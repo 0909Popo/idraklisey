@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "948909504681",
+    "project_id": "idraklisey-aafd7",
+    "storage_bucket": "idraklisey-aafd7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:948909504681:android:e938bf8329b3112c",
+        "android_client_info": {
+          "package_name": "az.idrak.liseyi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_placeholder_android_key_idrak"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
