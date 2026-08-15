@@ -18,10 +18,12 @@ workflows:
           keychain initialize
           app-store-connect fetch-signing-files "az.idrak.liseyi" --type IOS_APP_STORE --create
           keychain add-certificates
-          xcode-project use-profiles
       - name: Get Flutter packages
         script: |
           flutter packages pub get
+      - name: Apply profiles to Xcode
+        script: |
+          xcode-project use-profiles
       - name: Flutter build ipa and archive
         script: |
           flutter build ipa --release \
