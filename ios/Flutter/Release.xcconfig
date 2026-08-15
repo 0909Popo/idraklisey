@@ -1,1 +1,6 @@
 #include "Generated.xcconfig"
+
+CODE_SIGN_STYLE = Manual
+CODE_SIGN_IDENTITY = Apple Distribution
+DEVELOPMENT_TEAM = W24294ZD96
+PROVISIONING_PROFILE_SPECIFIER = Idrak Liseyi AppStore
