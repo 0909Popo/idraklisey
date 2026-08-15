@@ -22,15 +22,14 @@ workflows:
       - name: Get Flutter packages
         script: |
           flutter packages pub get
-      - name: Flutter build without signing
+      - name: Install CocoaPods
         script: |
-          flutter build ios --release --no-codesign
-      - name: Build IPA with Xcode
+          cd ios
+          pod install --repo-update
+      - name: Flutter build ipa and archive
         script: |
-          xcode-project build-ipa \
-            --workspace ios/Runner.xcworkspace \
-            --scheme Runner \
-            --config Release
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
