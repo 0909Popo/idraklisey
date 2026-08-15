@@ -13,9 +13,10 @@ workflows:
       - name: Disable Swift Package Manager (Use CocoaPods for Agora/Firebase)
         script: |
           flutter config --no-enable-swift-package-manager
-      - name: Get Flutter packages
+      - name: Get Flutter packages and generate iOS configs
         script: |
           flutter packages pub get
+          flutter build ios --config-only --release
       - name: Install CocoaPods
         script: |
           cd ios
