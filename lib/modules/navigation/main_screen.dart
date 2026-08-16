@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
@@ -129,11 +130,30 @@ class _MainScreenState extends State<MainScreen> {
       _currentTabIndex = 0;
     }
 
+    final isDark = appState.isDarkMode;
+
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 56,
-        backgroundColor: currentRole == UserRole.admin ? const Color(0xFF0F172A) : AppColors.primary,
+        backgroundColor: isDark
+            ? AppColors.darkSurface
+            : (currentRole == UserRole.admin ? const Color(0xFF0F172A) : AppColors.primary),
         elevation: 0,
+        flexibleSpace: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+            child: Container(
+              decoration: BoxDecoration(
+                color: (isDark
+                        ? AppColors.darkSurface
+                        : (currentRole == UserRole.admin
+                            ? const Color(0xFF0F172A)
+                            : AppColors.primary))
+                    .withAlpha(230),
+              ),
+            ),
+          ),
+        ),
         leading: const Padding(
           padding: EdgeInsets.only(left: 12),
           child: Center(
@@ -166,6 +186,19 @@ class _MainScreenState extends State<MainScreen> {
           ],
         ),
         actions: [
+          // Light / Dark theme toggle
+          IconButton(
+            icon: Icon(
+              appState.isDarkMode
+                  ? Icons.light_mode_rounded
+                  : Icons.dark_mode_rounded,
+              color: AppColors.goldLight,
+              size: 22,
+            ),
+            tooltip: appState.isDarkMode ? 'Açıq rejim' : 'Tünd rejim',
+            onPressed: () => appState.toggleTheme(),
+          ),
+
           // Notification Bell with Badge
           Stack(
             alignment: Alignment.center,
@@ -223,30 +256,46 @@ class _MainScreenState extends State<MainScreen> {
         index: _currentTabIndex,
         children: screens,
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: AppColors.cardBorder, width: 1)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(8),
-              blurRadius: 10,
-              offset: const Offset(0, -3),
+      bottomNavigationBar: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.darkSurface.withAlpha(200)
+                  : Colors.white.withAlpha(200),
+              border: Border(
+                top: BorderSide(
+                  color: isDark
+                      ? Colors.white.withAlpha(25)
+                      : Colors.white.withAlpha(40),
+                  width: 1,
+                ),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(8),
+                  blurRadius: 10,
+                  offset: const Offset(0, -3),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentTabIndex,
-          onTap: (index) => setState(() => _currentTabIndex = index),
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          selectedItemColor: currentRole == UserRole.admin ? const Color(0xFF0F172A) : AppColors.primary,
-          unselectedItemColor: AppColors.textMuted,
+            child: BottomNavigationBar(
+              currentIndex: _currentTabIndex,
+              onTap: (index) => setState(() => _currentTabIndex = index),
+              type: BottomNavigationBarType.fixed,
+              backgroundColor: Colors.transparent,
+              selectedItemColor: isDark
+                  ? AppColors.goldLight
+                  : (currentRole == UserRole.admin ? const Color(0xFF0F172A) : AppColors.primary),
+              unselectedItemColor: AppColors.textMuted,
           selectedFontSize: 11,
           unselectedFontSize: 11,
           selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
           elevation: 0,
           items: navItems,
+            ),
+          ),
         ),
       ),
     );

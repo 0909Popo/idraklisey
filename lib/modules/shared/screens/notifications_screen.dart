@@ -91,7 +91,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               border: Border(bottom: BorderSide(color: AppColors.cardBorder)),
             ),
             child: SingleChildScrollView(
@@ -128,12 +128,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             child: const Icon(Icons.notifications_none_rounded, size: 50, color: AppColors.primary),
                           ),
                           const SizedBox(height: 16),
-                          const Text(
+                          Text(
                             'Bildiriş tapılmadı',
                             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                           ),
                           const SizedBox(height: 6),
-                          const Text(
+                          Text(
                             'Məktəb rəhbərliyindən və ya müəllimlərinizdən gələn bütün bildirişlər burada toplanacaq.',
                             textAlign: TextAlign.center,
                             style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
@@ -264,7 +264,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     CircleAvatar(
                       radius: 20,
                       backgroundImage: NetworkImage(notif.senderPhotoUrl!),
-                      child: const Icon(Icons.person, size: 20),
+                      child: null, // No overlay icon
                     )
                   else
                     Container(
@@ -290,7 +290,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             Flexible(
                               child: Text(
                                 notif.senderName,
-                                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppColors.textPrimary),
+                                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppColors.textPrimary),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -309,7 +309,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           isTeacherSender
                               ? 'Müəllim • ${notif.senderSubject ?? "Fənn"}'
                               : 'İdrak Liseyi Rəhbərliyi',
-                          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                          style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
                         ),
                       ],
                     ),
@@ -344,7 +344,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 notif.message,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.3),
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.3),
               ),
 
               const SizedBox(height: 10),
@@ -385,7 +385,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   ),
                   Text(
                     _formatTimeAgo(notif.createdAt),
-                    style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
                 ],
               ),
@@ -401,7 +401,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       context: context,
       builder: (ctx) {
         return Dialog(
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -439,7 +439,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             notif.senderSubject != null
                                 ? 'Müəllim • ${notif.senderSubject}'
                                 : 'İdrak Liseyi Rəsmi Bildirişi',
-                            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
                           ),
                         ],
                       ),
@@ -453,12 +453,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
                 Text(
                   notif.title,
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppColors.textPrimary),
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 10),
                 Text(
                   notif.message,
-                  style: const TextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.5),
+                  style: TextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.5),
                 ),
 
                 const SizedBox(height: 18),
@@ -467,7 +467,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   children: [
                     Text(
                       DateFormat('dd MMMM yyyy, HH:mm').format(notif.createdAt),
-                      style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                      style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                     ),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(

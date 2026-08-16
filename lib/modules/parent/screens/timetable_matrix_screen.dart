@@ -42,7 +42,7 @@ class _TimetableMatrixScreenState extends State<TimetableMatrixScreen> with Sing
     final className = currentStudent.className.isNotEmpty ? currentStudent.className : '9B';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text('Dərs Cədvəli ($className)'),
         elevation: 0,
@@ -63,7 +63,7 @@ class _TimetableMatrixScreenState extends State<TimetableMatrixScreen> with Sing
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withAlpha(8),
@@ -100,7 +100,7 @@ class _TimetableMatrixScreenState extends State<TimetableMatrixScreen> with Sing
                       children: [
                         Text(
                           days[_selectedDayIndex].dayName,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w900,
                             color: AppColors.textPrimary,
@@ -108,7 +108,7 @@ class _TimetableMatrixScreenState extends State<TimetableMatrixScreen> with Sing
                         ),
                         Text(
                           '${days[_selectedDayIndex].lessons.length} Dərs Saatı Planlaşdırılıb',
-                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                          style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
                         ),
                       ],
                     ),
@@ -162,16 +162,16 @@ class _TimetableMatrixScreenState extends State<TimetableMatrixScreen> with Sing
                   color: AppColors.textMuted.withAlpha(25),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.event_busy_rounded, size: 48, color: AppColors.textMuted),
+                child: Icon(Icons.event_busy_rounded, size: 48, color: AppColors.textMuted),
               ),
               const SizedBox(height: 16),
               Text(
                 '${day.dayName} üçün dərs cədvəli boşdur',
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'Müəllimlər və məktəb rəhbərliyi tərəfindən dərslər əlavə olunduqda burada əks olunacaq.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.4),
@@ -194,7 +194,7 @@ class _TimetableMatrixScreenState extends State<TimetableMatrixScreen> with Sing
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isCurrent ? color : AppColors.cardBorder,
@@ -251,11 +251,11 @@ class _TimetableMatrixScreenState extends State<TimetableMatrixScreen> with Sing
                                   const SizedBox(width: 8),
                                   Row(
                                     children: [
-                                      const Icon(Icons.schedule_rounded, size: 13, color: AppColors.textSecondary),
+                                      Icon(Icons.schedule_rounded, size: 13, color: AppColors.textSecondary),
                                       const SizedBox(width: 4),
                                       Text(
                                         lesson.time,
-                                        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                                        style: TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
                                       ),
                                     ],
                                   ),
@@ -291,11 +291,11 @@ class _TimetableMatrixScreenState extends State<TimetableMatrixScreen> with Sing
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(Icons.meeting_room_outlined, size: 12, color: AppColors.textSecondary),
+                                      Icon(Icons.meeting_room_outlined, size: 12, color: AppColors.textSecondary),
                                       const SizedBox(width: 4),
                                       Text(
                                         lesson.room,
-                                        style: const TextStyle(fontSize: 11, color: AppColors.textPrimary, fontWeight: FontWeight.w700),
+                                        style: TextStyle(fontSize: 11, color: AppColors.textPrimary, fontWeight: FontWeight.w700),
                                       ),
                                     ],
                                   ),
@@ -323,7 +323,7 @@ class _TimetableMatrixScreenState extends State<TimetableMatrixScreen> with Sing
                                   children: [
                                     Text(
                                       lesson.subject,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w900,
                                         color: AppColors.textPrimary,
@@ -332,12 +332,12 @@ class _TimetableMatrixScreenState extends State<TimetableMatrixScreen> with Sing
                                     const SizedBox(height: 3),
                                     Row(
                                       children: [
-                                        const Icon(Icons.person_outline_rounded, size: 13, color: AppColors.textSecondary),
+                                        Icon(Icons.person_outline_rounded, size: 13, color: AppColors.textSecondary),
                                         const SizedBox(width: 4),
                                         Expanded(
                                           child: Text(
                                             lesson.teacher,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 12,
                                               color: AppColors.textSecondary,
                                               fontWeight: FontWeight.w500,

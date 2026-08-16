@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
@@ -9,6 +10,7 @@ import '../../../providers/app_state.dart';
 import 'create_account_dialog.dart';
 import 'admin_users_screen.dart';
 import 'class_management_screen.dart';
+import 'qr_inventory_management_screen.dart';
 import '../../parent/screens/parent_tickets_screen.dart';
 import '../../parent/screens/grades_analytics_screen.dart';
 import '../../student/screens/cafeteria_menu_screen.dart';
@@ -164,13 +166,19 @@ class AdminDashboardScreen extends StatelessWidget {
                           padding: const EdgeInsets.all(18),
                           child: Row(
                             children: [
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withAlpha(30),
-                                  shape: BoxShape.circle,
+                              ClipOval(
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withAlpha(35),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white.withAlpha(50)),
+                                    ),
+                                    child: const Icon(Icons.person_add_rounded, color: Colors.white, size: 28),
+                                  ),
                                 ),
-                                child: const Icon(Icons.person_add_rounded, color: Colors.white, size: 28),
                               ),
                               const SizedBox(width: 14),
                               Expanded(
@@ -208,9 +216,9 @@ class AdminDashboardScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
                       children: [
-                        _buildStatBox('Müəllimlər', '$teacherCount Nəfər', Icons.psychology_rounded, const Color(0xFF0D9488)),
+                        _buildStatBox('Müəllimlər', '$teacherCount Nəfər', Icons.psychology_rounded, const Color(0xFF0D9488), isDark: appState.isDarkMode),
                         const SizedBox(width: 8),
-                        _buildStatBox('Şagirdlər', '$studentCount Nəfər', Icons.school_rounded, AppColors.primaryAccent),
+                        _buildStatBox('Şagirdlər', '$studentCount Nəfər', Icons.school_rounded, AppColors.primaryAccent, isDark: appState.isDarkMode),
                       ],
                     ),
                   ),
@@ -219,9 +227,9 @@ class AdminDashboardScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
                       children: [
-                        _buildStatBox('Valideynlər', '$parentCount Nəfər', Icons.family_restroom_rounded, AppColors.goldDark),
+                        _buildStatBox('Valideynlər', '$parentCount Nəfər', Icons.family_restroom_rounded, AppColors.goldDark, isDark: appState.isDarkMode),
                         const SizedBox(width: 8),
-                        _buildStatBox('Müraciətlər', '$activeTickets Ticket', Icons.support_agent_rounded, Colors.purple),
+                        _buildStatBox('Müraciətlər', '$activeTickets Ticket', Icons.support_agent_rounded, Colors.purple, isDark: appState.isDarkMode),
                       ],
                     ),
                   ),
@@ -316,6 +324,20 @@ class AdminDashboardScreen extends StatelessWidget {
                       MaterialPageRoute(builder: (_) => const NotificationsScreen()),
                     ),
                   ),
+
+                  // 6. QR Inventory Registry
+                  _buildAdminToolCard(
+                    context: context,
+                    title: 'QR İnventar Reyestri',
+                    subtitle: 'Avadanlıqları QR ilə qeydiyyata al, kodu çap et — müəllim skan etdikdə cihaz avtomatik tanınar',
+                    icon: Icons.qr_code_rounded,
+                    accentColor: const Color(0xFF0D9488),
+                    tag: 'Texniki Xidmət',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const QrInventoryManagementScreen()),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -325,49 +347,60 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatBox(String label, String value, IconData icon, Color color) {
+  Widget _buildStatBox(String label, String value, IconData icon, Color color, {bool isDark = false}) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.cardBorder),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(6),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withAlpha(25),
-                borderRadius: BorderRadius.circular(12),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.darkSurface.withAlpha(190)
+                  : Colors.white.withAlpha(190),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? Colors.white.withAlpha(28) : Colors.white.withAlpha(50),
               ),
-              child: Icon(icon, color: color, size: 22),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(10),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    value,
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: color.withAlpha(30),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: color.withAlpha(40)),
                   ),
-                  Text(
-                    label,
-                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                  child: Icon(icon, color: color, size: 22),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        value,
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
+                      ),
+                      Text(
+                        label,
+                        style: TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -405,7 +438,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     Expanded(
                       child: Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textPrimary,
@@ -422,7 +455,7 @@ class AdminDashboardScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                     height: 1.3,
@@ -432,7 +465,7 @@ class AdminDashboardScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textMuted),
+          Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textMuted),
         ],
       ),
     );

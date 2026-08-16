@@ -22,7 +22,18 @@ void main() async {
     debugPrint('Firebase initialization notice: $e');
   }
 
-  runApp(const IdrakLiseyiApp());
+  // Restore appearance before the first frame so the correct palette
+  // is applied from the very first splash.
+  final appState = AppState();
+  await appState.loadThemeMode();
+  appState.initFirebaseData();
+
+  runApp(
+    ChangeNotifierProvider.value(
+      value: appState,
+      child: const IdrakLiseyiApp(),
+    ),
+  );
 }
 
 class IdrakLiseyiApp extends StatelessWidget {
@@ -30,22 +41,15 @@ class IdrakLiseyiApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(
-          create: (_) {
-            final state = AppState();
-            state.initFirebaseData();
-            return state;
-          },
-        ),
-      ],
-      child: MaterialApp(
-        title: 'İdrak Liseyi',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        home: const VideoSplashScreen(),
-      ),
+    final appState = Provider.of<AppState>(context);
+
+    return MaterialApp(
+      title: 'İdrak Liseyi',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: appState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      home: const VideoSplashScreen(),
     );
   }
 }

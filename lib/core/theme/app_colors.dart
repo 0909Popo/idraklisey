@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 
+/// App color palette.
+///
+/// Brand colors (navy, gold, status) are constant and shared by both themes.
+/// The neutral subset (background, surfaces, borders, text) is adaptive:
+/// [applyDark] swaps these mutable statics in place so every screen that
+/// reads `AppColors.background` etc. instantly follows the active theme
+/// without any per-screen logic.
 class AppColors {
   // Primary Navy Brand Colors
   static const Color primary = Color(0xFF0F2552); // Deep Idrak Navy
@@ -22,23 +29,55 @@ class AppColors {
   static const Color info = Color(0xFF3B82F6);    // Blue (Info)
   static const Color infoLight = Color(0xFFDBEAFE);
 
-  // Dark & Light Neutral Palette
-  static const Color background = Color(0xFFF8FAFC);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceElevated = Color(0xFFFFFFFF);
-  static const Color cardBorder = Color(0xFFE2E8F0);
-
-  // Text
-  static const Color textPrimary = Color(0xFF0F172A);
-  static const Color textSecondary = Color(0xFF64748B);
-  static const Color textMuted = Color(0xFF94A3B8);
-  static const Color textOnPrimary = Color(0xFFFFFFFF);
-
-  // Dark Mode Colors
+  // Dark palette (constant source for the adaptive values below)
   static const Color darkBackground = Color(0xFF090D16);
   static const Color darkSurface = Color(0xFF131B2E);
   static const Color darkCard = Color(0xFF1E293B);
   static const Color darkBorder = Color(0xFF334155);
+
+  // --- Adaptive neutral palette (swapped by applyDark) ---
+  static const Color _lightBackground = Color(0xFFF8FAFC);
+  static const Color _lightSurface = Color(0xFFFFFFFF);
+  static const Color _lightCardBorder = Color(0xFFE2E8F0);
+  static const Color _lightTextPrimary = Color(0xFF0F172A);
+  static const Color _lightTextSecondary = Color(0xFF64748B);
+  static const Color _lightTextMuted = Color(0xFF94A3B8);
+
+  static const Color _darkTextPrimary = Color(0xFFF1F5F9);
+  static const Color _darkTextSecondary = Color(0xFF94A3B8);
+  static const Color _darkTextMuted = Color(0xFF64748B);
+
+  static Color background = _lightBackground;
+  static Color surface = _lightSurface;
+  static Color surfaceElevated = _lightSurface;
+  static Color cardBorder = _lightCardBorder;
+
+  // Text
+  static Color textPrimary = _lightTextPrimary;
+  static Color textSecondary = _lightTextSecondary;
+  static Color textMuted = _lightTextMuted;
+  static const Color textOnPrimary = Color(0xFFFFFFFF);
+
+  /// Swaps every adaptive neutral to the requested palette.
+  static void applyDark(bool dark) {
+    if (dark) {
+      background = darkBackground;
+      surface = darkSurface;
+      surfaceElevated = darkCard;
+      cardBorder = darkBorder;
+      textPrimary = _darkTextPrimary;
+      textSecondary = _darkTextSecondary;
+      textMuted = _darkTextMuted;
+    } else {
+      background = _lightBackground;
+      surface = _lightSurface;
+      surfaceElevated = _lightSurface;
+      cardBorder = _lightCardBorder;
+      textPrimary = _lightTextPrimary;
+      textSecondary = _lightTextSecondary;
+      textMuted = _lightTextMuted;
+    }
+  }
 
   // Gradients
   static const LinearGradient primaryGradient = LinearGradient(
@@ -53,11 +92,12 @@ class AppColors {
     colors: [Color(0xFFF59E0B), Color(0xFFFBBF24), Color(0xFFFDE68A)],
   );
 
-  static const LinearGradient cardGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFFFFFFFF), Color(0xFFF8FAFC)],
-  );
+  /// Card gradient built from the current adaptive surfaces.
+  static LinearGradient get cardGradient => LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [surface, background],
+      );
 
   static const LinearGradient heroGradient = LinearGradient(
     begin: Alignment.topCenter,

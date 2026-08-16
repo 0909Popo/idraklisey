@@ -129,9 +129,9 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
             if (studentGrades.isEmpty) ...[
               Center(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+                  padding: EdgeInsets.symmetric(vertical: 40, horizontal: 24),
                   child: Column(
-                    children: const [
+                    children: [
                       Icon(Icons.insights_rounded, size: 64, color: AppColors.textMuted),
                       SizedBox(height: 14),
                       Text(
@@ -158,7 +158,7 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Tədris Dinamikası',
                           style: TextStyle(
                             fontSize: 16,
@@ -275,7 +275,7 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
           fontSize: 12,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         side: BorderSide(color: isSelected ? AppColors.primary : AppColors.cardBorder),
       ),
     );
@@ -310,7 +310,7 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
               getTitlesWidget: (val, meta) {
                 return Text(
                   '${val.toInt()}',
-                  style: const TextStyle(color: AppColors.textMuted, fontSize: 10),
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 10),
                 );
               },
             ),
@@ -372,7 +372,7 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
               getTitlesWidget: (val, meta) {
                 return Text(
                   '${val.toInt()}',
-                  style: const TextStyle(color: AppColors.textMuted, fontSize: 10),
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 10),
                 );
               },
             ),
@@ -440,10 +440,10 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
                 children: [
                   Text(
                     dateFormat.format(grade.date),
-                    style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
                   PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert_rounded, size: 16, color: AppColors.textMuted),
+                    icon: Icon(Icons.more_vert_rounded, size: 16, color: AppColors.textMuted),
                     padding: EdgeInsets.zero,
                     onSelected: (val) {
                       if (val == 'delete') {
@@ -485,7 +485,7 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
                     ),
                     Text(
                       grade.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
@@ -535,7 +535,7 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
               ),
               child: Text(
                 'Müəllim Rəyi: "${grade.teacherFeedback}"',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontStyle: FontStyle.italic,
                   color: AppColors.textSecondary,

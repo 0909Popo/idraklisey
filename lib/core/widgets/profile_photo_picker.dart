@@ -51,7 +51,7 @@ class _ProfilePhotoPickerState extends State<ProfilePhotoPicker>
       builder: (ctx) => Container(
         margin: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Column(
@@ -67,7 +67,7 @@ class _ProfilePhotoPickerState extends State<ProfilePhotoPicker>
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Profil Fotosu Seçin',
               style: TextStyle(
                 fontSize: 17,
@@ -76,7 +76,7 @@ class _ProfilePhotoPickerState extends State<ProfilePhotoPicker>
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Fotosu kamera ilə çəkin və ya qalereyadan seçin',
               style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),

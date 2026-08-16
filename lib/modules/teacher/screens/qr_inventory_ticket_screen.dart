@@ -5,6 +5,9 @@ import '../../../core/widgets/custom_card.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../../providers/app_state.dart';
 import '../../../data/models/ticket_model.dart';
+import '../../../data/models/inventory_model.dart';
+import '../../../data/models/notification_model.dart';
+import '../../shared/screens/qr_scanner_screen.dart';
 
 class QrInventoryTicketScreen extends StatefulWidget {
   const QrInventoryTicketScreen({super.key});
@@ -15,12 +18,10 @@ class QrInventoryTicketScreen extends StatefulWidget {
 
 class _QrInventoryTicketScreenState extends State<QrInventoryTicketScreen> {
   String? _scannedQrCode;
-  String? _detectedRoom;
-  String? _detectedEquipment;
+  InventoryItem? _scannedItem; // Resolved equipment from the registry (null = unknown QR)
   final TextEditingController _problemTitleCtrl = TextEditingController();
   final TextEditingController _problemDescCtrl = TextEditingController();
   TicketPriority _priority = TicketPriority.urgent;
-  bool _isScanning = false;
 
   @override
   void dispose() {
@@ -29,35 +30,109 @@ class _QrInventoryTicketScreenState extends State<QrInventoryTicketScreen> {
     super.dispose();
   }
 
-  void _simulateQrScan() {
-    setState(() => _isScanning = true);
+  /// Opens the real camera scanner and resolves the scanned QR payload
+  /// against the admin-managed inventory registry.
+  Future<void> _startRealScan() async {
+    final appState = Provider.of<AppState>(context, listen: false);
 
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      if (mounted) {
-        setState(() {
-          _isScanning = false;
-          _scannedQrCode = 'IDRAK-INV-ROOM302-PROJ-882';
-          _detectedRoom = 'Otaq 302 (Riyaziyyat Korpusu)';
-          _detectedEquipment = 'Epson HD Proyektor & Smart Lövhə (INV-PRJ-2023-302)';
-          // Do not auto-fill problem text - teacher enters custom description from scratch!
-          _problemTitleCtrl.clear();
-          _problemDescCtrl.clear();
-        });
+    final code = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => const QrScannerScreen()),
+    );
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Avadanlıq QR Kodu uğurla skan edildi! İndi nasazlıq haqqında məlumatı qeyd edin.'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-      }
+    if (code == null || code.isEmpty) return;
+
+    final item = appState.findInventoryItemByQr(code);
+
+    setState(() {
+      _scannedQrCode = code;
+      _scannedItem = item;
+      // Do not auto-fill problem text - teacher enters custom description from scratch!
+      _problemTitleCtrl.clear();
+      _problemDescCtrl.clear();
     });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            item != null
+                ? 'QR tanındı: ${item.name}. İndi nasazlıq haqqında məlumatı qeyd edin.'
+                : 'QR oxundu, amma bu avadanlıq reyestrdə qeydiyyatda deyil. Yenə də müraciət göndərə bilərsiniz.',
+          ),
+          backgroundColor: item != null ? AppColors.success : AppColors.warning,
+        ),
+      );
+    }
+  }
+
+  void _submitTicket(AppState appState) {
+    if (_problemTitleCtrl.text.trim().isEmpty || _problemDescCtrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Zəhmət olmasa problem başlığını və izahını qeyd edin!')),
+      );
+      return;
+    }
+
+    final currentUser = appState.currentUser;
+    final item = _scannedItem;
+
+    final newTicket = HelpdeskTicket(
+      id: 'INV-TK-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
+      title: _problemTitleCtrl.text.trim(),
+      category: TicketCategory.inventory,
+      status: TicketStatus.open,
+      priority: _priority,
+      senderName: '${currentUser?.fullName ?? "Müəllim"} (${currentUser?.subject ?? "Tədris"})',
+      senderRole: 'Müəllim',
+      roomNumber: item?.room,
+      inventoryCode: _scannedQrCode,
+      description: _problemDescCtrl.text.trim(),
+      createdAt: DateTime.now(),
+      messages: [
+        TicketMessage(
+          sender: currentUser?.fullName ?? 'Müəllim',
+          message: _problemDescCtrl.text.trim(),
+          timestamp: DateTime.now(),
+          isFromStaff: false,
+        ),
+      ],
+    );
+
+    appState.addTicket(newTicket);
+
+    // Real in-app notification for the admin: which device + the problem
+    // exactly as the teacher described it.
+    final deviceLabel = item != null
+        ? '${item.name} (${item.room})'
+        : 'Qeydiyyatsız avadanlıq [QR: $_scannedQrCode]';
+    appState.sendNotification(
+      title: '📡 Texniki Müraciət: ${item?.name ?? "Qeydiyyatsız QR"}',
+      message:
+          '$deviceLabel — ${newTicket.title}. Göndərən: ${currentUser?.fullName ?? "Müəllim"}. İzah: ${_problemDescCtrl.text.trim()}',
+      category: _priority == TicketPriority.urgent
+          ? NotificationCategory.emergency
+          : NotificationCategory.general,
+      priority: _priority == TicketPriority.urgent ? 'high' : 'normal',
+    );
+
+    _problemTitleCtrl.clear();
+    _problemDescCtrl.clear();
+    setState(() {
+      _scannedQrCode = null;
+      _scannedItem = null;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('İnventar nasazlıq müraciəti rəhbərliyə və IT şöbəsinə çatdırıldı!'),
+        backgroundColor: AppColors.success,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
-    final currentUser = appState.currentUser;
     final inventoryTickets = appState.tickets.where((t) => t.category == TicketCategory.inventory).toList();
 
     return Scaffold(
@@ -124,11 +199,9 @@ class _QrInventoryTicketScreenState extends State<QrInventoryTicketScreen> {
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(backgroundColor: AppColors.goldDark),
-                      onPressed: _isScanning ? null : _simulateQrScan,
-                      icon: _isScanning
-                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                          : const Icon(Icons.camera_alt_rounded),
-                      label: Text(_isScanning ? 'Kamera Açılır...' : 'Avadanlıq QR Kodunu Skan Et'),
+                      onPressed: _startRealScan,
+                      icon: const Icon(Icons.camera_alt_rounded),
+                      label: const Text('Avadanlıq QR Kodunu Skan Et'),
                     ),
                   ),
                 ],
@@ -137,42 +210,85 @@ class _QrInventoryTicketScreenState extends State<QrInventoryTicketScreen> {
 
             // Scanned Equipment Details & Report Form
             if (_scannedQrCode != null) ...[
-              CustomCard(
-                backgroundColor: const Color(0xFFFEF2F2),
-                border: Border.all(color: AppColors.danger.withAlpha(60)),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.precision_manufacturing_rounded, color: AppColors.danger, size: 20),
-                        const SizedBox(width: 8),
-                        const Expanded(
-                          child: Text(
-                            'Aşkar Edilmiş Avadanlıq:',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              if (_scannedItem != null) ...[
+                // Known device — green confirmation card
+                CustomCard(
+                  backgroundColor: AppColors.success.withAlpha(22),
+                  border: Border.all(color: AppColors.success.withAlpha(60)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.precision_manufacturing_rounded, color: AppColors.success, size: 20),
+                          const SizedBox(width: 8),
+                          const Expanded(
+                            child: Text(
+                              'Aşkar Edilmiş Avadanlıq:',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
                           ),
-                        ),
-                        StatusBadge(
-                          label: 'QR Təsdiqləndi',
-                          color: AppColors.danger,
-                          fontSize: 9,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(_detectedEquipment!, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppColors.textPrimary)),
-                    Text(_detectedRoom!, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                  ],
+                          StatusBadge(
+                            label: 'QR Təsdiqləndi',
+                            color: AppColors.success,
+                            fontSize: 9,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(_scannedItem!.name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppColors.textPrimary)),
+                      const SizedBox(height: 2),
+                      Text(_scannedItem!.room, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                      if (_scannedItem!.serialNumber.isNotEmpty)
+                        Text('Seriya №: ${_scannedItem!.serialNumber}', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                      const SizedBox(height: 4),
+                      Text('QR: $_scannedQrCode', style: TextStyle(fontSize: 10, color: AppColors.textMuted, fontFamily: 'monospace')),
+                    ],
+                  ),
                 ),
-              ),
+              ] else ...[
+                // Unknown QR — amber warning, still allowed to report
+                CustomCard(
+                  backgroundColor: AppColors.warning.withAlpha(25),
+                  border: Border.all(color: AppColors.warning.withAlpha(70)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.help_outline_rounded, color: AppColors.warning, size: 20),
+                          const SizedBox(width: 8),
+                          const Expanded(
+                            child: Text(
+                              'Bu QR reyestrdə qeydiyyatda deyil',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF92400E)),
+                            ),
+                          ),
+                          StatusBadge(
+                            label: 'Bilinmir',
+                            color: AppColors.warning,
+                            fontSize: 9,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Bu avadanlıq admin tərəfindən qeydiyyata alınmayıb. Müraciəti yenə də göndərə bilərsiniz — İT şöbəsi QR koduna görə cihazı müəyyən edəcək.',
+                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.4),
+                      ),
+                      const SizedBox(height: 4),
+                      Text('QR: $_scannedQrCode', style: TextStyle(fontSize: 10, color: AppColors.textMuted, fontFamily: 'monospace')),
+                    ],
+                  ),
+                ),
+              ],
 
               // Problem Form
               CustomCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Nasazlıq Şikayətini Rəhbərliyə Göndər', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                    Text('Nasazlıq Şikayətini Rəhbərliyə Göndər', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
                     const SizedBox(height: 12),
                     TextField(
                       controller: _problemTitleCtrl,
@@ -203,47 +319,7 @@ class _QrInventoryTicketScreenState extends State<QrInventoryTicketScreen> {
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
-                        onPressed: () {
-                          if (_problemTitleCtrl.text.isNotEmpty && _problemDescCtrl.text.isNotEmpty) {
-                            final newTicket = HelpdeskTicket(
-                              id: 'INV-TK-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
-                              title: _problemTitleCtrl.text.trim(),
-                              category: TicketCategory.inventory,
-                              status: TicketStatus.open,
-                              priority: _priority,
-                              senderName: '${currentUser?.fullName ?? "Müəllim"} (${currentUser?.subject ?? "Tədris"})',
-                              senderRole: 'Müəllim',
-                              roomNumber: _detectedRoom,
-                              inventoryCode: _scannedQrCode,
-                              description: _problemDescCtrl.text.trim(),
-                              createdAt: DateTime.now(),
-                              messages: [
-                                TicketMessage(
-                                  sender: currentUser?.fullName ?? 'Müəllim',
-                                  message: _problemDescCtrl.text.trim(),
-                                  timestamp: DateTime.now(),
-                                  isFromStaff: false,
-                                ),
-                              ],
-                            );
-
-                            appState.addTicket(newTicket);
-                            _problemTitleCtrl.clear();
-                            _problemDescCtrl.clear();
-                            setState(() => _scannedQrCode = null);
-
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('İnventar nasazlıq müraciəti rəhbərliyə və IT şöbəsinə çatdırıldı!'),
-                                backgroundColor: AppColors.success,
-                              ),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Zəhmət olmasa problem başlığını və izahını qeyd edin!')),
-                            );
-                          }
-                        },
+                        onPressed: () => _submitTicket(appState),
                         icon: const Icon(Icons.report_problem_rounded),
                         label: const Text('Rəhbərliyə və İT Şöbəsinə Göndər'),
                       ),
@@ -258,7 +334,7 @@ class _QrInventoryTicketScreenState extends State<QrInventoryTicketScreen> {
             // Previous Inventory Tickets List
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: const Text('Məktəb Üzrə Texniki Müraciətlər', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+              child: Text('Məktəb Üzrə Texniki Müraciətlər', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
             ),
             const SizedBox(height: 8),
 
@@ -274,13 +350,13 @@ class _QrInventoryTicketScreenState extends State<QrInventoryTicketScreen> {
                           label: ticket.priority == TicketPriority.urgent ? 'TƏCİLİ' : 'NORMAL',
                           color: ticket.priority == TicketPriority.urgent ? AppColors.danger : AppColors.warning,
                         ),
-                        Text(ticket.inventoryCode ?? ticket.id, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                        Text(ticket.inventoryCode ?? ticket.id, style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Text(ticket.title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                    Text(ticket.title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
                     const SizedBox(height: 4),
-                    Text(ticket.description, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                    Text(ticket.description, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                   ],
                 ),
               );

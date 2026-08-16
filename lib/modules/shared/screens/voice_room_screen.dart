@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../providers/app_state.dart';
 import '../../../data/models/meet_model.dart';
 import '../../../services/agora_service.dart';
+import '../../../services/agora_token_service.dart';
 
 class VoiceRoomScreen extends StatefulWidget {
   final MeetRoom room;
@@ -15,14 +16,20 @@ class VoiceRoomScreen extends StatefulWidget {
   State<VoiceRoomScreen> createState() => _VoiceRoomScreenState();
 }
 
-class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProviderStateMixin {
+class _VoiceRoomScreenState extends State<VoiceRoomScreen>
+    with SingleTickerProviderStateMixin {
   final AgoraService _agoraService = AgoraService();
+  final AgoraTokenService _agoraTokenService = AgoraTokenService();
 
   late Timer _durationTimer;
   int _secondsElapsed = 0;
   bool _isLocalMuted = false;
   bool _isSpeakerOn = true;
   bool _isHandRaised = false;
+  bool _isJoining = true;
+  bool _hasJoinedRoom = false;
+  String? _connectionError;
+  late AppState _appState;
 
   StreamSubscription? _userJoinedSub;
   StreamSubscription? _userLeftSub;
@@ -44,43 +51,114 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
       if (mounted) setState(() => _secondsElapsed++);
     });
 
+    _appState = Provider.of<AppState>(context, listen: false);
+    _appState.addListener(_syncForcedMuteState);
+    _subscribeToAgoraEvents();
     _initAndJoinVoice();
   }
 
-  Future<void> _initAndJoinVoice() async {
-    final appState = Provider.of<AppState>(context, listen: false);
-    final currentUserId = appState.currentUser?.id ?? appState.student.id;
-
-    // 1. Join room in AppState
-    await appState.joinMeetRoom(widget.room.id);
-
-    // 2. Compute Agora UID
-    final myUid = (currentUserId.hashCode.abs() % 900000) + 100000;
-
-    // 3. Initialize Agora & Join Channel
-    await _agoraService.initAgora();
-    await _agoraService.joinChannel(
-      channelName: widget.room.channelName,
-      uid: myUid,
-    );
-
-    // 4. Listen to Agora events
-    _userMuteSub = _agoraService.onUserMuteAudio.listen((event) {
+  void _subscribeToAgoraEvents() {
+    // Subscribe before joining: Agora can report an existing remote user during
+    // the join handshake, before the Firestore presence write has completed.
+    _userMuteSub ??= _agoraService.onUserMuteAudio.listen((_) {
       if (mounted) setState(() {});
     });
+    _userJoinedSub ??= _agoraService.onUserJoined.listen((remoteUid) {
+      debugPrint('✓ Agora user joined: $remoteUid');
+      if (mounted) setState(() {});
+    });
+    _userLeftSub ??= _agoraService.onUserOffline.listen((remoteUid) {
+      debugPrint('✓ Agora user left: $remoteUid');
+      if (mounted) setState(() {});
+    });
+  }
 
-    _volumeSub = _agoraService.onVolumeIndication.listen((speakers) {
-      if (!mounted) return;
-      final appState = Provider.of<AppState>(context, listen: false);
-      for (final s in speakers) {
-        final isSpeaking = (s.volume ?? 0) > 10;
-        // Find matching participant
-        final match = widget.room.participants.where((p) => p.agoraUid == s.uid).firstOrNull;
-        if (match != null) {
-          appState.updateParticipantSpeaking(widget.room.id, match.userId, isSpeaking);
+  Future<void> _initAndJoinVoice() async {
+    final appState = _appState;
+    final currentUserId = appState.currentUser?.id ?? appState.student.id;
+    final myUid = agoraUidForUser(currentUserId);
+
+    try {
+      final token = await _agoraTokenService.getToken(
+        roomId: widget.room.id,
+        channelName: widget.room.channelName,
+        uid: myUid,
+      );
+      final joined = await _agoraService.joinChannel(
+        channelName: widget.room.channelName,
+        uid: myUid,
+        token: token,
+      );
+      if (!joined) throw StateError('Agora bağlantısı kurulamadı.');
+
+      _hasJoinedRoom = true;
+      // Presence is metadata, not the voice connection itself. A transient
+      // Firestore reconnect must never make a successfully joined Agora room
+      // appear empty or failed.
+      unawaited(_registerMeetPresence(appState));
+      _volumeSub = _agoraService.onVolumeIndication.listen((speakers) {
+        if (!mounted) return;
+        final room = appState.meetRooms.firstWhere(
+          (item) => item.id == widget.room.id,
+          orElse: () => widget.room,
+        );
+        for (final speaker in speakers) {
+          final participant = room.participants
+              .where((item) => item.agoraUid == speaker.uid)
+              .firstOrNull;
+          if (participant != null) {
+            appState.updateParticipantSpeaking(
+              widget.room.id,
+              participant.userId,
+              (speaker.volume ?? 0) > 10,
+            );
+          }
+        }
+      });
+    } catch (error) {
+      _connectionError = error.toString().replaceFirst('Bad state: ', '');
+      debugPrint('Meet connection error: $error');
+    } finally {
+      if (mounted) setState(() => _isJoining = false);
+    }
+  }
+
+  Future<void> _registerMeetPresence(AppState appState) async {
+    for (var attempt = 0; attempt < 5; attempt++) {
+      try {
+        await appState
+            .joinMeetRoom(widget.room.id)
+            .timeout(const Duration(seconds: 20));
+        debugPrint('✓ Meet presence registered successfully');
+        return;
+      } catch (error) {
+        debugPrint(
+          'Meet presence attempt ${attempt + 1}/5 failed; retrying: $error',
+        );
+        if (attempt < 4) {
+          await Future<void>.delayed(Duration(seconds: 3 * (attempt + 1)));
         }
       }
-    });
+    }
+    debugPrint('⚠️ Meet presence registration failed after 5 attempts');
+  }
+
+  Future<void> _syncForcedMuteState() async {
+    if (!_hasJoinedRoom) return;
+    final userId = _appState.currentUser?.id ?? _appState.student.id;
+    final room = _appState.meetRooms.firstWhere(
+      (item) => item.id == widget.room.id,
+      orElse: () => widget.room,
+    );
+    final participant = room.participants
+        .where((item) => item.userId == userId)
+        .firstOrNull;
+    if (participant == null || participant.isMutedByHost == _isLocalMuted) {
+      return;
+    }
+
+    final muted = await _agoraService.setLocalMute(participant.isMutedByHost);
+    if (mounted) setState(() => _isLocalMuted = muted);
   }
 
   @override
@@ -91,8 +169,11 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
     _userLeftSub?.cancel();
     _userMuteSub?.cancel();
     _volumeSub?.cancel();
+    _appState.removeListener(_syncForcedMuteState);
 
-    // Leave channel
+    if (_hasJoinedRoom) {
+      _appState.leaveMeetRoom(widget.room.id);
+    }
     _agoraService.leaveChannel();
     super.dispose();
   }
@@ -104,7 +185,23 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
   }
 
   Future<void> _toggleMute() async {
-    final appState = Provider.of<AppState>(context, listen: false);
+    final appState = _appState;
+    final userId = appState.currentUser?.id ?? appState.student.id;
+    final room = appState.meetRooms.firstWhere(
+      (item) => item.id == widget.room.id,
+      orElse: () => widget.room,
+    );
+    final me = room.participants
+        .where((participant) => participant.userId == userId)
+        .firstOrNull;
+    if (me?.isMutedByHost ?? false) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Müəllim mikrofonunuzu müvəqqəti bağlayıb.'),
+        ),
+      );
+      return;
+    }
     final newMuteState = await _agoraService.toggleLocalMute();
     await appState.toggleMyMuteInRoom(widget.room.id);
     setState(() {
@@ -120,42 +217,67 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
   }
 
   void _leaveRoom() async {
-    final appState = Provider.of<AppState>(context, listen: false);
-    await appState.leaveMeetRoom(widget.room.id);
+    if (_hasJoinedRoom) {
+      await _appState.leaveMeetRoom(widget.room.id);
+      _hasJoinedRoom = false;
+    }
     await _agoraService.leaveChannel();
     if (mounted) Navigator.pop(context);
   }
 
-  void _showParticipantOptions(MeetParticipant participant, bool isHost) {
+  void _showParticipantOptions(
+    MeetParticipant participant,
+    bool isHost,
+    String hostId,
+  ) {
     if (!isHost) return; // Only host can manage participants
     final appState = Provider.of<AppState>(context, listen: false);
-    final isTargetHost = participant.role == 'host';
+    final isTargetHost = participant.userId == hostId;
 
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF1E293B),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (ctx) {
         return Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
               const SizedBox(height: 16),
               CircleAvatar(
                 radius: 28,
-                backgroundImage: NetworkImage(participant.photoUrl ?? 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200'),
+                backgroundImage: NetworkImage(
+                  participant.photoUrl ??
+                      'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
+                ),
                 child: const Icon(Icons.person, color: Colors.white),
               ),
               const SizedBox(height: 8),
               Text(
                 participant.fullName,
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               Text(
                 '${participant.role == 'host' ? 'Host (Müəllim)' : (participant.role == 'teacher' ? 'Müəllim' : 'Şagird')} • ${participant.className ?? 'İdrak'}',
-                style: const TextStyle(color: AppColors.goldLight, fontSize: 12),
+                style: const TextStyle(
+                  color: AppColors.goldLight,
+                  fontSize: 12,
+                ),
               ),
               const SizedBox(height: 20),
 
@@ -163,27 +285,49 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
                 // Mute / Unmute Action
                 ListTile(
                   leading: Icon(
-                    participant.isMuted ? Icons.mic_rounded : Icons.mic_off_rounded,
-                    color: participant.isMuted ? AppColors.success : AppColors.danger,
+                    participant.isMuted
+                        ? Icons.mic_rounded
+                        : Icons.mic_off_rounded,
+                    color: participant.isMuted
+                        ? AppColors.success
+                        : AppColors.danger,
                   ),
                   title: Text(
-                    participant.isMuted ? 'Səsini Aç (Unmute)' : 'Səsini Susdur (Mute)',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                    participant.isMuted
+                        ? 'Səsini Aç (Unmute)'
+                        : 'Səsini Susdur (Mute)',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   subtitle: Text(
-                    participant.isMuted ? 'Şagirdin danışmasına icazə ver' : 'Şagirdin mikrofonunu məcburi bağla',
+                    participant.isMuted
+                        ? 'Şagirdin danışmasına icazə ver'
+                        : 'Şagirdin mikrofonunu məcburi bağla',
                     style: const TextStyle(color: Colors.white54, fontSize: 11),
                   ),
                   onTap: () async {
                     Navigator.pop(ctx);
                     final newMute = !participant.isMuted;
-                    await _agoraService.muteRemoteParticipant(participant.agoraUid, newMute);
-                    await appState.setParticipantMuteByHost(widget.room.id, participant.userId, newMute);
+                    await _agoraService.muteRemoteParticipant(
+                      participant.agoraUid,
+                      newMute,
+                    );
+                    await appState.setParticipantMuteByHost(
+                      widget.room.id,
+                      participant.userId,
+                      newMute,
+                    );
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('${participant.fullName} ${newMute ? 'susduruldu' : 'səsi açıldı'}'),
-                          backgroundColor: newMute ? AppColors.danger : AppColors.success,
+                          content: Text(
+                            '${participant.fullName} ${newMute ? 'susduruldu' : 'səsi açıldı'}',
+                          ),
+                          backgroundColor: newMute
+                              ? AppColors.danger
+                              : AppColors.success,
                         ),
                       );
                     }
@@ -194,16 +338,34 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
 
                 // Kick participant
                 ListTile(
-                  leading: const Icon(Icons.person_remove_rounded, color: AppColors.danger),
-                  title: const Text('Otaqdan Çıxar', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.w600)),
-                  subtitle: const Text('İştirakçını bu toplantıdan uzaqlaşdır', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                  leading: const Icon(
+                    Icons.person_remove_rounded,
+                    color: AppColors.danger,
+                  ),
+                  title: const Text(
+                    'Otaqdan Çıxar',
+                    style: TextStyle(
+                      color: AppColors.danger,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: const Text(
+                    'İştirakçını bu toplantıdan uzaqlaşdır',
+                    style: TextStyle(color: Colors.white54, fontSize: 11),
+                  ),
                   onTap: () async {
                     Navigator.pop(ctx);
-                    await appState.setParticipantMuteByHost(widget.room.id, participant.userId, true);
+                    await appState.setParticipantMuteByHost(
+                      widget.room.id,
+                      participant.userId,
+                      true,
+                    );
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('${participant.fullName} otaqdan uzaqlaşdırıldı'),
+                          content: Text(
+                            '${participant.fullName} otaqdan uzaqlaşdırıldı',
+                          ),
                           backgroundColor: AppColors.danger,
                         ),
                       );
@@ -213,7 +375,10 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
               ] else ...[
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Text('Bu istifadəçi otağın təşkilatçısıdır (Host).', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                  child: Text(
+                    'Bu istifadəçi otağın təşkilatçısıdır (Host).',
+                    style: TextStyle(color: Colors.white54, fontSize: 12),
+                  ),
                 ),
               ],
             ],
@@ -229,12 +394,17 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
       builder: (ctx) {
         return AlertDialog(
           backgroundColor: const Color(0xFF1E293B),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: const Row(
             children: [
               Icon(Icons.volume_off_rounded, color: AppColors.danger),
               SizedBox(width: 8),
-              Text('Hamını Susdur?', style: TextStyle(color: Colors.white, fontSize: 16)),
+              Text(
+                'Hamını Susdur?',
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
             ],
           ),
           content: const Text(
@@ -244,10 +414,15 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Ləğv et', style: TextStyle(color: Colors.white54)),
+              child: const Text(
+                'Ləğv et',
+                style: TextStyle(color: Colors.white54),
+              ),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.danger,
+              ),
               onPressed: () async {
                 Navigator.pop(ctx);
                 final appState = Provider.of<AppState>(context, listen: false);
@@ -255,11 +430,17 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
                 await appState.muteAllInRoom(widget.room.id, true);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Bütün iştirakçılar susduruldu'), backgroundColor: AppColors.danger),
+                    const SnackBar(
+                      content: Text('Bütün iştirakçılar susduruldu'),
+                      backgroundColor: AppColors.danger,
+                    ),
                   );
                 }
               },
-              child: const Text('Hamısını Susdur', style: TextStyle(color: Colors.white)),
+              child: const Text(
+                'Hamısını Susdur',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         );
@@ -273,12 +454,17 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
       builder: (ctx) {
         return AlertDialog(
           backgroundColor: const Color(0xFF1E293B),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: const Row(
             children: [
               Icon(Icons.call_end_rounded, color: AppColors.danger),
               SizedBox(width: 8),
-              Text('Toplantını Bitir?', style: TextStyle(color: Colors.white, fontSize: 16)),
+              Text(
+                'Toplantını Bitir?',
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
             ],
           ),
           content: const Text(
@@ -288,10 +474,15 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Ləğv et', style: TextStyle(color: Colors.white54)),
+              child: const Text(
+                'Ləğv et',
+                style: TextStyle(color: Colors.white54),
+              ),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.danger,
+              ),
               onPressed: () async {
                 Navigator.pop(ctx);
                 final appState = Provider.of<AppState>(context, listen: false);
@@ -299,12 +490,65 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
                 await _agoraService.leaveChannel();
                 if (mounted) Navigator.pop(context);
               },
-              child: const Text('Toplantını Bitir', style: TextStyle(color: Colors.white)),
+              child: const Text(
+                'Toplantını Bitir',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         );
       },
     );
+  }
+
+  List<MeetParticipant> _participantsForDisplay(
+    MeetRoom room,
+    AppState appState,
+    String currentUserId,
+  ) {
+    final byAgoraUid = <int, MeetParticipant>{
+      for (final participant in room.participants)
+        participant.agoraUid: participant,
+    };
+
+    final currentUser = appState.currentUser;
+    final localUid = agoraUidForUser(currentUserId);
+    byAgoraUid.putIfAbsent(
+      localUid,
+      () => MeetParticipant(
+        userId: currentUserId,
+        fullName: currentUser?.fullName ?? appState.student.fullName,
+        role: room.hostId == currentUserId
+            ? 'host'
+            : (currentUser?.role == UserRole.teacher ? 'teacher' : 'student'),
+        photoUrl: currentUser?.photoUrl ?? appState.student.photoUrl,
+        className: currentUser?.className ?? appState.student.className,
+        agoraUid: localUid,
+      ),
+    );
+
+    // Agora is the source of truth for who is connected right now. Firestore
+    // enriches these cards with names, class and moderation state after it
+    // reconnects.
+    for (final remoteUid in _agoraService.remoteUids) {
+      byAgoraUid.putIfAbsent(remoteUid, () {
+        final isRemoteHost = remoteUid == agoraUidForUser(room.hostId);
+        return MeetParticipant(
+          userId: isRemoteHost ? room.hostId : 'agora-$remoteUid',
+          fullName: isRemoteHost ? room.hostName : 'Bağlı katılımcı',
+          role: isRemoteHost ? 'host' : 'student',
+          photoUrl: isRemoteHost ? room.hostPhotoUrl : null,
+          agoraUid: remoteUid,
+        );
+      });
+    }
+
+    return byAgoraUid.values.toList()..sort((a, b) {
+      final aIsHost = a.userId == room.hostId;
+      final bIsHost = b.userId == room.hostId;
+      if (aIsHost != bIsHost) return aIsHost ? -1 : 1;
+      return a.joinedAt.compareTo(b.joinedAt);
+    });
   }
 
   @override
@@ -319,7 +563,11 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
     );
 
     final isHost = currentRoom.hostId == currentUserId;
-    final participants = currentRoom.participants;
+    final participants = _participantsForDisplay(
+      currentRoom,
+      appState,
+      currentUserId,
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A),
@@ -345,7 +593,10 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
                 Container(
                   width: 7,
                   height: 7,
-                  decoration: const BoxDecoration(color: AppColors.success, shape: BoxShape.circle),
+                  decoration: const BoxDecoration(
+                    color: AppColors.success,
+                    shape: BoxShape.circle,
+                  ),
                 ),
                 const SizedBox(width: 5),
                 Text(
@@ -359,12 +610,18 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
         actions: [
           if (isHost) ...[
             IconButton(
-              icon: const Icon(Icons.volume_off_rounded, color: AppColors.goldLight),
+              icon: const Icon(
+                Icons.volume_off_rounded,
+                color: AppColors.goldLight,
+              ),
               tooltip: 'Hamını Susdur',
               onPressed: _showMuteAllDialog,
             ),
             IconButton(
-              icon: const Icon(Icons.power_settings_new_rounded, color: AppColors.danger),
+              icon: const Icon(
+                Icons.power_settings_new_rounded,
+                color: AppColors.danger,
+              ),
               tooltip: 'Toplantını Bitir',
               onPressed: _showEndMeetingDialog,
             ),
@@ -374,6 +631,39 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
       ),
       body: Column(
         children: [
+          if (_isJoining || _connectionError != null)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              color: _connectionError == null
+                  ? Colors.blue.withAlpha(45)
+                  : AppColors.danger.withAlpha(45),
+              child: Row(
+                children: [
+                  if (_connectionError == null)
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  else
+                    const Icon(
+                      Icons.error_outline_rounded,
+                      color: Colors.white,
+                    ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _connectionError ?? 'Səsli otağa qoşulursunuz…',
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           // Host Alert Banner (if you are the host)
           if (isHost)
             Container(
@@ -386,12 +676,20 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.admin_panel_settings_rounded, color: AppColors.goldLight, size: 18),
+                  Icon(
+                    Icons.admin_panel_settings_rounded,
+                    color: AppColors.goldLight,
+                    size: 18,
+                  ),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Siz Hostsuz. İstənilən iştirakçının üzərinə toxunaraq səsini aça və ya bağlaya bilərsiniz.',
-                      style: TextStyle(color: AppColors.goldLight, fontSize: 11, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: AppColors.goldLight,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -404,7 +702,11 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Row(
                 children: [
-                  const Icon(Icons.groups_rounded, color: Colors.white54, size: 14),
+                  const Icon(
+                    Icons.groups_rounded,
+                    color: Colors.white54,
+                    size: 14,
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     'İcazəli Siniflər: ${currentRoom.targetClasses.join(', ')}',
@@ -429,14 +731,18 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
                 itemBuilder: (context, index) {
                   final p = participants[index];
                   final isMe = p.userId == currentUserId;
+                  final isParticipantHost = p.userId == currentRoom.hostId;
                   final isParticipantSpeaking = p.isSpeaking;
 
                   return GestureDetector(
-                    onTap: () => _showParticipantOptions(p, isHost),
+                    onTap: () =>
+                        _showParticipantOptions(p, isHost, currentRoom.hostId),
                     child: AnimatedBuilder(
                       animation: _pulseController,
                       builder: (context, child) {
-                        final glow = isParticipantSpeaking ? (_pulseController.value * 8 + 4) : 0.0;
+                        final glow = isParticipantSpeaking
+                            ? (_pulseController.value * 8 + 4)
+                            : 0.0;
                         return Container(
                           decoration: BoxDecoration(
                             color: const Color(0xFF1E293B),
@@ -444,8 +750,12 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
                             border: Border.all(
                               color: isParticipantSpeaking
                                   ? AppColors.success
-                                  : (p.role == 'host' ? AppColors.gold : Colors.white12),
-                              width: isParticipantSpeaking ? 2.5 : (p.role == 'host' ? 1.5 : 1),
+                                  : (isParticipantHost
+                                        ? AppColors.gold
+                                        : Colors.white12),
+                              width: isParticipantSpeaking
+                                  ? 2.5
+                                  : (isParticipantHost ? 1.5 : 1),
                             ),
                             boxShadow: isParticipantSpeaking
                                 ? [
@@ -476,15 +786,20 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
                                             height: 72,
                                             decoration: BoxDecoration(
                                               shape: BoxShape.circle,
-                                              border: Border.all(color: AppColors.success.withAlpha(120), width: 3),
+                                              border: Border.all(
+                                                color: AppColors.success
+                                                    .withAlpha(120),
+                                                width: 3,
+                                              ),
                                             ),
                                           ),
                                         CircleAvatar(
                                           radius: 30,
                                           backgroundImage: NetworkImage(
-                                            p.photoUrl ?? 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
+                                            p.photoUrl ??
+                                                'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
                                           ),
-                                          child: const Icon(Icons.person, color: Colors.white),
+                                          child: null, // No overlay icon
                                         ),
                                       ],
                                     ),
@@ -499,28 +814,40 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontSize: 13,
-                                        fontWeight: isMe ? FontWeight.w900 : FontWeight.bold,
+                                        fontWeight: isMe
+                                            ? FontWeight.w900
+                                            : FontWeight.bold,
                                       ),
                                     ),
                                     const SizedBox(height: 3),
 
                                     // Role / Class Badge
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
                                       decoration: BoxDecoration(
-                                        color: p.role == 'host'
+                                        color: isParticipantHost
                                             ? AppColors.gold.withAlpha(30)
-                                            : (p.role == 'teacher' ? Colors.blue.withAlpha(30) : Colors.white.withAlpha(15)),
+                                            : (p.role == 'teacher'
+                                                  ? Colors.blue.withAlpha(30)
+                                                  : Colors.white.withAlpha(15)),
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: Text(
-                                        p.role == 'host'
+                                        isParticipantHost
                                             ? '👑 Host'
-                                            : (p.role == 'teacher' ? '👨‍🏫 Müəllim' : (p.className ?? '🎓 Şagird')),
+                                            : (p.role == 'teacher'
+                                                  ? '👨‍🏫 Müəllim'
+                                                  : (p.className ??
+                                                        '🎓 Şagird')),
                                         style: TextStyle(
-                                          color: p.role == 'host'
+                                          color: isParticipantHost
                                               ? AppColors.goldLight
-                                              : (p.role == 'teacher' ? Colors.blueAccent : Colors.white70),
+                                              : (p.role == 'teacher'
+                                                    ? Colors.blueAccent
+                                                    : Colors.white70),
                                           fontSize: 10,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -537,12 +864,20 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
                                 child: Container(
                                   padding: const EdgeInsets.all(5),
                                   decoration: BoxDecoration(
-                                    color: p.isMuted ? AppColors.danger : AppColors.success.withAlpha(40),
+                                    color: p.isMuted
+                                        ? AppColors.danger
+                                        : AppColors.success.withAlpha(40),
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: p.isMuted ? AppColors.danger : AppColors.success),
+                                    border: Border.all(
+                                      color: p.isMuted
+                                          ? AppColors.danger
+                                          : AppColors.success,
+                                    ),
                                   ),
                                   child: Icon(
-                                    p.isMuted ? Icons.mic_off_rounded : Icons.mic_rounded,
+                                    p.isMuted
+                                        ? Icons.mic_off_rounded
+                                        : Icons.mic_rounded,
                                     color: Colors.white,
                                     size: 13,
                                   ),
@@ -560,7 +895,11 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
                                       color: AppColors.gold,
                                       shape: BoxShape.circle,
                                     ),
-                                    child: const Icon(Icons.front_hand_rounded, color: Color(0xFF0F172A), size: 13),
+                                    child: const Icon(
+                                      Icons.front_hand_rounded,
+                                      color: Color(0xFF0F172A),
+                                      size: 13,
+                                    ),
                                   ),
                                 ),
                             ],
@@ -604,17 +943,25 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
                           height: 58,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: _isLocalMuted ? AppColors.danger : AppColors.success,
+                            color: _isLocalMuted
+                                ? AppColors.danger
+                                : AppColors.success,
                             boxShadow: [
                               BoxShadow(
-                                color: (_isLocalMuted ? AppColors.danger : AppColors.success).withAlpha(100),
+                                color:
+                                    (_isLocalMuted
+                                            ? AppColors.danger
+                                            : AppColors.success)
+                                        .withAlpha(100),
                                 blurRadius: 12,
                                 offset: const Offset(0, 4),
                               ),
                             ],
                           ),
                           child: Icon(
-                            _isLocalMuted ? Icons.mic_off_rounded : Icons.mic_rounded,
+                            _isLocalMuted
+                                ? Icons.mic_off_rounded
+                                : Icons.mic_rounded,
                             color: Colors.white,
                             size: 28,
                           ),
@@ -623,7 +970,9 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
                         Text(
                           _isLocalMuted ? 'Səssiz' : 'Danışırsınız',
                           style: TextStyle(
-                            color: _isLocalMuted ? Colors.white60 : AppColors.success,
+                            color: _isLocalMuted
+                                ? Colors.white60
+                                : AppColors.success,
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                           ),
@@ -647,7 +996,9 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
                             border: Border.all(color: Colors.white24),
                           ),
                           child: Icon(
-                            _isSpeakerOn ? Icons.volume_up_rounded : Icons.phone_in_talk_rounded,
+                            _isSpeakerOn
+                                ? Icons.volume_up_rounded
+                                : Icons.phone_in_talk_rounded,
                             color: Colors.white,
                             size: 24,
                           ),
@@ -655,7 +1006,10 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
                         const SizedBox(height: 6),
                         Text(
                           _isSpeakerOn ? 'Dinamik' : 'Dəstək',
-                          style: const TextStyle(color: Colors.white70, fontSize: 11),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 11,
+                          ),
                         ),
                       ],
                     ),
@@ -667,7 +1021,11 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
                       setState(() => _isHandRaised = !_isHandRaised);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(_isHandRaised ? 'Əl qaldırdınız ✋' : 'Əlinizi endirdiniz'),
+                          content: Text(
+                            _isHandRaised
+                                ? 'Əl qaldırdınız ✋'
+                                : 'Əlinizi endirdiniz',
+                          ),
                           duration: const Duration(seconds: 1),
                         ),
                       );
@@ -680,19 +1038,32 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
                           height: 50,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: _isHandRaised ? AppColors.gold.withAlpha(40) : Colors.white.withAlpha(20),
-                            border: Border.all(color: _isHandRaised ? AppColors.gold : Colors.white24),
+                            color: _isHandRaised
+                                ? AppColors.gold.withAlpha(40)
+                                : Colors.white.withAlpha(20),
+                            border: Border.all(
+                              color: _isHandRaised
+                                  ? AppColors.gold
+                                  : Colors.white24,
+                            ),
                           ),
                           child: Icon(
                             Icons.front_hand_rounded,
-                            color: _isHandRaised ? AppColors.goldLight : Colors.white,
+                            color: _isHandRaised
+                                ? AppColors.goldLight
+                                : Colors.white,
                             size: 24,
                           ),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           _isHandRaised ? 'Əl aktiv' : 'Əl qaldır',
-                          style: TextStyle(color: _isHandRaised ? AppColors.goldLight : Colors.white70, fontSize: 11),
+                          style: TextStyle(
+                            color: _isHandRaised
+                                ? AppColors.goldLight
+                                : Colors.white70,
+                            fontSize: 11,
+                          ),
                         ),
                       ],
                     ),
@@ -721,7 +1092,11 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen> with SingleTickerProv
                         const SizedBox(height: 6),
                         const Text(
                           'Çıxış',
-                          style: TextStyle(color: AppColors.danger, fontSize: 11, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: AppColors.danger,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),

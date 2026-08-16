@@ -1,0 +1,15 @@
+{
+  "name": "idrak-agora-token-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "agora-token": "^2.0.5"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

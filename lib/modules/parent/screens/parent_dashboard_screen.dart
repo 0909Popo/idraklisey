@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
@@ -116,11 +117,11 @@ class ParentDashboardScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
                       children: [
-                        _buildQuickStat('GPA Nəticəsi', '${student.gpa}', Icons.school_rounded, AppColors.primary),
+                        _buildQuickStat('GPA Nəticəsi', '${student.gpa}', Icons.school_rounded, AppColors.primary, isDark: appState.isDarkMode),
                         const SizedBox(width: 8),
-                        _buildQuickStat('Davamiyyət', '${student.attendanceRate}%', Icons.event_available_rounded, AppColors.success),
+                        _buildQuickStat('Davamiyyət', '${student.attendanceRate}%', Icons.event_available_rounded, AppColors.success, isDark: appState.isDarkMode),
                         const SizedBox(width: 8),
-                        _buildQuickStat('Qan Qrupu', 'A(II)+', Icons.favorite_rounded, AppColors.danger),
+                        _buildQuickStat('Qan Qrupu', 'A(II)+', Icons.favorite_rounded, AppColors.danger, isDark: appState.isDarkMode),
                       ],
                     ),
                   ),
@@ -210,43 +211,61 @@ class ParentDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickStat(String title, String value, IconData icon, Color color) {
+  Widget _buildQuickStat(String title, String value, IconData icon, Color color, {bool isDark = false}) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.cardBorder),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(6),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(height: 6),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-                color: color,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.darkSurface.withAlpha(190)
+                  : Colors.white.withAlpha(190),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isDark ? Colors.white.withAlpha(28) : Colors.white.withAlpha(50),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(10),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 11,
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w500,
-              ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: color.withAlpha(30),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: color.withAlpha(40)),
+                  ),
+                  child: Icon(icon, color: color, size: 18),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: color,
+                  ),
+                ),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -284,7 +303,7 @@ class ParentDashboardScreen extends StatelessWidget {
                     Expanded(
                       child: Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textPrimary,
@@ -301,7 +320,7 @@ class ParentDashboardScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                     height: 1.3,
@@ -311,7 +330,7 @@ class ParentDashboardScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textMuted),
+          Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textMuted),
         ],
       ),
     );

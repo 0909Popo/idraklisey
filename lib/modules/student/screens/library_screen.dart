@@ -110,7 +110,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                             fontSize: 12,
                           ),
-                          backgroundColor: Colors.white,
+                          backgroundColor: AppColors.surface,
                           side: BorderSide(color: isSelected ? AppColors.primary : AppColors.cardBorder),
                         ),
                       );
@@ -127,7 +127,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
+                      children: [
                         Icon(Icons.menu_book_rounded, size: 64, color: AppColors.textMuted),
                         SizedBox(height: 12),
                         Text('Bu kateqoriyada kitab tapılmadı.', style: TextStyle(color: AppColors.textSecondary, fontSize: 15)),
@@ -213,7 +213,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 const SizedBox(height: 6),
                 Text(
                   book.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
@@ -222,12 +222,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 const SizedBox(height: 2),
                 Text(
                   book.author,
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   '${book.pageCount} səhifə • Dil: ${book.language}',
-                  style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                  style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                 ),
                 const SizedBox(height: 8),
 
@@ -394,7 +394,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -411,7 +411,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   Expanded(
                     child: Text(
                       book.title,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                     ),
                   ),
                   IconButton(
@@ -463,7 +463,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Səhifə 1 / ${book.pageCount}', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  Text('Səhifə 1 / ${book.pageCount}', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                   Row(
                     children: [
                       IconButton(onPressed: () {}, icon: const Icon(Icons.arrow_back_ios_rounded, size: 16)),

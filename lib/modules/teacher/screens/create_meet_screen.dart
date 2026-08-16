@@ -203,7 +203,7 @@ class _CreateMeetScreenState extends State<CreateMeetScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Görüşün Mövzusu / Başlığı *',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textPrimary),
                     ),
@@ -230,7 +230,7 @@ class _CreateMeetScreenState extends State<CreateMeetScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Fənn / Kateqoriya *',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textPrimary),
                     ),
@@ -275,7 +275,7 @@ class _CreateMeetScreenState extends State<CreateMeetScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(
+                    Row(
                       children: [
                         Icon(Icons.security_rounded, color: AppColors.primaryAccent, size: 20),
                         SizedBox(width: 8),
@@ -311,7 +311,7 @@ class _CreateMeetScreenState extends State<CreateMeetScreen> {
 
                     if (_allowStudents) ...[
                       const SizedBox(height: 12),
-                      const Text(
+                      Text(
                         'Hansı Siniflər Qoşula Bilər?',
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textPrimary),
                       ),
@@ -372,7 +372,7 @@ class _CreateMeetScreenState extends State<CreateMeetScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Görüşün Vaxtı',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textPrimary),
                     ),
@@ -388,7 +388,7 @@ class _CreateMeetScreenState extends State<CreateMeetScreen> {
                             ),
                             onPressed: () => setState(() => _isLiveNow = true),
                             icon: const Icon(Icons.play_circle_fill_rounded, color: AppColors.success),
-                            label: const Text('İndi Canlı Başlat', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+                            label: Text('İndi Canlı Başlat', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -403,7 +403,7 @@ class _CreateMeetScreenState extends State<CreateMeetScreen> {
                             icon: const Icon(Icons.calendar_today_rounded, color: AppColors.primary),
                             label: Text(
                               _scheduledTime != null ? '${_scheduledTime!.hour.toString().padLeft(2, '0')}:${_scheduledTime!.minute.toString().padLeft(2, '0')}' : 'Planlaşdır',
-                              style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+                              style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
                             ),
                           ),
                         ),

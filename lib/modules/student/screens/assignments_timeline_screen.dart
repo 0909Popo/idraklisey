@@ -91,7 +91,7 @@ class _AssignmentsTimelineScreenState extends State<AssignmentsTimelineScreen> {
         : relevantAssignments.where((a) => a.getStatusForStudent(currentStudent.id) == _selectedStatus).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text('${currentStudent.fullName} • Tapşırıqlar'),
         elevation: 0,
@@ -102,7 +102,7 @@ class _AssignmentsTimelineScreenState extends State<AssignmentsTimelineScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withAlpha(8),
@@ -157,12 +157,12 @@ class _AssignmentsTimelineScreenState extends State<AssignmentsTimelineScreen> {
                             child: const Icon(Icons.assignment_turned_in_rounded, size: 56, color: AppColors.primary),
                           ),
                           const SizedBox(height: 16),
-                          const Text(
+                          Text(
                             'Tapşırıq tapılmadı',
                             style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 6),
-                          const Text(
+                          Text(
                             'Seçilmiş kateqoriya üzrə aktiv ev tapşırığı mövcud deyil.',
                             textAlign: TextAlign.center,
                             style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
@@ -284,7 +284,7 @@ class _AssignmentsTimelineScreenState extends State<AssignmentsTimelineScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.cardBorder),
         boxShadow: [
@@ -365,7 +365,7 @@ class _AssignmentsTimelineScreenState extends State<AssignmentsTimelineScreen> {
                           // Assignment Title
                           Text(
                             assignment.title,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w900,
                               color: AppColors.textPrimary,
@@ -379,11 +379,11 @@ class _AssignmentsTimelineScreenState extends State<AssignmentsTimelineScreen> {
                             assignment.instructions,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.3),
+                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.3),
                           ),
 
                           const SizedBox(height: 12),
-                          const Divider(color: AppColors.cardBorder, height: 1),
+                          Divider(color: AppColors.cardBorder, height: 1),
                           const SizedBox(height: 8),
 
                           // Bottom Row: Due Date & Action CTA

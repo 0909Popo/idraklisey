@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
@@ -55,7 +56,7 @@ class StudentDashboardScreen extends StatelessWidget {
                         radius: 36,
                         backgroundImage: NetworkImage(student.photoUrl),
                         onBackgroundImageError: (e, s) {},
-                        child: const Icon(Icons.person, color: Colors.white),
+                        child: null, // No overlay icon
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -145,14 +146,19 @@ class StudentDashboardScreen extends StatelessWidget {
                           padding: const EdgeInsets.all(18),
                           child: Row(
                             children: [
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withAlpha(25),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: AppColors.goldLight),
+                              ClipOval(
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withAlpha(30),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: AppColors.goldLight.withAlpha(80)),
+                                    ),
+                                    child: const Icon(Icons.qr_code_scanner_rounded, color: AppColors.goldLight, size: 28),
+                                  ),
                                 ),
-                                child: const Icon(Icons.qr_code_scanner_rounded, color: AppColors.goldLight, size: 28),
                               ),
                               const SizedBox(width: 14),
                               Expanded(
@@ -300,7 +306,7 @@ class StudentDashboardScreen extends StatelessWidget {
                     Expanded(
                       child: Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textPrimary,
@@ -317,7 +323,7 @@ class StudentDashboardScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                     height: 1.3,
@@ -327,7 +333,7 @@ class StudentDashboardScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textMuted),
+          Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textMuted),
         ],
       ),
     );

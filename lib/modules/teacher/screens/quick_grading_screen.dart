@@ -136,14 +136,14 @@ class _QuickGradingScreenState extends State<QuickGradingScreen> {
                     children: [
                       const Icon(Icons.filter_alt_rounded, size: 16, color: AppColors.primary),
                       const SizedBox(width: 6),
-                      const Text(
+                      Text(
                         'Sinif Filteri:',
                         style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                       ),
                       const Spacer(),
                       Text(
                         '${availableStudents.length} şagird',
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
                       ),
                     ],
                   ),
@@ -171,7 +171,7 @@ class _QuickGradingScreenState extends State<QuickGradingScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 'Şagirdi Seçin (${availableStudents.length} Şagird):',
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
               ),
             ),
             const SizedBox(height: 8),
@@ -182,7 +182,7 @@ class _QuickGradingScreenState extends State<QuickGradingScreen> {
                 child: Center(
                   child: Text(
                     '$_selectedClassFilter sinifində şagird tapılmadı.',
-                    style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 13),
                   ),
                 ),
               )
@@ -217,8 +217,8 @@ class _QuickGradingScreenState extends State<QuickGradingScreen> {
                             CircleAvatar(
                               radius: 18,
                               backgroundImage: NetworkImage(student.photoUrl),
-                              onBackgroundImageError: (_, _) {},
-                              child: const Icon(Icons.person, size: 18),
+                              onBackgroundImageError: (_, __) {},
+                              child: null, // No overlay icon
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -248,8 +248,8 @@ class _QuickGradingScreenState extends State<QuickGradingScreen> {
                   CircleAvatar(
                     radius: 24,
                     backgroundImage: NetworkImage(activeStudent.photoUrl),
-                    onBackgroundImageError: (_, _) {},
-                    child: const Icon(Icons.person),
+                    onBackgroundImageError: (_, __) {},
+                    child: null, // No overlay icon
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -258,11 +258,11 @@ class _QuickGradingScreenState extends State<QuickGradingScreen> {
                       children: [
                         Text(
                           activeStudent.fullName,
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                         ),
                         Text(
                           '${activeStudent.className} • ${activeStudent.studentNumber}',
-                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                          style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                         ),
                       ],
                     ),
@@ -282,7 +282,7 @@ class _QuickGradingScreenState extends State<QuickGradingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Qiymətləndirmə Növü & Bal Daxil Etmə',
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                   ),
@@ -319,7 +319,7 @@ class _QuickGradingScreenState extends State<QuickGradingScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Pedaqoji Rəy & Şərh',
                         style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                       ),

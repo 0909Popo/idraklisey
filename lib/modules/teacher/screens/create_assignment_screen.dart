@@ -90,7 +90,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
+            colorScheme: ColorScheme.light(
               primary: AppColors.primary,
               onPrimary: Colors.white,
               onSurface: AppColors.textPrimary,
@@ -254,7 +254,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: AppColors.cardBorder),
                 boxShadow: [
@@ -362,7 +362,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: AppColors.cardBorder),
               ),
@@ -373,7 +373,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
-                        children: const [
+                        children: [
                           Icon(Icons.event_available_rounded, color: AppColors.goldDark, size: 22),
                           SizedBox(width: 8),
                           Text(
@@ -399,7 +399,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
                           onPressed: () => _setQuickDueDate(const Duration(days: 1)),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 8),
-                            side: const BorderSide(color: AppColors.cardBorder),
+                            side: BorderSide(color: AppColors.cardBorder),
                           ),
                           child: const Text('Sabah', style: TextStyle(fontSize: 12)),
                         ),
@@ -410,7 +410,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
                           onPressed: () => _setQuickDueDate(const Duration(days: 2)),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 8),
-                            side: const BorderSide(color: AppColors.cardBorder),
+                            side: BorderSide(color: AppColors.cardBorder),
                           ),
                           child: const Text('2 gün sonra', style: TextStyle(fontSize: 12)),
                         ),
@@ -421,7 +421,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
                           onPressed: () => _setQuickDueDate(const Duration(days: 7)),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 8),
-                            side: const BorderSide(color: AppColors.cardBorder),
+                            side: BorderSide(color: AppColors.cardBorder),
                           ),
                           child: const Text('1 həftə', style: TextStyle(fontSize: 12)),
                         ),
@@ -434,7 +434,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
                   ListTile(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
-                      side: const BorderSide(color: AppColors.cardBorder),
+                      side: BorderSide(color: AppColors.cardBorder),
                     ),
                     tileColor: AppColors.background,
                     leading: const Icon(Icons.calendar_today_rounded, color: AppColors.primaryAccent),
@@ -456,7 +456,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: AppColors.cardBorder),
               ),
@@ -464,7 +464,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    children: const [
+                    children: [
                       Icon(Icons.people_alt_rounded, color: AppColors.primaryAccent, size: 22),
                       SizedBox(width: 8),
                       Text(
@@ -493,7 +493,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
                     // A) TEACHER CLAIMED CLASSES (Sahipliyi olduğu siniflər)
                     if (teacherClaimedClasses.isNotEmpty) ...[
                       Row(
-                        children: const [
+                        children: [
                           Icon(Icons.star_rounded, color: AppColors.gold, size: 18),
                           SizedBox(width: 6),
                           Text(
@@ -547,7 +547,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
                           border: Border.all(color: AppColors.primaryAccent.withAlpha(40)),
                         ),
                         child: Row(
-                          children: const [
+                          children: [
                             Icon(Icons.info_outline_rounded, color: AppColors.primaryAccent, size: 20),
                             SizedBox(width: 8),
                             Expanded(
@@ -562,7 +562,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
                     ],
 
                     // B) ALL SCHOOL CLASSES / OTHERS
-                    const Text(
+                    Text(
                       'Digər Siniflər və Məktəb:',
                       style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
                     ),
@@ -788,7 +788,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: filteredStudents.isEmpty
-                            ? const Padding(
+                            ? Padding(
                                 padding: EdgeInsets.all(16),
                                 child: Center(
                                   child: Text('Axtarışa uyğun şagird tapılmadı.', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),

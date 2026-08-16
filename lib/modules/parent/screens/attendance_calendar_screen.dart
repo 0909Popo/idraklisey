@@ -171,7 +171,7 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  const Divider(color: AppColors.cardBorder, height: 1),
+                  Divider(color: AppColors.cardBorder, height: 1),
                   const SizedBox(height: 10),
 
                   // Calendar Days Grid
@@ -263,7 +263,7 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
                               Expanded(
                                 child: Text(
                                   _getStatusTitle(selectedDayData.status),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.textPrimary,
@@ -310,7 +310,7 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
                     ],
 
                     const SizedBox(height: 16),
-                    const Divider(color: AppColors.cardBorder, height: 1),
+                    Divider(color: AppColors.cardBorder, height: 1),
                     const SizedBox(height: 14),
 
                     // Header for All Periods
@@ -320,11 +320,11 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
                         Expanded(
                           child: Text(
                             'Gün Ərzində Keçilən Dərslər (${selectedDayData.periodDetails.length} Dərs):',
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                           ),
                         ),
                         const SizedBox(width: 6),
-                        const Text(
+                        Text(
                           'Status',
                           style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textMuted),
                         ),
@@ -378,7 +378,7 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
                                     children: [
                                       Text(
                                         period.subject,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w800,
                                           color: AppColors.textPrimary,
@@ -387,11 +387,11 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
                                       const SizedBox(height: 2),
                                       Row(
                                         children: [
-                                          const Icon(Icons.access_time_rounded, size: 12, color: AppColors.textMuted),
+                                          Icon(Icons.access_time_rounded, size: 12, color: AppColors.textMuted),
                                           const SizedBox(width: 4),
                                           Text(
                                             period.time != null && period.time!.isNotEmpty ? period.time! : 'Dərs Saatı',
-                                            style: const TextStyle(fontSize: 11, color: AppColors.textMuted, fontWeight: FontWeight.w500),
+                                            style: TextStyle(fontSize: 11, color: AppColors.textMuted, fontWeight: FontWeight.w500),
                                           ),
                                         ],
                                       ),
@@ -411,9 +411,9 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
             ] else ...[
               CustomCard(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                  padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
                   child: Column(
-                    children: const [
+                    children: [
                       Icon(Icons.event_busy_rounded, size: 48, color: AppColors.textMuted),
                       SizedBox(height: 12),
                       Text(
@@ -462,7 +462,7 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
         const SizedBox(width: 4),
         Text(
           title,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
         ),
       ],
     );

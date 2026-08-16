@@ -82,7 +82,7 @@ class _ClassManagementScreenState extends State<ClassManagementScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Məktəbin Bütün Sinifləri',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
                   ),
@@ -97,9 +97,9 @@ class _ClassManagementScreenState extends State<ClassManagementScreen> {
             if (classes.isEmpty)
               Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(40),
+                  padding: EdgeInsets.all(40),
                   child: Column(
-                    children: const [
+                    children: [
                       Icon(Icons.meeting_room_rounded, size: 64, color: AppColors.textMuted),
                       SizedBox(height: 12),
                       Text('Hələ heç bir sinif yaradılmayıb.', style: TextStyle(color: AppColors.textSecondary, fontSize: 15)),
@@ -144,11 +144,11 @@ class _ClassManagementScreenState extends State<ClassManagementScreen> {
                                 children: [
                                   Text(
                                     '$cls Sinfi',
-                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                                   ),
                                   Text(
                                     '${classStudents.length} Şagird Qeydiyyatda',
-                                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                                   ),
                                 ],
                               ),
@@ -190,7 +190,7 @@ class _ClassManagementScreenState extends State<ClassManagementScreen> {
                             avatar: const Icon(Icons.person_rounded, size: 14, color: AppColors.primary),
                             label: Text('${t.fullName} (${t.subject ?? "Müəllim"})', style: const TextStyle(fontSize: 10)),
                             backgroundColor: AppColors.background,
-                            side: const BorderSide(color: AppColors.cardBorder),
+                            side: BorderSide(color: AppColors.cardBorder),
                             padding: EdgeInsets.zero,
                           )).toList(),
                         ),
@@ -215,7 +215,7 @@ class _ClassManagementScreenState extends State<ClassManagementScreen> {
                                   radius: 16,
                                   backgroundImage: NetworkImage(st.photoUrl),
                                   onBackgroundImageError: (_, _) {},
-                                  child: const Icon(Icons.person, size: 16),
+                                  child: null, // No overlay icon
                                 ),
                                 title: Text(st.fullName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
                                 subtitle: Text('ID: ${st.studentNumber} • Valideyn: ${st.parentName} (${st.parentPhone})', style: const TextStyle(fontSize: 11)),
@@ -332,7 +332,7 @@ class _ClassManagementScreenState extends State<ClassManagementScreen> {
             children: [
               Text(
                 '$fromClass sinfindəki bütün şagirdlərin sinfi bir kliklə növbəti tədris sinfinə keçiriləcək.',
-                style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
               ),
               const SizedBox(height: 14),
               TextField(

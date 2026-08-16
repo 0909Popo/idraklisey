@@ -14,8 +14,8 @@ class RoleSelectorSheet extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
@@ -32,12 +32,12 @@ class RoleSelectorSheet extends StatelessWidget {
           const SizedBox(height: 16),
           const IdrakLogo(size: 38, showText: true),
           const SizedBox(height: 14),
-          const Text(
+          Text(
             'İstifadəçi Hesabı və Paneli',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Tətbiqdəki 4 rol arasında sürətli keçid edin:',
             style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
           ),
@@ -191,7 +191,7 @@ class RoleSelectorSheet extends StatelessWidget {
                         description,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                        style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
                       ),
                     ],
                   ),

@@ -92,7 +92,7 @@ class _CafeteriaMenuScreenState extends State<CafeteriaMenuScreen> {
                           color: isSelected ? Colors.white : AppColors.textPrimary,
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                         ),
-                        backgroundColor: Colors.white,
+                        backgroundColor: AppColors.surface,
                         side: BorderSide(color: isSelected ? AppColors.primary : AppColors.cardBorder),
                       ),
                     );
@@ -141,12 +141,12 @@ class _CafeteriaMenuScreenState extends State<CafeteriaMenuScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Column(
                         children: [
-                          const Text(
+                          Text(
                             'Cəmi Kalori',
                             style: TextStyle(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.w600),
                           ),
@@ -173,9 +173,9 @@ class _CafeteriaMenuScreenState extends State<CafeteriaMenuScreen> {
                   child: Center(
                     child: Column(
                       children: [
-                        const Icon(Icons.restaurant_menu_rounded, size: 48, color: AppColors.textMuted),
+                        Icon(Icons.restaurant_menu_rounded, size: 48, color: AppColors.textMuted),
                         const SizedBox(height: 10),
-                        const Text(
+                        Text(
                           'Bu gün üçün menyu daxil edilməyib.',
                           style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold),
                         ),
@@ -225,7 +225,7 @@ class _CafeteriaMenuScreenState extends State<CafeteriaMenuScreen> {
                 width: 80,
                 height: 80,
                 color: const Color(0xFFF1F5F9),
-                child: const Icon(Icons.restaurant_rounded, color: AppColors.textMuted),
+                child: Icon(Icons.restaurant_rounded, color: AppColors.textMuted),
               ),
             ),
           ),
@@ -246,7 +246,7 @@ class _CafeteriaMenuScreenState extends State<CafeteriaMenuScreen> {
                       children: [
                         Text(
                           '${item.calories} kkal • ${item.weightGram}',
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
                         ),
                         if (canManage) ...[
                           const SizedBox(width: 6),
@@ -288,7 +288,7 @@ class _CafeteriaMenuScreenState extends State<CafeteriaMenuScreen> {
                 const SizedBox(height: 6),
                 Text(
                   item.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,

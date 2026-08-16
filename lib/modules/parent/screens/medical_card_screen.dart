@@ -115,7 +115,7 @@ class MedicalCardScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.surface,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Text(
@@ -150,7 +150,7 @@ class MedicalCardScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -191,7 +191,7 @@ class MedicalCardScreen extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 padding: const EdgeInsets.all(14),
                 child: Row(
-                  children: const [
+                  children: [
                     Icon(Icons.check_circle_outline_rounded, color: AppColors.success, size: 20),
                     SizedBox(width: 10),
                     Expanded(
@@ -226,7 +226,7 @@ class MedicalCardScreen extends StatelessWidget {
                           Expanded(
                             child: Text(
                               cond,
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                             ),
                           ),
                         ],
@@ -240,7 +240,7 @@ class MedicalCardScreen extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 padding: const EdgeInsets.all(14),
                 child: Row(
-                  children: const [
+                  children: [
                     Icon(Icons.health_and_safety_outlined, color: AppColors.primary, size: 20),
                     SizedBox(width: 10),
                     Expanded(
@@ -283,7 +283,7 @@ class MedicalCardScreen extends StatelessWidget {
 
                   // Table Rows
                   if (med.vaccineHistory.isEmpty)
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.all(16),
                       child: Center(
                         child: Text('Peyvənd qeydi daxil edilməyib.', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
@@ -294,7 +294,7 @@ class MedicalCardScreen extends StatelessWidget {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: med.vaccineHistory.length,
-                      separatorBuilder: (_, _) => const Divider(color: AppColors.cardBorder, height: 1),
+                      separatorBuilder: (_, _) => Divider(color: AppColors.cardBorder, height: 1),
                       itemBuilder: (context, index) {
                         final item = med.vaccineHistory[index];
                         final isDone = item.status == 'Tamamlandı';
@@ -309,11 +309,11 @@ class MedicalCardScreen extends StatelessWidget {
                                   children: [
                                     Text(
                                       item.name,
-                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                                     ),
                                     Text(
                                       item.doctor,
-                                      style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                                      style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                                     ),
                                   ],
                                 ),
@@ -322,7 +322,7 @@ class MedicalCardScreen extends StatelessWidget {
                                 flex: 2,
                                 child: Text(
                                   dateFormat.format(item.date),
-                                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
                                 ),
                               ),
                               Expanded(
@@ -340,7 +340,7 @@ class MedicalCardScreen extends StatelessWidget {
                     ),
 
                   if (canManageMedical) ...[
-                    const Divider(color: AppColors.cardBorder, height: 1),
+                    Divider(color: AppColors.cardBorder, height: 1),
                     Padding(
                       padding: const EdgeInsets.all(8),
                       child: SizedBox(
@@ -399,14 +399,14 @@ class MedicalCardScreen extends StatelessWidget {
                         ),
                         Text(
                           dateFormat.format(note.date),
-                          style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                          style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                         ),
                       ],
                     ),
                     const SizedBox(height: 6),
                     Text(
                       note.note,
-                      style: const TextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.3),
+                      style: TextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.3),
                     ),
                   ],
                 ),
@@ -414,9 +414,9 @@ class MedicalCardScreen extends StatelessWidget {
             else
               CustomCard(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                padding: const EdgeInsets.all(14),
+                padding: EdgeInsets.all(14),
                 child: Row(
-                  children: const [
+                  children: [
                     Icon(Icons.info_outline_rounded, size: 18, color: AppColors.textMuted),
                     SizedBox(width: 8),
                     Expanded(
@@ -451,10 +451,10 @@ class MedicalCardScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     med.lyceumDoctorNotes.isNotEmpty ? med.lyceumDoctorNotes : 'Məktəb həkimi tərəfindən xüsusi qeyd daxil edilməyib.',
-                    style: const TextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.4),
+                    style: TextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.4),
                   ),
                   const SizedBox(height: 12),
-                  const Divider(color: AppColors.cardBorder),
+                  Divider(color: AppColors.cardBorder),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -462,8 +462,8 @@ class MedicalCardScreen extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Təcili Əlaqə Şəxsi:', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                          Text(med.emergencyContactName.isNotEmpty ? med.emergencyContactName : student.parentName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                          Text('Təcili Əlaqə Şəxsi:', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                          Text(med.emergencyContactName.isNotEmpty ? med.emergencyContactName : student.parentName, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
                         ],
                       ),
                       Text(
@@ -515,7 +515,7 @@ class MedicalCardScreen extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     allergy.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary,
@@ -533,7 +533,7 @@ class MedicalCardScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'Reaksiya: ${allergy.reaction}',
-            style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+            style: TextStyle(fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 4),
           Container(
@@ -697,7 +697,7 @@ class MedicalCardScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Övladınızın səhhəti, içdiyi dərmanlar, xüsusi pəhriz və ya həkim təlimatlarını bura yaza bilərsiniz. Məktəb həkimi və müəllimlər bu qeydi görəcək.',
                 style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
               ),

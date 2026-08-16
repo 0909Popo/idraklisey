@@ -36,7 +36,7 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Icon(Icons.inbox_rounded, size: 64, color: AppColors.textMuted),
                   SizedBox(height: 12),
                   Text('Hələ ki, heç bir müraciətiniz yoxdur.', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
@@ -104,7 +104,7 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
                   const SizedBox(width: 8),
                   Text(
                     _getCategoryName(ticket.category),
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -117,7 +117,7 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
           const SizedBox(height: 12),
           Text(
             ticket.title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
@@ -128,17 +128,17 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
             ticket.description,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 12),
-          const Divider(color: AppColors.cardBorder, height: 1),
+          Divider(color: AppColors.cardBorder, height: 1),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 dateFormat.format(ticket.createdAt),
-                style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                style: TextStyle(fontSize: 11, color: AppColors.textMuted),
               ),
               Row(
                 children: [
@@ -180,7 +180,7 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -208,11 +208,11 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
                           children: [
                             Text(
                               currentTicket.id,
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textMuted),
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textMuted),
                             ),
                             Text(
                               currentTicket.title,
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                             ),
                           ],
                         ),
@@ -223,7 +223,77 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    const Divider(color: AppColors.cardBorder),
+                    Divider(color: AppColors.cardBorder),
+
+                    // Resolved QR equipment info (inventory tickets)
+                    if (currentTicket.inventoryCode != null &&
+                        currentTicket.inventoryCode!.isNotEmpty) ...[
+                      Builder(
+                        builder: (context) {
+                          final item = appState.findInventoryItemByQr(
+                            currentTicket.inventoryCode!,
+                          );
+                          return Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(top: 8),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: item != null
+                                  ? AppColors.success.withAlpha(22)
+                                  : AppColors.warning.withAlpha(25),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: item != null
+                                    ? AppColors.success.withAlpha(60)
+                                    : AppColors.warning.withAlpha(70),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      item != null
+                                          ? Icons.precision_manufacturing_rounded
+                                          : Icons.help_outline_rounded,
+                                      color: item != null ? AppColors.success : AppColors.warning,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'QR ilə aşkarlanan avadanlıq',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: item != null ? const Color(0xFF065F46) : const Color(0xFF92400E),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                if (item != null) ...[
+                                  Text(item.name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                                  const SizedBox(height: 2),
+                                  Text('${item.category} • ${item.room}', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                                  if (item.serialNumber.isNotEmpty)
+                                    Text('Seriya №: ${item.serialNumber}', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                                ] else
+                                  Text(
+                                    'Bu QR reyestrdə qeydiyyatda deyil — cihaz QR koduna görə İT şöbəsi tərəfindən müəyyən edilməlidir.',
+                                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.4),
+                                  ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'QR: ${currentTicket.inventoryCode}',
+                                  style: TextStyle(fontSize: 10, color: AppColors.textMuted, fontFamily: 'monospace'),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                     Expanded(
                       child: ListView.builder(
                         itemCount: currentTicket.messages.length,
@@ -255,14 +325,14 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
                                     ),
                                     Text(
                                       DateFormat('HH:mm').format(msg.timestamp),
-                                      style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+                                      style: TextStyle(fontSize: 10, color: AppColors.textMuted),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   msg.message,
-                                  style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+                                  style: TextStyle(fontSize: 13, color: AppColors.textPrimary),
                                 ),
                               ],
                             ),
@@ -322,7 +392,7 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -340,7 +410,7 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Yeni Müraciət Yarat',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                   ),

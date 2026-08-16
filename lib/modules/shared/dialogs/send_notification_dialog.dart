@@ -166,7 +166,7 @@ class _SendNotificationDialogState extends State<SendNotificationDialog> {
     final isTeacher = user?.role == UserRole.teacher;
 
     return Dialog(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Container(
         constraints: const BoxConstraints(maxWidth: 500, maxHeight: 680),
@@ -231,7 +231,7 @@ class _SendNotificationDialogState extends State<SendNotificationDialog> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
+                            color: AppColors.background,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(color: AppColors.cardBorder),
                           ),
@@ -241,7 +241,7 @@ class _SendNotificationDialogState extends State<SendNotificationDialog> {
                                 radius: 20,
                                 onBackgroundImageError: (e, s) {},
                                 backgroundImage: NetworkImage(widget.directStudent!.photoUrl),
-                                child: const Icon(Icons.person),
+                                child: null, // No overlay icon
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -254,7 +254,7 @@ class _SendNotificationDialogState extends State<SendNotificationDialog> {
                                     ),
                                     Text(
                                       'Valideyn: ${widget.directStudent!.parentName} (${widget.directStudent!.parentPhone})',
-                                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                                      style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
                                     ),
                                   ],
                                 ),
@@ -404,7 +404,7 @@ class _SendNotificationDialogState extends State<SendNotificationDialog> {
                         decoration: InputDecoration(
                           hintText: 'məs: Riyaziyyat dərsi üzrə həftəlik rəy',
                           filled: true,
-                          fillColor: const Color(0xFFF8FAFC),
+                          fillColor: AppColors.background,
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                         ),
                         validator: (v) => (v == null || v.trim().isEmpty) ? 'Başlığı qeyd edin' : null,
@@ -413,7 +413,7 @@ class _SendNotificationDialogState extends State<SendNotificationDialog> {
                       const SizedBox(height: 14),
 
                       // Quick Templates
-                      const Text('Sürətli Şablonlar:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.textSecondary)),
+                      Text('Sürətli Şablonlar:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.textSecondary)),
                       const SizedBox(height: 6),
                       SizedBox(
                         height: 34,
@@ -449,7 +449,7 @@ class _SendNotificationDialogState extends State<SendNotificationDialog> {
                         decoration: InputDecoration(
                           hintText: 'Valideynə və ya şagirdə çatdırmaq istədiyiniz mesajı ətraflı yazın...',
                           filled: true,
-                          fillColor: const Color(0xFFF8FAFC),
+                          fillColor: AppColors.background,
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                         ),
                         validator: (v) => (v == null || v.trim().isEmpty) ? 'Mesaj mətnini yazın' : null,

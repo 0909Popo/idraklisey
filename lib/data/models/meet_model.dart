@@ -1,3 +1,13 @@
+/// Creates the same positive 32-bit Agora UID on every device for a user.
+int agoraUidForUser(String userId) {
+  var hash = 2166136261;
+  for (final codeUnit in userId.codeUnits) {
+    hash ^= codeUnit;
+    hash = (hash * 16777619) & 0x7fffffff;
+  }
+  return hash == 0 ? 1 : hash;
+}
+
 class MeetParticipant {
   final String userId;
   final String fullName;
@@ -73,7 +83,9 @@ class MeetParticipant {
       isMuted: json['isMuted'] ?? false,
       isMutedByHost: json['isMutedByHost'] ?? false,
       isSpeaking: json['isSpeaking'] ?? false,
-      joinedAt: json['joinedAt'] != null ? DateTime.tryParse(json['joinedAt']) ?? DateTime.now() : DateTime.now(),
+      joinedAt: json['joinedAt'] != null
+          ? DateTime.tryParse(json['joinedAt']) ?? DateTime.now()
+          : DateTime.now(),
     );
   }
 }
@@ -89,7 +101,8 @@ class MeetRoom {
   final List<String> targetClasses; // e.g. ['9A', '9B'] or [] for all
   final bool allowTeachers; // Can other teachers join?
   final bool allowStudents; // Can students join?
-  final String status; // 'live' (Canlı Dərs Gedir), 'scheduled' (Planlaşdırılıb), 'ended' (Başa çatdı)
+  final String
+  status; // 'live' (Canlı Dərs Gedir), 'scheduled' (Planlaşdırılıb), 'ended' (Başa çatdı)
   final DateTime createdAt;
   final DateTime? scheduledTime;
   final List<MeetParticipant> participants;
@@ -178,14 +191,30 @@ class MeetRoom {
       hostPhotoUrl: json['hostPhotoUrl'],
       subject: json['subject'] ?? '',
       channelName: json['channelName'] ?? '',
-      targetClasses: (json['targetClasses'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      targetClasses:
+          (json['targetClasses'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       allowTeachers: json['allowTeachers'] ?? true,
       allowStudents: json['allowStudents'] ?? true,
       status: json['status'] ?? 'live',
-      createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) ?? DateTime.now() : DateTime.now(),
-      scheduledTime: json['scheduledTime'] != null ? DateTime.tryParse(json['scheduledTime']) : null,
-      participants: (json['participants'] as List<dynamic>?)?.map((p) => MeetParticipant.fromJson(p)).toList() ?? [],
-      materials: (json['materials'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt']) ?? DateTime.now()
+          : DateTime.now(),
+      scheduledTime: json['scheduledTime'] != null
+          ? DateTime.tryParse(json['scheduledTime'])
+          : null,
+      participants:
+          (json['participants'] as List<dynamic>?)
+              ?.map((p) => MeetParticipant.fromJson(p))
+              .toList() ??
+          [],
+      materials:
+          (json['materials'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
     );
   }
 }

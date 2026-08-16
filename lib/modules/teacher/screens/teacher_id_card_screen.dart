@@ -449,7 +449,7 @@ class _TeacherIdCardScreenState extends State<TeacherIdCardScreen> with SingleTi
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
@@ -473,7 +473,7 @@ class _TeacherIdCardScreenState extends State<TeacherIdCardScreen> with SingleTi
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Turniket & Keçid QR',
                           style: TextStyle(
                             color: AppColors.textPrimary,
@@ -482,7 +482,7 @@ class _TeacherIdCardScreenState extends State<TeacherIdCardScreen> with SingleTi
                           ),
                         ),
                         const SizedBox(height: 3),
-                        const Text(
+                        Text(
                           'Turniketə və ya müəllimlər otağı skanerinə yaxınlaşdırın.',
                           style: TextStyle(color: AppColors.textSecondary, fontSize: 10, height: 1.3),
                         ),

@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import '../core/theme/app_colors.dart';
 import '../data/models/timetable_model.dart';
 import '../data/models/grade_model.dart';
 import '../data/models/attendance_model.dart';
@@ -10,15 +13,17 @@ import '../data/models/library_model.dart';
 import '../data/models/menu_model.dart';
 import '../data/models/meet_model.dart';
 import '../data/models/notification_model.dart';
+import '../data/models/inventory_model.dart';
 import '../data/models/user_model.dart';
 import '../data/mock_data.dart';
 import '../services/firestore_service.dart';
+import '../services/auth_storage_service.dart';
 
 enum UserRole {
-  admin,    // Məktəb İdarəetməsi (Admin)
-  parent,   // Valideyn Paneli
-  student,  // Şagird Paneli
-  teacher,  // Müəllim Paneli
+  admin, // Məktəb İdarəetməsi (Admin)
+  parent, // Valideyn Paneli
+  student, // Şagird Paneli
+  teacher, // Müəllim Paneli
 }
 
 extension UserRoleExt on UserRole {
@@ -51,6 +56,26 @@ extension UserRoleExt on UserRole {
 
 class AppState extends ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
+  final AuthStorageService _authStorage = AuthStorageService();
+  StreamSubscription<List<MeetRoom>>? _meetRoomsSubscription;
+
+  // --- APPEARANCE (Light / Dark) ---
+  bool _isDarkMode = false;
+  bool get isDarkMode => _isDarkMode;
+
+  /// Restores the persisted theme before the first frame so the app
+  /// never flashes the wrong palette on startup.
+  Future<void> loadThemeMode() async {
+    _isDarkMode = await _authStorage.getIsDarkMode();
+    AppColors.applyDark(_isDarkMode);
+  }
+
+  void toggleTheme() {
+    _isDarkMode = !_isDarkMode;
+    AppColors.applyDark(_isDarkMode);
+    _authStorage.saveIsDarkMode(_isDarkMode);
+    notifyListeners();
+  }
 
   // Current Logged In User
   AppUser? _currentUser;
@@ -108,7 +133,8 @@ class AppState extends ChangeNotifier {
 
   // Selected Student for Parent / Active view
   StudentProfile get student {
-    if (_currentUser?.role == UserRole.parent && _currentUser?.linkedStudentId != null) {
+    if (_currentUser?.role == UserRole.parent &&
+        _currentUser?.linkedStudentId != null) {
       return _students.firstWhere(
         (s) => s.id == _currentUser!.linkedStudentId,
         orElse: () => MockData.currentStudent,
@@ -116,8 +142,10 @@ class AppState extends ChangeNotifier {
     }
     if (_currentUser?.role == UserRole.student) {
       return _students.firstWhere(
-        (s) => s.fullName.toLowerCase() == _currentUser!.fullName.toLowerCase() ||
-               s.studentNumber.toLowerCase() == _currentUser!.idrakCode.toLowerCase(),
+        (s) =>
+            s.fullName.toLowerCase() == _currentUser!.fullName.toLowerCase() ||
+            s.studentNumber.toLowerCase() ==
+                _currentUser!.idrakCode.toLowerCase(),
         orElse: () => MockData.currentStudent,
       );
     }
@@ -147,8 +175,20 @@ class AppState extends ChangeNotifier {
   }
 
   // --- INITIALIZE & SYNC FROM FIRESTORE ---
+  Future<void>? _initFuture;
+
+  /// Returns the ongoing (or a new) Firestore sync so callers can await it
+  /// before relying on cloud data (e.g. auto-login needs the users list).
+  Future<void> ensureDataReady() {
+    return _initFuture ??= initFirebaseData();
+  }
+
   Future<void> initFirebaseData() async {
     try {
+      // Meet presence must start immediately. Waiting for every other school
+      // collection can otherwise delay a live room by minutes on a weak link.
+      _startMeetRoomsListener();
+
       // 1. Fetch Users
       final cloudUsers = await _firestoreService.fetchUsers();
       if (cloudUsers.isNotEmpty) {
@@ -224,8 +264,8 @@ class AppState extends ChangeNotifier {
 
       // 11. Fetch Meet Rooms
       final cloudMeetRooms = await _firestoreService.fetchMeetRooms();
-      if (cloudMeetRooms.isNotEmpty) {
-        _meetRooms.clear();
+      // Do not overwrite a newer snapshot delivered by the listener above.
+      if (_meetRooms.isEmpty && cloudMeetRooms.isNotEmpty) {
         _meetRooms.addAll(cloudMeetRooms);
       }
 
@@ -236,19 +276,49 @@ class AppState extends ChangeNotifier {
         _notifications.addAll(cloudNotifs);
       }
 
+      // 13. Fetch QR Inventory Items
+      final cloudInventory = await _firestoreService.fetchInventoryItems();
+      if (cloudInventory.isNotEmpty) {
+        _inventoryItems.clear();
+        _inventoryItems.addAll(cloudInventory);
+      }
+
       notifyListeners();
     } catch (e) {
       debugPrint('Firestore initialization sync notice: $e');
     }
   }
 
+  void _startMeetRoomsListener() {
+    _meetRoomsSubscription?.cancel();
+    _meetRoomsSubscription = _firestoreService.watchMeetRooms().listen(
+      (rooms) {
+        _meetRooms
+          ..clear()
+          ..addAll(rooms);
+        notifyListeners();
+      },
+      onError: (Object error) {
+        debugPrint('Meet rooms live sync error: $error');
+        // Keep existing rooms on error instead of clearing
+      },
+      cancelOnError: false, // Keep stream alive on Firestore reconnects
+    );
+  }
+
   // --- AUTHENTICATION ---
-  String? login(String username, String password) {
+  String? login(String username, String password, {bool saveCredentials = true}) {
     final cleanUsername = username.trim().toLowerCase();
     final cleanPass = password.trim();
 
+    debugPrint('[AppState] Login attempt - username: "$cleanUsername", password length: ${cleanPass.length}');
+    debugPrint('[AppState] Total users in database: ${_users.length}');
+
     final user = _users.firstWhere(
-      (u) => (u.username.toLowerCase() == cleanUsername || u.idrakCode.toLowerCase() == cleanUsername) && u.password == cleanPass,
+      (u) =>
+          (u.username.toLowerCase() == cleanUsername ||
+              u.idrakCode.toLowerCase() == cleanUsername) &&
+          u.password == cleanPass,
       orElse: () => AppUser(
         id: '',
         username: '',
@@ -261,6 +331,7 @@ class AppState extends ChangeNotifier {
     );
 
     if (user.id.isEmpty) {
+      debugPrint('[AppState] Login failed - user not found');
       return 'İstifadəçi adı / İdrak kodu və ya şifrə yanlışdır!';
     }
 
@@ -268,18 +339,90 @@ class AppState extends ChangeNotifier {
       return 'Bu hesab inzibatçı tərəfindən deaktiv edilib.';
     }
 
+    debugPrint('[AppState] ✓ Login successful - user: ${user.fullName}');
     _currentUser = user;
+    
+    // Save credentials for auto-login if requested
+    if (saveCredentials) {
+      debugPrint('[AppState] Saving credentials for auto-login...');
+      _authStorage.saveCredentials(cleanUsername, cleanPass);
+    }
+    
     notifyListeners();
     return null;
   }
 
-  void logout() {
+  /// Attempt auto-login using stored credentials.
+  /// Never logs in silently: biometric confirmation is always required.
+  Future<bool> tryAutoLogin() async {
+    try {
+      debugPrint('[AppState] Attempting auto-login...');
+
+      // Fast local checks first, before waiting on any network sync.
+      final hasCredentials = await _authStorage.hasStoredCredentials();
+      final biometricEnabled = await _authStorage.isBiometricEnabled();
+      debugPrint(
+        '[AppState] Credentials: $hasCredentials, biometric enabled: $biometricEnabled',
+      );
+
+      // Without stored credentials or an explicit opt-in to biometric
+      // login the user must always sign in manually.
+      if (!hasCredentials || !biometricEnabled) return false;
+
+      final authenticated = await _authStorage.authenticateWithBiometrics();
+      debugPrint('[AppState] Biometric authenticated: $authenticated');
+      if (!authenticated) return false;
+
+      // Wait for the Firestore users sync; without it only the built-in
+      // master admin exists and saved cloud users would fail to match.
+      try {
+        await ensureDataReady().timeout(const Duration(seconds: 10));
+      } on TimeoutException {
+        debugPrint('[AppState] Firestore sync timed out, trying login anyway');
+      }
+
+      debugPrint('[AppState] Users in database: ${_users.length}');
+
+      final credentials = await _authStorage.getSavedCredentials();
+      debugPrint('[AppState] Credentials found: ${credentials != null}');
+      
+      if (credentials == null) return false;
+
+      debugPrint('[AppState] Saved username: "${credentials['username']}"');
+      debugPrint('[AppState] Saved password length: ${credentials['password']?.length}');
+
+      final error = login(
+        credentials['username']!,
+        credentials['password']!,
+        saveCredentials: false, // Already saved
+      );
+      
+      if (error == null) {
+        debugPrint('[AppState] ✓ Auto-login successful');
+        return true;
+      } else {
+        debugPrint('[AppState] ⚠️ Auto-login failed: $error');
+        // Clear invalid credentials
+        await _authStorage.clearAll();
+        return false;
+      }
+    } catch (e) {
+      debugPrint('[AppState] ⚠️ Auto-login error: $e');
+      return false;
+    }
+  }
+
+  void logout() async {
     _currentUser = null;
+    await _authStorage.clearAll();
     notifyListeners();
   }
 
   void switchUserRoleForTesting(UserRole role) {
-    final matchingUser = _users.firstWhere((u) => u.role == role && u.isActive, orElse: () => _users.first);
+    final matchingUser = _users.firstWhere(
+      (u) => u.role == role && u.isActive,
+      orElse: () => _users.first,
+    );
     _currentUser = matchingUser;
     notifyListeners();
   }
@@ -297,7 +440,9 @@ class AppState extends ChangeNotifier {
   }
 
   List<StudentProfile> getStudentsForClass(String className) {
-    return _students.where((s) => s.className.toLowerCase() == className.toLowerCase()).toList();
+    return _students
+        .where((s) => s.className.toLowerCase() == className.toLowerCase())
+        .toList();
   }
 
   double getClassAverageGpa(String className) {
@@ -312,7 +457,9 @@ class AppState extends ChangeNotifier {
   int getClassAverageAttendance(String className) {
     final classStudents = getStudentsForClass(className);
     if (classStudents.isEmpty) return 0;
-    final sum = classStudents.map((s) => s.attendanceRate).reduce((a, b) => a + b);
+    final sum = classStudents
+        .map((s) => s.attendanceRate)
+        .reduce((a, b) => a + b);
     return (sum / classStudents.length).round();
   }
 
@@ -341,7 +488,8 @@ class AppState extends ChangeNotifier {
 
     // Update corresponding AppUsers
     for (int i = 0; i < _users.length; i++) {
-      if (_users[i].className != null && _users[i].className!.toLowerCase() == fromClass.toLowerCase()) {
+      if (_users[i].className != null &&
+          _users[i].className!.toLowerCase() == fromClass.toLowerCase()) {
         _users[i] = _users[i].copyWith(className: toClass);
       }
     }
@@ -365,11 +513,16 @@ class AppState extends ChangeNotifier {
     final currentClasses = List<String>.from(_currentUser!.assignedClasses);
     if (!currentClasses.contains(className)) {
       currentClasses.add(className);
-      final updatedUser = _currentUser!.copyWith(assignedClasses: currentClasses);
+      final updatedUser = _currentUser!.copyWith(
+        assignedClasses: currentClasses,
+      );
       _currentUser = updatedUser;
       final idx = _users.indexWhere((u) => u.id == updatedUser.id);
       if (idx != -1) _users[idx] = updatedUser;
-      _firestoreService.updateTeacherAssignedClasses(updatedUser.id, currentClasses);
+      _firestoreService.updateTeacherAssignedClasses(
+        updatedUser.id,
+        currentClasses,
+      );
       notifyListeners();
     }
   }
@@ -379,11 +532,16 @@ class AppState extends ChangeNotifier {
     final currentClasses = List<String>.from(_currentUser!.assignedClasses);
     if (currentClasses.contains(className)) {
       currentClasses.remove(className);
-      final updatedUser = _currentUser!.copyWith(assignedClasses: currentClasses);
+      final updatedUser = _currentUser!.copyWith(
+        assignedClasses: currentClasses,
+      );
       _currentUser = updatedUser;
       final idx = _users.indexWhere((u) => u.id == updatedUser.id);
       if (idx != -1) _users[idx] = updatedUser;
-      _firestoreService.updateTeacherAssignedClasses(updatedUser.id, currentClasses);
+      _firestoreService.updateTeacherAssignedClasses(
+        updatedUser.id,
+        currentClasses,
+      );
       notifyListeners();
     }
   }
@@ -414,7 +572,13 @@ class AppState extends ChangeNotifier {
     if (dayIndex != -1) {
       days[dayIndex].lessons.add(newSlot);
     } else {
-      days.add(DayTimetable(dayName: dayName, shortDay: dayName.substring(0, 2), lessons: [newSlot]));
+      days.add(
+        DayTimetable(
+          dayName: dayName,
+          shortDay: dayName.substring(0, 2),
+          lessons: [newSlot],
+        ),
+      );
     }
 
     _classTimetablesMap[className] = days;
@@ -430,7 +594,9 @@ class AppState extends ChangeNotifier {
     final days = getClassTimetable(className);
     final dayIndex = days.indexWhere((d) => d.dayName == dayName);
 
-    if (dayIndex != -1 && slotIndex >= 0 && slotIndex < days[dayIndex].lessons.length) {
+    if (dayIndex != -1 &&
+        slotIndex >= 0 &&
+        slotIndex < days[dayIndex].lessons.length) {
       days[dayIndex].lessons.removeAt(slotIndex);
       _classTimetablesMap[className] = days;
       _firestoreService.saveClassTimetable(className, days);
@@ -449,9 +615,19 @@ class AppState extends ChangeNotifier {
     String? photoUrl,
     List<String> assignedClasses = const [],
   }) {
-    final codeNum = 100 + _users.where((u) => u.role == UserRole.teacher).length + 1;
+    final codeNum =
+        100 + _users.where((u) => u.role == UserRole.teacher).length + 1;
     final idrakCode = 'IDR-TCH-$codeNum';
-    final rawUsername = fullName.toLowerCase().replaceAll(' ', '.').replaceAll('ə', 'e').replaceAll('ı', 'i').replaceAll('ö', 'o').replaceAll('ü', 'u').replaceAll('ç', 'c').replaceAll('ş', 's').replaceAll('ğ', 'g');
+    final rawUsername = fullName
+        .toLowerCase()
+        .replaceAll(' ', '.')
+        .replaceAll('ə', 'e')
+        .replaceAll('ı', 'i')
+        .replaceAll('ö', 'o')
+        .replaceAll('ü', 'u')
+        .replaceAll('ç', 'c')
+        .replaceAll('ş', 's')
+        .replaceAll('ğ', 'g');
     final username = '$rawUsername$codeNum';
 
     final newTeacher = AppUser(
@@ -493,7 +669,16 @@ class AppState extends ChangeNotifier {
     final studentIdrakCode = 'IDR-2025-0${490 + stdIndex}';
     final barcodeData = '994019${283740 + stdIndex}';
 
-    final cleanStdName = studentName.toLowerCase().replaceAll(' ', '.').replaceAll('ə', 'e').replaceAll('ı', 'i').replaceAll('ö', 'o').replaceAll('ü', 'u').replaceAll('ç', 'c').replaceAll('ş', 's').replaceAll('ğ', 'g');
+    final cleanStdName = studentName
+        .toLowerCase()
+        .replaceAll(' ', '.')
+        .replaceAll('ə', 'e')
+        .replaceAll('ı', 'i')
+        .replaceAll('ö', 'o')
+        .replaceAll('ü', 'u')
+        .replaceAll('ç', 'c')
+        .replaceAll('ş', 's')
+        .replaceAll('ğ', 'g');
     final studentUsername = '$cleanStdName$stdIndex';
 
     // 1. Create Student Profile
@@ -502,7 +687,9 @@ class AppState extends ChangeNotifier {
       fullName: studentName,
       studentNumber: studentIdrakCode,
       className: className,
-      photoUrl: studentPhotoUrl ?? 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(studentName)}&background=0D47A1&color=fff&size=400',
+      photoUrl:
+          studentPhotoUrl ??
+          'https://ui-avatars.com/api/?name=${Uri.encodeComponent(studentName)}&background=0D47A1&color=fff&size=400',
       qrData: 'IDRAK-STUDENT-2025-$studentName-$className',
       barcodeData: barcodeData,
       parentName: parentName,
@@ -534,7 +721,16 @@ class AppState extends ChangeNotifier {
 
     // 3. Create Linked Parent AppUser
     final parentIdrakCode = 'IDR-PAR-0${490 + stdIndex}';
-    final cleanParName = parentName.toLowerCase().replaceAll(' ', '.').replaceAll('ə', 'e').replaceAll('ı', 'i').replaceAll('ö', 'o').replaceAll('ü', 'u').replaceAll('ç', 'c').replaceAll('ş', 's').replaceAll('ğ', 'g');
+    final cleanParName = parentName
+        .toLowerCase()
+        .replaceAll(' ', '.')
+        .replaceAll('ə', 'e')
+        .replaceAll('ı', 'i')
+        .replaceAll('ö', 'o')
+        .replaceAll('ü', 'u')
+        .replaceAll('ç', 'c')
+        .replaceAll('ş', 's')
+        .replaceAll('ğ', 'g');
     final parentUsername = 'valideyn.$cleanParName$stdIndex';
 
     final parentUser = AppUser(
@@ -552,12 +748,16 @@ class AppState extends ChangeNotifier {
     _firestoreService.saveUser(parentUser);
 
     // 4. Create Student's Clean Medical Card
-    final allergyItems = allergies.map((a) => AllergyItem(
-      name: a,
-      severity: 'Yüksək dərəcə',
-      reaction: 'Xüsusi qida / dərman həssaslığı',
-      firstAid: 'Tibb otağına məlumat verilməli və pəhriz saxlanmalıdır.',
-    )).toList();
+    final allergyItems = allergies
+        .map(
+          (a) => AllergyItem(
+            name: a,
+            severity: 'Yüksək dərəcə',
+            reaction: 'Xüsusi qida / dərman həssaslığı',
+            firstAid: 'Tibb otağına məlumat verilməli və pəhriz saxlanmalıdır.',
+          ),
+        )
+        .toList();
 
     final newMedicalCard = StudentMedicalCard(
       bloodGroup: bloodGroup.isEmpty ? 'Məlumat daxil edilməyib' : bloodGroup,
@@ -574,10 +774,7 @@ class AppState extends ChangeNotifier {
     _firestoreService.saveMedicalCard(stdId, newMedicalCard);
 
     notifyListeners();
-    return {
-      'student': studentUser,
-      'parent': parentUser,
-    };
+    return {'student': studentUser, 'parent': parentUser};
   }
 
   void updateTeacherPermissions(String userId, TeacherPermissions permissions) {
@@ -635,7 +832,9 @@ class AppState extends ChangeNotifier {
     final stdIndex = _students.indexWhere((s) => s.id == targetStdId);
     if (stdIndex == -1) return;
 
-    final studentGrades = _grades.where((g) => g.studentId == targetStdId).toList();
+    final studentGrades = _grades
+        .where((g) => g.studentId == targetStdId)
+        .toList();
     if (studentGrades.isEmpty) {
       final old = _students[stdIndex];
       _students[stdIndex] = StudentProfile(
@@ -658,7 +857,9 @@ class AppState extends ChangeNotifier {
 
     final validPcts = studentGrades.map((g) => g.percentage).toList();
     final avgPct = validPcts.reduce((a, b) => a + b) / validPcts.length;
-    final calculatedGpa = double.parse(((avgPct / 100.0) * 5.0).clamp(0.0, 5.0).toStringAsFixed(2));
+    final calculatedGpa = double.parse(
+      ((avgPct / 100.0) * 5.0).clamp(0.0, 5.0).toStringAsFixed(2),
+    );
 
     final old = _students[stdIndex];
     _students[stdIndex] = StudentProfile(
@@ -675,17 +876,25 @@ class AppState extends ChangeNotifier {
       attendanceRate: old.attendanceRate,
       academicYear: old.academicYear,
     );
-    _firestoreService.updateStudentGPA(targetStdId, calculatedGpa, old.attendanceRate);
+    _firestoreService.updateStudentGPA(
+      targetStdId,
+      calculatedGpa,
+      old.attendanceRate,
+    );
   }
 
   void addGrade(GradeRecord grade, [String? studentId]) {
     final targetStdId = studentId ?? grade.studentId ?? student.id;
     final stdIndex = _students.indexWhere((s) => s.id == targetStdId);
-    final stdName = stdIndex != -1 ? _students[stdIndex].fullName : student.fullName;
+    final stdName = stdIndex != -1
+        ? _students[stdIndex].fullName
+        : student.fullName;
 
     // Sanitize score if out of bounds
     double sanitizedScore = grade.score;
-    if (grade.maxScore == 100.0 && sanitizedScore > 100.0 && sanitizedScore <= 1000.0) {
+    if (grade.maxScore == 100.0 &&
+        sanitizedScore > 100.0 &&
+        sanitizedScore <= 1000.0) {
       sanitizedScore = sanitizedScore / 10.0;
     } else if (sanitizedScore > grade.maxScore) {
       sanitizedScore = grade.maxScore;
@@ -713,7 +922,18 @@ class AppState extends ChangeNotifier {
   }
 
   void deleteGrade(String gradeId, [String? studentId]) {
-    final targetGrade = _grades.firstWhere((g) => g.id == gradeId, orElse: () => GradeRecord(id: '', subject: '', type: AssessmentType.ksq, title: '', score: 0, gradeLetter: '', date: DateTime.now()));
+    final targetGrade = _grades.firstWhere(
+      (g) => g.id == gradeId,
+      orElse: () => GradeRecord(
+        id: '',
+        subject: '',
+        type: AssessmentType.ksq,
+        title: '',
+        score: 0,
+        gradeLetter: '',
+        date: DateTime.now(),
+      ),
+    );
     final targetStdId = studentId ?? targetGrade.studentId ?? student.id;
 
     _grades.removeWhere((g) => g.id == gradeId);
@@ -811,10 +1031,45 @@ class AppState extends ChangeNotifier {
       date: DateTime.now(),
       parentName: parName,
     );
-    final updatedList = List<ParentMedicalNote>.from(card.parentNotes)..insert(0, newNote);
+    final updatedList = List<ParentMedicalNote>.from(card.parentNotes)
+      ..insert(0, newNote);
     final updatedCard = card.copyWith(parentNotes: updatedList);
     _medicalCardsMap[studentId] = updatedCard;
     _firestoreService.saveMedicalCard(studentId, updatedCard);
+    notifyListeners();
+  }
+
+  // QR Inventory Items
+  final List<InventoryItem> _inventoryItems = [];
+  List<InventoryItem> get inventoryItems => _inventoryItems;
+
+  /// Resolves a scanned QR payload to its registered equipment, if any.
+  InventoryItem? findInventoryItemByQr(String qrCode) {
+    final clean = qrCode.trim();
+    for (final item in _inventoryItems) {
+      if (item.qrCode.trim() == clean) return item;
+    }
+    return null;
+  }
+
+  void addInventoryItem(InventoryItem item) {
+    _inventoryItems.insert(0, item);
+    _firestoreService.saveInventoryItem(item);
+    notifyListeners();
+  }
+
+  void updateInventoryItem(InventoryItem item) {
+    final index = _inventoryItems.indexWhere((i) => i.id == item.id);
+    if (index != -1) {
+      _inventoryItems[index] = item;
+      _firestoreService.saveInventoryItem(item);
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteInventoryItem(String id) async {
+    _inventoryItems.removeWhere((i) => i.id == id);
+    await _firestoreService.deleteInventoryItem(id);
     notifyListeners();
   }
 
@@ -832,7 +1087,8 @@ class AppState extends ChangeNotifier {
     final index = _tickets.indexWhere((t) => t.id == ticketId);
     if (index != -1) {
       final ticket = _tickets[index];
-      final updatedMessages = List<TicketMessage>.from(ticket.messages)..add(message);
+      final updatedMessages = List<TicketMessage>.from(ticket.messages)
+        ..add(message);
       final updatedTicket = HelpdeskTicket(
         id: ticket.id,
         title: ticket.title,
@@ -866,7 +1122,9 @@ class AppState extends ChangeNotifier {
     final teacherName = _currentUser!.fullName.trim().toLowerCase();
     return _assignments.where((a) {
       final aTeacher = a.teacherName.trim().toLowerCase();
-      return aTeacher == teacherName || aTeacher.contains(teacherName) || teacherName.contains(aTeacher);
+      return aTeacher == teacherName ||
+          aTeacher.contains(teacherName) ||
+          teacherName.contains(aTeacher);
     }).toList();
   }
 
@@ -886,7 +1144,9 @@ class AppState extends ChangeNotifier {
     final index = _assignments.indexWhere((a) => a.id == assignmentId);
     if (index != -1) {
       final old = _assignments[index];
-      final newSubmissions = Map<String, AssignmentSubmission>.from(old.submissions);
+      final newSubmissions = Map<String, AssignmentSubmission>.from(
+        old.submissions,
+      );
       newSubmissions[studentId] = AssignmentSubmission(
         studentId: studentId,
         studentName: studentName,
@@ -925,8 +1185,12 @@ class AppState extends ChangeNotifier {
       final old = _assignments[index];
       final oldSub = old.submissions[studentId];
       if (oldSub != null) {
-        final sanitizedScore = (score > 100.0) ? (score / 10.0).clamp(0.0, 100.0) : score.clamp(0.0, 100.0);
-        final newSubmissions = Map<String, AssignmentSubmission>.from(old.submissions);
+        final sanitizedScore = (score > 100.0)
+            ? (score / 10.0).clamp(0.0, 100.0)
+            : score.clamp(0.0, 100.0);
+        final newSubmissions = Map<String, AssignmentSubmission>.from(
+          old.submissions,
+        );
         newSubmissions[studentId] = AssignmentSubmission(
           studentId: oldSub.studentId,
           studentName: oldSub.studentName,
@@ -956,7 +1220,10 @@ class AppState extends ChangeNotifier {
         _firestoreService.saveAssignment(updated);
 
         // Auto-sync into student GradeRecords so parents see the grade and GPA is updated
-        final targetStd = _students.firstWhere((s) => s.id == studentId, orElse: () => student);
+        final targetStd = _students.firstWhere(
+          (s) => s.id == studentId,
+          orElse: () => student,
+        );
 
         final gradeRecord = GradeRecord(
           id: 'gr-hw-${old.id}-$studentId',
@@ -967,18 +1234,32 @@ class AppState extends ChangeNotifier {
           title: 'Tapşırıq: ${old.title}',
           score: sanitizedScore,
           maxScore: 100.0,
-          gradeLetter: sanitizedScore >= 90 ? 'A' : (sanitizedScore >= 80 ? 'B' : (sanitizedScore >= 70 ? 'C' : (sanitizedScore >= 60 ? 'D' : 'E'))),
+          gradeLetter: sanitizedScore >= 90
+              ? 'A'
+              : (sanitizedScore >= 80
+                    ? 'B'
+                    : (sanitizedScore >= 70
+                          ? 'C'
+                          : (sanitizedScore >= 60 ? 'D' : 'E'))),
           date: DateTime.now(),
-          teacherFeedback: comment.isNotEmpty ? comment : 'Müəllim (${old.teacherName}) tərəfindən yoxlanıldı.',
+          teacherFeedback: comment.isNotEmpty
+              ? comment
+              : 'Müəllim (${old.teacherName}) tərəfindən yoxlanıldı.',
         );
 
-        final existingGradeIdx = _grades.indexWhere((g) => g.id == 'gr-hw-${old.id}-$studentId');
+        final existingGradeIdx = _grades.indexWhere(
+          (g) => g.id == 'gr-hw-${old.id}-$studentId',
+        );
         if (existingGradeIdx != -1) {
           _grades[existingGradeIdx] = gradeRecord;
         } else {
           _grades.insert(0, gradeRecord);
         }
-        _firestoreService.saveGrade(gradeRecord, targetStd.id, targetStd.fullName);
+        _firestoreService.saveGrade(
+          gradeRecord,
+          targetStd.id,
+          targetStd.fullName,
+        );
         recalculateStudentGpa(targetStd.id);
 
         notifyListeners();
@@ -1048,7 +1329,8 @@ class AppState extends ChangeNotifier {
     final hostName = host?.fullName ?? 'Fənn Müəllimi';
     final hostPhoto = host?.photoUrl;
     final roomId = 'meet-${DateTime.now().millisecondsSinceEpoch}';
-    final channelName = 'idrak_meet_${DateTime.now().millisecondsSinceEpoch % 100000}';
+    final channelName =
+        'idrak_meet_${DateTime.now().millisecondsSinceEpoch % 100000}';
 
     // Host is automatically the first participant
     final hostParticipant = MeetParticipant(
@@ -1057,7 +1339,7 @@ class AppState extends ChangeNotifier {
       role: 'host',
       photoUrl: hostPhoto,
       className: host?.className,
-      agoraUid: (hostId.hashCode.abs() % 900000) + 100000,
+      agoraUid: agoraUidForUser(hostId),
       isMuted: false,
       isMutedByHost: false,
       isSpeaking: false,
@@ -1089,7 +1371,7 @@ class AppState extends ChangeNotifier {
     final index = _meetRooms.indexWhere((r) => r.id == roomId);
     if (index != -1) {
       _meetRooms[index] = _meetRooms[index].copyWith(status: 'ended');
-      await _firestoreService.saveMeetRoom(_meetRooms[index]);
+      await _firestoreService.setMeetRoomStatus(roomId, 'ended');
       notifyListeners();
     }
   }
@@ -1108,15 +1390,12 @@ class AppState extends ChangeNotifier {
     final user = _currentUser;
     final userId = user?.id ?? student.id;
     final userName = user?.fullName ?? student.fullName;
-    final userRole = user?.role == UserRole.teacher ? 'teacher' : (user?.role == UserRole.admin ? 'admin' : 'student');
+    final userRole = user?.role == UserRole.teacher
+        ? 'teacher'
+        : (user?.role == UserRole.admin ? 'admin' : 'student');
     final userPhoto = user?.photoUrl ?? student.photoUrl;
     final userClass = user?.className ?? student.className;
-    final agoraUid = (userId.hashCode.abs() % 900000) + 100000;
-
-    // Check if already in participants
-    if (room.participants.any((p) => p.userId == userId)) {
-      return;
-    }
+    final agoraUid = agoraUidForUser(userId);
 
     final newParticipant = MeetParticipant(
       userId: userId,
@@ -1129,10 +1408,34 @@ class AppState extends ChangeNotifier {
       isMutedByHost: false,
     );
 
-    final updatedParticipants = List<MeetParticipant>.from(room.participants)..add(newParticipant);
-    _meetRooms[index] = room.copyWith(participants: updatedParticipants);
-    await _firestoreService.updateMeetParticipants(roomId, updatedParticipants);
+    // Immediately update local state for responsive UI
+    final localParticipants = List<MeetParticipant>.from(room.participants);
+    final existingIndex = localParticipants.indexWhere(
+      (p) => p.userId == userId,
+    );
+    if (existingIndex == -1) {
+      localParticipants.add(newParticipant);
+    } else {
+      localParticipants[existingIndex] = newParticipant;
+    }
+    _meetRooms[index] = room.copyWith(participants: localParticipants);
     notifyListeners();
+
+    // Sync to Firestore in background (don't block UI)
+    try {
+      final updatedParticipants = await _firestoreService.joinMeetParticipant(
+        roomId,
+        newParticipant,
+      );
+      final currentIndex = _meetRooms.indexWhere((r) => r.id == roomId);
+      if (currentIndex != -1) {
+        _meetRooms[currentIndex] = _meetRooms[currentIndex]
+            .copyWith(participants: updatedParticipants);
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('⚠️ Firestore sync failed (local state preserved): $e');
+    }
   }
 
   Future<void> leaveMeetRoom(String roomId) async {
@@ -1142,10 +1445,27 @@ class AppState extends ChangeNotifier {
     final room = _meetRooms[index];
     final userId = _currentUser?.id ?? student.id;
 
-    final updatedParticipants = room.participants.where((p) => p.userId != userId).toList();
-    _meetRooms[index] = room.copyWith(participants: updatedParticipants);
-    await _firestoreService.updateMeetParticipants(roomId, updatedParticipants);
+    // Immediately update local state
+    final localParticipants = List<MeetParticipant>.from(room.participants);
+    localParticipants.removeWhere((p) => p.userId == userId);
+    _meetRooms[index] = room.copyWith(participants: localParticipants);
     notifyListeners();
+
+    // Sync to Firestore in background
+    try {
+      final updatedParticipants = await _firestoreService.leaveMeetParticipant(
+        roomId,
+        userId,
+      );
+      final currentIndex = _meetRooms.indexWhere((r) => r.id == roomId);
+      if (currentIndex != -1) {
+        _meetRooms[currentIndex] = _meetRooms[currentIndex]
+            .copyWith(participants: updatedParticipants);
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('⚠️ Firestore leave sync failed (local state preserved): $e');
+    }
   }
 
   Future<void> toggleMyMuteInRoom(String roomId) async {
@@ -1155,32 +1475,37 @@ class AppState extends ChangeNotifier {
     final room = _meetRooms[index];
     final userId = _currentUser?.id ?? student.id;
 
-    final updatedParticipants = room.participants.map((p) {
-      if (p.userId == userId) {
-        return p.copyWith(isMuted: !p.isMuted);
-      }
-      return p;
-    }).toList();
+    final currentParticipant = room.participants
+        .where((p) => p.userId == userId)
+        .firstOrNull;
+    if (currentParticipant?.isMutedByHost ?? false) return;
+    final updatedParticipants = await _firestoreService.setMeetParticipantMuted(
+      roomId,
+      userId,
+      !(currentParticipant?.isMuted ?? false),
+    );
 
     _meetRooms[index] = room.copyWith(participants: updatedParticipants);
-    await _firestoreService.updateMeetParticipants(roomId, updatedParticipants);
     notifyListeners();
   }
 
-  Future<void> setParticipantMuteByHost(String roomId, String targetUserId, bool mute) async {
+  Future<void> setParticipantMuteByHost(
+    String roomId,
+    String targetUserId,
+    bool mute,
+  ) async {
     final index = _meetRooms.indexWhere((r) => r.id == roomId);
     if (index == -1) return;
 
     final room = _meetRooms[index];
-    final updatedParticipants = room.participants.map((p) {
-      if (p.userId == targetUserId) {
-        return p.copyWith(isMuted: mute, isMutedByHost: mute);
-      }
-      return p;
-    }).toList();
+    final updatedParticipants = await _firestoreService.setMeetParticipantMuted(
+      roomId,
+      targetUserId,
+      mute,
+      mutedByHost: mute,
+    );
 
     _meetRooms[index] = room.copyWith(participants: updatedParticipants);
-    await _firestoreService.updateMeetParticipants(roomId, updatedParticipants);
     notifyListeners();
   }
 
@@ -1189,21 +1514,20 @@ class AppState extends ChangeNotifier {
     if (index == -1) return;
 
     final room = _meetRooms[index];
-    final hostId = room.hostId;
-
-    final updatedParticipants = room.participants.map((p) {
-      if (p.userId != hostId) {
-        return p.copyWith(isMuted: mute, isMutedByHost: mute);
-      }
-      return p;
-    }).toList();
+    final updatedParticipants = await _firestoreService.muteAllMeetParticipants(
+      roomId,
+      mute,
+    );
 
     _meetRooms[index] = room.copyWith(participants: updatedParticipants);
-    await _firestoreService.updateMeetParticipants(roomId, updatedParticipants);
     notifyListeners();
   }
 
-  void updateParticipantSpeaking(String roomId, String userId, bool isSpeaking) {
+  void updateParticipantSpeaking(
+    String roomId,
+    String userId,
+    bool isSpeaking,
+  ) {
     final index = _meetRooms.indexWhere((r) => r.id == roomId);
     if (index == -1) return;
 
@@ -1243,9 +1567,13 @@ class AppState extends ChangeNotifier {
         type: old.type,
         pageCount: old.pageCount,
         language: old.language,
-        availableCopies: newBorrowed ? old.availableCopies - 1 : old.availableCopies + 1,
+        availableCopies: newBorrowed
+            ? old.availableCopies - 1
+            : old.availableCopies + 1,
         isBorrowedByMe: newBorrowed,
-        returnDeadline: newBorrowed ? DateTime.now().add(const Duration(days: 14)) : null,
+        returnDeadline: newBorrowed
+            ? DateTime.now().add(const Duration(days: 14))
+            : null,
         description: old.description,
         rating: old.rating,
       );
@@ -1282,7 +1610,11 @@ class AppState extends ChangeNotifier {
           dayName: _weeklyMenu[dayIndex].dayName,
           date: _weeklyMenu[dayIndex].date,
           mealTime: _weeklyMenu[dayIndex].mealTime,
-          totalCalories: (_weeklyMenu[dayIndex].totalCalories - removed.calories).clamp(0, 99999),
+          totalCalories:
+              (_weeklyMenu[dayIndex].totalCalories - removed.calories).clamp(
+                0,
+                99999,
+              ),
           items: _weeklyMenu[dayIndex].items,
         );
         _firestoreService.saveWeeklyMenu(_weeklyMenu);
@@ -1293,10 +1625,12 @@ class AppState extends ChangeNotifier {
 
   // --- TEACHER HUB: SMART ATTENDANCE TINDER-STYLE STATE ---
   late List<StudentProfile> _pendingAttendanceStudents = List.from(_students);
-  List<StudentProfile> get pendingAttendanceStudents => _pendingAttendanceStudents;
+  List<StudentProfile> get pendingAttendanceStudents =>
+      _pendingAttendanceStudents;
 
   final Map<String, AttendanceStatus> _currentSessionAttendance = {};
-  Map<String, AttendanceStatus> get currentSessionAttendance => _currentSessionAttendance;
+  Map<String, AttendanceStatus> get currentSessionAttendance =>
+      _currentSessionAttendance;
 
   final List<MapEntry<String, AttendanceStatus>> _attendanceHistory = [];
 
@@ -1305,7 +1639,11 @@ class AppState extends ChangeNotifier {
   String _currentSessionSubject = '';
   String get currentSessionSubject => _currentSessionSubject;
 
-  void startAttendanceForLesson({required String className, required String subject, required String time}) {
+  void startAttendanceForLesson({
+    required String className,
+    required String subject,
+    required String time,
+  }) {
     _currentSessionClass = className;
     _currentSessionSubject = subject;
     final classStudents = getStudentsForClass(className);
@@ -1327,7 +1665,8 @@ class AppState extends ChangeNotifier {
   bool isAttendanceLocked(String className, String subject) {
     if (_currentUser?.role == UserRole.admin) return false;
     final now = DateTime.now();
-    final key = '${className.trim().toLowerCase()}_${subject.trim().toLowerCase()}_${now.year}_${now.month}_${now.day}';
+    final key =
+        '${className.trim().toLowerCase()}_${subject.trim().toLowerCase()}_${now.year}_${now.month}_${now.day}';
     final submittedTime = _attendanceLockTimestamps[key];
     if (submittedTime == null) return false;
     final diff = now.difference(submittedTime);
@@ -1336,21 +1675,29 @@ class AppState extends ChangeNotifier {
 
   DateTime? getAttendanceSubmittedTime(String className, String subject) {
     final now = DateTime.now();
-    final key = '${className.trim().toLowerCase()}_${subject.trim().toLowerCase()}_${now.year}_${now.month}_${now.day}';
+    final key =
+        '${className.trim().toLowerCase()}_${subject.trim().toLowerCase()}_${now.year}_${now.month}_${now.day}';
     return _attendanceLockTimestamps[key];
   }
 
   void completeAttendanceSession() {
     final now = DateTime.now();
     final dayNum = now.day;
-    final subjectName = _currentSessionSubject.isNotEmpty ? _currentSessionSubject : 'Dərs';
-    final timeStr = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+    final subjectName = _currentSessionSubject.isNotEmpty
+        ? _currentSessionSubject
+        : 'Dərs';
+    final timeStr =
+        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
 
-    final lockKey = '${_currentSessionClass.trim().toLowerCase()}_${_currentSessionSubject.trim().toLowerCase()}_${now.year}_${now.month}_${now.day}';
+    final lockKey =
+        '${_currentSessionClass.trim().toLowerCase()}_${_currentSessionSubject.trim().toLowerCase()}_${now.year}_${now.month}_${now.day}';
     _attendanceLockTimestamps[lockKey] = now;
 
     _currentSessionAttendance.forEach((studentId, status) {
-      final studentAttMap = _studentAttendanceMap.putIfAbsent(studentId, () => {});
+      final studentAttMap = _studentAttendanceMap.putIfAbsent(
+        studentId,
+        () => {},
+      );
       final existingDay = studentAttMap[dayNum];
 
       List<PeriodAttendance> periods = [];
@@ -1359,9 +1706,12 @@ class AppState extends ChangeNotifier {
       }
 
       // Check if this subject already exists in today's lesson list; if so, update, otherwise append!
-      final existingPeriodIndex = periods.indexWhere((p) => p.subject.toLowerCase() == subjectName.toLowerCase());
+      final existingPeriodIndex = periods.indexWhere(
+        (p) => p.subject.toLowerCase() == subjectName.toLowerCase(),
+      );
       final newPeriod = PeriodAttendance(
-        period: '${existingPeriodIndex != -1 ? existingPeriodIndex + 1 : periods.length + 1}-ci dərs',
+        period:
+            '${existingPeriodIndex != -1 ? existingPeriodIndex + 1 : periods.length + 1}-ci dərs',
         subject: subjectName,
         status: status,
         time: timeStr,
@@ -1386,7 +1736,9 @@ class AppState extends ChangeNotifier {
       final hasAbsent = periods.any((p) => p.status == AttendanceStatus.absent);
       final noteText = hasAbsent
           ? 'Qayıb dərslər var'
-          : (hasLate ? 'Dərsə gecikmə qeydə alınıb' : 'Bütün dərslərdə tam iştirak edib');
+          : (hasLate
+                ? 'Dərsə gecikmə qeydə alınıb'
+                : 'Bütün dərslərdə tam iştirak edib');
 
       final dayAtt = DayAttendance(
         date: now,
@@ -1409,9 +1761,17 @@ class AppState extends ChangeNotifier {
           int attendedPeriods = 0;
           for (final d in stdAttMap.values) {
             totalPeriods += d.periodDetails.length;
-            attendedPeriods += d.periodDetails.where((p) => p.status == AttendanceStatus.present || p.status == AttendanceStatus.late).length;
+            attendedPeriods += d.periodDetails
+                .where(
+                  (p) =>
+                      p.status == AttendanceStatus.present ||
+                      p.status == AttendanceStatus.late,
+                )
+                .length;
           }
-          final rate = totalPeriods > 0 ? ((attendedPeriods / totalPeriods) * 100).round() : 100;
+          final rate = totalPeriods > 0
+              ? ((attendedPeriods / totalPeriods) * 100).round()
+              : 100;
           final old = _students[stdIndex];
           _students[stdIndex] = StudentProfile(
             id: old.id,
@@ -1439,7 +1799,10 @@ class AppState extends ChangeNotifier {
     if (_attendanceHistory.isNotEmpty) {
       final last = _attendanceHistory.removeLast();
       _currentSessionAttendance.remove(last.key);
-      final restoredStudent = _students.firstWhere((s) => s.id == last.key, orElse: () => MockData.currentStudent);
+      final restoredStudent = _students.firstWhere(
+        (s) => s.id == last.key,
+        orElse: () => MockData.currentStudent,
+      );
       if (restoredStudent.id != 'std-empty') {
         _pendingAttendanceStudents.insert(0, restoredStudent);
       }
@@ -1473,7 +1836,9 @@ class AppState extends ChangeNotifier {
 
     return _notifications.where((n) {
       // 1. Direct message targeted to this user or sent by this user
-      if (n.targetParentId == userId || n.targetStudentId == userId || n.senderId == userId) {
+      if (n.targetParentId == userId ||
+          n.targetStudentId == userId ||
+          n.senderId == userId) {
         return true;
       }
 
@@ -1487,7 +1852,9 @@ class AppState extends ChangeNotifier {
 
       // 3. Student filtering
       if (userRole == UserRole.student) {
-        if (n.targetStudentId != null && n.targetStudentId != userId && n.targetStudentId != student.id) {
+        if (n.targetStudentId != null &&
+            n.targetStudentId != userId &&
+            n.targetStudentId != student.id) {
           return false;
         }
         if (n.targetRoles.isNotEmpty && !n.targetRoles.contains('student')) {
@@ -1514,7 +1881,8 @@ class AppState extends ChangeNotifier {
         if (n.targetRoles.isNotEmpty && !n.targetRoles.contains('parent')) {
           return false;
         }
-        if (n.targetClasses.isNotEmpty && !n.targetClasses.contains(childClass)) {
+        if (n.targetClasses.isNotEmpty &&
+            !n.targetClasses.contains(childClass)) {
           return false;
         }
         return true;
@@ -1545,7 +1913,9 @@ class AppState extends ChangeNotifier {
     final user = _currentUser;
     final senderId = user?.id ?? 'school';
     final senderName = user?.fullName ?? 'İdrak Liseyi Rəhbərliyi';
-    final senderRole = user?.role == UserRole.teacher ? 'teacher' : (user?.role == UserRole.admin ? 'admin' : 'school');
+    final senderRole = user?.role == UserRole.teacher
+        ? 'teacher'
+        : (user?.role == UserRole.admin ? 'admin' : 'school');
     final senderSubject = user?.subject;
     final senderPhoto = user?.photoUrl;
     final notifId = 'notif-${DateTime.now().millisecondsSinceEpoch}';
@@ -1582,8 +1952,11 @@ class AppState extends ChangeNotifier {
     final idx = _notifications.indexWhere((n) => n.id == notifId);
     if (idx != -1) {
       if (!_notifications[idx].readByUserIds.contains(userId)) {
-        final updatedIds = List<String>.from(_notifications[idx].readByUserIds)..add(userId);
-        _notifications[idx] = _notifications[idx].copyWith(readByUserIds: updatedIds);
+        final updatedIds = List<String>.from(_notifications[idx].readByUserIds)
+          ..add(userId);
+        _notifications[idx] = _notifications[idx].copyWith(
+          readByUserIds: updatedIds,
+        );
         await _firestoreService.markNotificationRead(notifId, userId);
         notifyListeners();
       }
@@ -1597,8 +1970,11 @@ class AppState extends ChangeNotifier {
 
     for (int i = 0; i < _notifications.length; i++) {
       if (!_notifications[i].readByUserIds.contains(userId)) {
-        final updatedIds = List<String>.from(_notifications[i].readByUserIds)..add(userId);
-        _notifications[i] = _notifications[i].copyWith(readByUserIds: updatedIds);
+        final updatedIds = List<String>.from(_notifications[i].readByUserIds)
+          ..add(userId);
+        _notifications[i] = _notifications[i].copyWith(
+          readByUserIds: updatedIds,
+        );
         _firestoreService.markNotificationRead(_notifications[i].id, userId);
       }
     }
@@ -1611,4 +1987,3 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 }
-

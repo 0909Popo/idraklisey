@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:local_auth/local_auth.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/idrak_logo.dart';
 import '../../../providers/app_state.dart';
+import '../../../services/auth_storage_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,9 +16,33 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _usernameCtrl = TextEditingController();
   final TextEditingController _passwordCtrl = TextEditingController();
+  final AuthStorageService _authStorage = AuthStorageService();
+  
   bool _isPasswordVisible = false;
   bool _isLoading = false;
+  bool _isCheckingAutoLogin = true;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAutoLogin();
+  }
+
+  Future<void> _checkAutoLogin() async {
+    setState(() => _isCheckingAutoLogin = true);
+
+    debugPrint('[LoginScreen] Starting auto-login check...');
+
+    final appState = Provider.of<AppState>(context, listen: false);
+    final success = await appState.tryAutoLogin();
+    debugPrint('[LoginScreen] Auto-login result: $success');
+
+    if (mounted) {
+      setState(() => _isCheckingAutoLogin = false);
+      // If auto-login successful, UI will automatically switch due to Provider
+    }
+  }
 
   @override
   void dispose() {
@@ -25,7 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     final userToLogin = _usernameCtrl.text.trim();
     final passToLogin = _passwordCtrl.text.trim();
 
@@ -41,19 +67,147 @@ class _LoginScreenState extends State<LoginScreen> {
       _errorMessage = null;
     });
 
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted) {
-        final error = Provider.of<AppState>(context, listen: false).login(userToLogin, passToLogin);
-        setState(() {
-          _isLoading = false;
-          _errorMessage = error;
-        });
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    if (!mounted) return;
+
+    // Capture the root navigator before login: a successful login makes
+    // MainScreen swap this screen for the dashboard, disposing our context.
+    final rootContext = Navigator.of(context, rootNavigator: true).context;
+
+    final appState = Provider.of<AppState>(context, listen: false);
+    final error = appState.login(
+      userToLogin,
+      passToLogin,
+      saveCredentials: false, // Stored only if the user opts into biometrics
+    );
+
+    if (error == null) {
+      // Login successful, offer biometric login for next time
+      final biometricAvailable = await _authStorage.isBiometricAvailable();
+      final biometricEnabled = await _authStorage.isBiometricEnabled();
+
+      if (biometricAvailable && !biometricEnabled && rootContext.mounted) {
+        final types = await _authStorage.getAvailableBiometrics();
+        if (rootContext.mounted) {
+          await _showBiometricSetupDialog(
+            rootContext,
+            userToLogin,
+            passToLogin,
+            types,
+          );
+        }
       }
-    });
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = error;
+      });
+    }
+  }
+
+  /// Asks the user to enable biometric login. Credentials for auto-login
+  /// are stored only when the user accepts.
+  Future<void> _showBiometricSetupDialog(
+    BuildContext dialogContext,
+    String username,
+    String password,
+    List<BiometricType> types,
+  ) async {
+    final biometricName = _authStorage.getBiometricName(types);
+
+    await showDialog<bool>(
+      context: dialogContext,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(
+              types.contains(BiometricType.face)
+                  ? Icons.face_rounded
+                  : Icons.fingerprint_rounded,
+              color: AppColors.primary,
+              size: 28,
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Biometrik Giriş',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          '$biometricName istifadə edərək növbəti girişlərdə daha sürətli və təhlükəsiz giriş edə bilərsiniz. Aktivləşdirmək istəyirsiniz?',
+          style: const TextStyle(fontSize: 14, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(
+              'Xeyr',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await _authStorage.setBiometricEnabled(true);
+              await _authStorage.saveCredentials(username, password);
+              if (dialogContext.mounted) {
+                Navigator.pop(dialogContext, true);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              'Aktivləşdir',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    // Show loading screen while checking auto-login
+    if (_isCheckingAutoLogin) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF070E1E),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IdrakLogo(size: 80, showText: false, isLightText: true),
+              SizedBox(height: 24),
+              CircularProgressIndicator(
+                color: AppColors.goldLight,
+                strokeWidth: 3,
+              ),
+              SizedBox(height: 16),
+              Text(
+                'Yüklənir...',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFF070E1E),
       body: Stack(
@@ -119,7 +273,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     constraints: const BoxConstraints(maxWidth: 420),
                     padding: const EdgeInsets.all(28),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(28),
                       boxShadow: [
                         BoxShadow(
@@ -142,7 +296,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
+                        Text(
                           'Şəxsi istifadəçi məlumatlarınızla portala daxil olun.',
                           style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                         ),
@@ -174,7 +328,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
 
                         // Username / Idrak Code Input
-                        const Text(
+                        Text(
                           'İstifadəçi Adı və ya İdrak Kodu',
                           style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                         ),
@@ -184,18 +338,18 @@ class _LoginScreenState extends State<LoginScreen> {
                           textInputAction: TextInputAction.next,
                           decoration: InputDecoration(
                             hintText: 'İstifadəçi adınızı və ya İdrak kodunuzu daxil edin',
-                            hintStyle: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                            hintStyle: TextStyle(fontSize: 12, color: AppColors.textMuted),
                             prefixIcon: const Icon(Icons.person_outline_rounded, color: AppColors.primary, size: 20),
                             filled: true,
-                            fillColor: const Color(0xFFF8FAFC),
+                            fillColor: AppColors.background,
                             contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(color: AppColors.cardBorder),
+                              borderSide: BorderSide(color: AppColors.cardBorder),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(color: AppColors.cardBorder),
+                              borderSide: BorderSide(color: AppColors.cardBorder),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
@@ -207,7 +361,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 16),
 
                         // Password Input
-                        const Text(
+                        Text(
                           'Şifrə',
                           style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                         ),
@@ -219,7 +373,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           onSubmitted: (_) => _handleLogin(),
                           decoration: InputDecoration(
                             hintText: 'Şifrənizi daxil edin',
-                            hintStyle: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                            hintStyle: TextStyle(fontSize: 12, color: AppColors.textMuted),
                             prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.primary, size: 20),
                             suffixIcon: IconButton(
                               icon: Icon(
@@ -230,15 +384,15 @@ class _LoginScreenState extends State<LoginScreen> {
                               onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
                             ),
                             filled: true,
-                            fillColor: const Color(0xFFF8FAFC),
+                            fillColor: AppColors.background,
                             contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(color: AppColors.cardBorder),
+                              borderSide: BorderSide(color: AppColors.cardBorder),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(color: AppColors.cardBorder),
+                              borderSide: BorderSide(color: AppColors.cardBorder),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),

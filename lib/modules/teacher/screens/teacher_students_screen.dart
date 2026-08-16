@@ -106,7 +106,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                               color: isSelected ? Colors.white : AppColors.textPrimary,
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                             ),
-                            backgroundColor: Colors.white,
+                            backgroundColor: AppColors.surface,
                             side: BorderSide(color: isSelected ? AppColors.primary : AppColors.cardBorder),
                           ),
                         );
@@ -126,7 +126,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                       padding: const EdgeInsets.all(32),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
+                        children: [
                           Icon(Icons.person_search_rounded, size: 64, color: AppColors.textMuted),
                           SizedBox(height: 14),
                           Text(
@@ -148,7 +148,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
+                          children: [
                             Icon(Icons.search_off_rounded, size: 48, color: AppColors.textMuted),
                             SizedBox(height: 8),
                             Text('Axtarışa uyğun şagird tapılmadı.', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
@@ -203,7 +203,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                     Expanded(
                       child: Text(
                         student.fullName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textPrimary,
@@ -220,7 +220,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'ID: ${student.studentNumber} • $gpaText',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 4),
                 Row(
@@ -229,7 +229,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                     const SizedBox(width: 4),
                     Text(
                       'Valideyn: ${student.parentName}',
-                      style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                      style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                     ),
                   ],
                 ),
@@ -237,7 +237,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
             ),
           ),
           const SizedBox(width: 8),
-          const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textMuted),
+          Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textMuted),
         ],
       ),
     );
@@ -250,7 +250,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
@@ -294,11 +294,11 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                             children: [
                               Text(
                                 student.fullName,
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
                               ),
                               Text(
                                 '${student.className} • ${student.studentNumber}',
-                                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                               ),
                             ],
                           ),
@@ -352,7 +352,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                               return Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: AppColors.surface,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(color: AppColors.primary.withAlpha(80), width: 1.5),
                                   boxShadow: [
@@ -389,7 +389,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                                     const SizedBox(height: 8),
                                     Text(
                                       'Məktəb üzrə ümumi ortalama: ${student.gpa.toStringAsFixed(2)} GPA (${studentGrades.length} qiymət)',
-                                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                                      style: TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
                                     ),
                                     if (mySubjectGrades.isNotEmpty) ...[
                                       const SizedBox(height: 8),
@@ -405,7 +405,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                                                 '• ${g.title}',
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(fontSize: 12, color: AppColors.textPrimary, fontWeight: FontWeight.w500),
+                                                style: TextStyle(fontSize: 12, color: AppColors.textPrimary, fontWeight: FontWeight.w500),
                                               ),
                                             ),
                                             Text(
@@ -428,7 +428,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                           Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: AppColors.surface,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(color: currentMed.bmiColor.withAlpha(80), width: 1.5),
                               boxShadow: [
@@ -446,7 +446,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     Row(
-                                      children: const [
+                                      children: [
                                         Icon(Icons.accessibility_new_rounded, color: AppColors.primary, size: 20),
                                         SizedBox(width: 6),
                                         Text('Fiziki İnkişaf & BMI Göstəricisi', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppColors.textPrimary)),
@@ -506,7 +506,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                           Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
+                              color: AppColors.background,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(color: AppColors.cardBorder),
                             ),
@@ -528,7 +528,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                                   ],
                                 ),
                                 const SizedBox(height: 8),
-                                Text('Adı: ${student.parentName}', style: const TextStyle(fontSize: 13, color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+                                Text('Adı: ${student.parentName}', style: TextStyle(fontSize: 13, color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
                                 const SizedBox(height: 2),
                                 Text('Telefon: ${student.parentPhone}', style: const TextStyle(fontSize: 13, color: AppColors.primaryAccent, fontWeight: FontWeight.bold)),
                                 const SizedBox(height: 10),
@@ -597,8 +597,8 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(allergy.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-                                          Text('Reaksiya: ${allergy.reaction}', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                                          Text(allergy.name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                                          Text('Reaksiya: ${allergy.reaction}', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                                         ],
                                       ),
                                     ),
@@ -614,7 +614,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                                 color: AppColors.background,
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: const Text('Allergiya və ya xəstəlik qeydi yoxdur.', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                              child: Text('Allergiya və ya xəstəlik qeydi yoxdur.', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
                             ),
 
                           const SizedBox(height: 16),
@@ -645,7 +645,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                                 margin: const EdgeInsets.only(bottom: 6),
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: AppColors.surface,
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(color: AppColors.cardBorder),
                                 ),
@@ -656,8 +656,8 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(v.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-                                          Text('${v.doctor} • ${v.date.day}.${v.date.month}.${v.date.year}', style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                                          Text(v.name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                                          Text('${v.doctor} • ${v.date.day}.${v.date.month}.${v.date.year}', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
                                         ],
                                       ),
                                     ),
@@ -677,7 +677,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                                 color: AppColors.background,
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: const Text('Peyvənd qeydi daxil edilməyib.', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                              child: Text('Peyvənd qeydi daxil edilməyib.', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
                             ),
 
                           // 👨‍👩‍👧 Parent Notes for this student (if any)
@@ -700,11 +700,11 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(note.parentName, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.goldDark)),
-                                      Text('${note.date.day}.${note.date.month}.${note.date.year}', style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
+                                      Text('${note.date.day}.${note.date.month}.${note.date.year}', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
                                     ],
                                   ),
                                   const SizedBox(height: 4),
-                                  Text(note.note, style: const TextStyle(fontSize: 12, color: AppColors.textPrimary)),
+                                  Text(note.note, style: TextStyle(fontSize: 12, color: AppColors.textPrimary)),
                                 ],
                               ),
                             )),
@@ -773,8 +773,8 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
     return Expanded(
       child: Column(
         children: [
-          Text(val, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppColors.textPrimary)),
-          Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+          Text(val, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppColors.textPrimary)),
+          Text(label, style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
         ],
       ),
     );

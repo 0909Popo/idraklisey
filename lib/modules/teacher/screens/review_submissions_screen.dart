@@ -95,12 +95,12 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                             child: const Icon(Icons.assignment_add, size: 64, color: AppColors.primary),
                           ),
                           const SizedBox(height: 16),
-                          const Text(
+                          Text(
                             'Hələ heç bir dərs tapşırığı verilməyib',
                             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
+                          Text(
                             'Şagirdlərə fənniniz üzrə ev tapşırığı, məsələ və ya mövzu təyin etmək üçün aşağıdakı düyməyə klikləyin.',
                             textAlign: TextAlign.center,
                             style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
@@ -129,7 +129,7 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
+                          children: [
                             Icon(Icons.filter_alt_off_rounded, size: 48, color: AppColors.textMuted),
                             SizedBox(height: 8),
                             Text('Bu filtr üzrə tapşırıq tapılmadı.', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
@@ -214,7 +214,7 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.cardBorder),
         boxShadow: [
@@ -276,7 +276,7 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                                   ),
                                   child: Text(
                                     a.assignedClass!,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
                                       color: AppColors.textPrimary,
@@ -287,7 +287,7 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                             ],
                           ),
                           PopupMenuButton<String>(
-                            icon: const Icon(Icons.more_vert_rounded, size: 18, color: AppColors.textMuted),
+                            icon: Icon(Icons.more_vert_rounded, size: 18, color: AppColors.textMuted),
                             padding: EdgeInsets.zero,
                             onSelected: (val) {
                               if (val == 'delete') {
@@ -312,23 +312,23 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                       const SizedBox(height: 8),
                       Text(
                         a.title,
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         a.instructions,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.3),
+                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.3),
                       ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.access_time_rounded, size: 12, color: AppColors.textMuted),
+                          Icon(Icons.access_time_rounded, size: 12, color: AppColors.textMuted),
                           const SizedBox(width: 4),
                           Text(
                             'Son təhvil: ${dateFormat.format(a.dueDate)}',
-                            style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                            style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                           ),
                         ],
                       ),
@@ -344,7 +344,7 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                             children: [
                               Text(
                                 'Təhvil: $totalSubmitted / $totalTarget şagird (${(progress * 100).toInt()}%)',
-                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                               ),
                               Row(
                                 children: [
@@ -442,8 +442,8 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
 
             return Container(
               height: MediaQuery.of(context).size.height * 0.88,
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: Column(
@@ -473,12 +473,12 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                                 assignment.title,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 '${assignment.subject} • ${assignment.assignedClass ?? "Bütün Siniflər"} (${targetStudents.length} Şagird)',
-                                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                                style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
                               ),
                             ],
                           ),
@@ -495,7 +495,7 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                   // Students Submissions List
                   Expanded(
                     child: targetStudents.isEmpty
-                        ? const Center(
+                        ? Center(
                             child: Text('Bu tapşırıq üçün heç bir şagird təyin olunmayıb.', style: TextStyle(color: AppColors.textSecondary)),
                           )
                         : ListView.separated(
@@ -550,12 +550,12 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                                             children: [
                                               Text(
                                                 student.fullName,
-                                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                                               ),
                                               const SizedBox(height: 2),
                                               Text(
                                                 'ID: ${student.studentNumber} • ${student.className}',
-                                                style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                                                style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
                                               ),
                                             ],
                                           ),
@@ -593,7 +593,7 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                                               borderRadius: BorderRadius.circular(8),
                                               border: Border.all(color: AppColors.cardBorder),
                                             ),
-                                            child: const Text(
+                                            child: Text(
                                               '⏳ Gözləmədə',
                                               style: TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.w600),
                                             ),
@@ -612,13 +612,13 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                                           padding: const EdgeInsets.only(bottom: 6),
                                           child: Text(
                                             'Şagirdin qeydi: "${sub.studentNote}"',
-                                            style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: AppColors.textPrimary),
+                                            style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: AppColors.textPrimary),
                                           ),
                                         ),
 
                                       // Scanned Images Gallery
                                       if (sub.scannedImages.isNotEmpty) ...[
-                                        const Text('Yüklənmiş Dəftər Səhifələri:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+                                        Text('Yüklənmiş Dəftər Səhifələri:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
                                         const SizedBox(height: 6),
                                         SizedBox(
                                           height: 70,
@@ -656,13 +656,13 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                                           padding: const EdgeInsets.all(8),
                                           margin: const EdgeInsets.only(bottom: 8),
                                           decoration: BoxDecoration(
-                                            color: Colors.white,
+                                            color: AppColors.surface,
                                             borderRadius: BorderRadius.circular(8),
                                             border: Border.all(color: AppColors.cardBorder),
                                           ),
                                           child: Text(
                                             'Müəllim rəyi: "${sub.teacherComment}"',
-                                            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                                            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
                                           ),
                                         ),
 
@@ -727,7 +727,7 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
               children: [
                 Text(
                   'Tapşırıq: ${assignment.title}',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 12),
                 TextField(

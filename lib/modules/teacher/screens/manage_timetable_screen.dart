@@ -79,7 +79,7 @@ class _ManageTimetableScreenState extends State<ManageTimetableScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Tədris Olunan Sinif:',
                       style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                     ),
@@ -112,7 +112,7 @@ class _ManageTimetableScreenState extends State<ManageTimetableScreen> {
                             color: isSelected ? Colors.white : AppColors.textPrimary,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                           ),
-                          backgroundColor: Colors.white,
+                          backgroundColor: AppColors.surface,
                           side: BorderSide(color: isSelected ? AppColors.primary : AppColors.cardBorder),
                         ),
                       );
@@ -186,15 +186,15 @@ class _ManageTimetableScreenState extends State<ManageTimetableScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.event_note_rounded, size: 56, color: AppColors.textMuted),
+                          Icon(Icons.event_note_rounded, size: 56, color: AppColors.textMuted),
                           const SizedBox(height: 12),
                           Text(
                             '$_selectedClass sinfi üçün ${_daysList[_selectedDayIndex]} gününə dərs əlavə edilməyib.',
                             textAlign: TextAlign.center,
-                            style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.bold),
+                            style: TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 6),
-                          const Text(
+                          Text(
                             'Aşağıdakı "+ Dərs Əlavə Et" düyməsinə basaraq dərsin saatını, otağını və fənnini qeyd edin.',
                             textAlign: TextAlign.center,
                             style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
@@ -240,7 +240,7 @@ class _ManageTimetableScreenState extends State<ManageTimetableScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: isLocked ? const Color(0xFFF8FAFC) : (isMyLesson ? Colors.white : const Color(0xFFFAFAFA)),
+        color: isLocked ? AppColors.background : (isMyLesson ? AppColors.surface : AppColors.surfaceElevated),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isLocked ? AppColors.cardBorder : (isMyLesson ? color : AppColors.cardBorder),
@@ -296,7 +296,7 @@ class _ManageTimetableScreenState extends State<ManageTimetableScreen> {
                   ),
                   content: Text(
                     'Bu dərsin (${slot.subject} - $_selectedClass) davamiyyəti artıq təsdiqlənib və 5 dəqiqə keçdiyi üçün rəsmi olaraq kilidlənib.\n\nDəyişiklik yalnız Məktəb İnzibatçısı (Admin) tərəfindən edilə bilər.',
-                    style: const TextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.4),
+                    style: TextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.4),
                   ),
                   actions: [
                     ElevatedButton(
@@ -364,11 +364,11 @@ class _ManageTimetableScreenState extends State<ManageTimetableScreen> {
                                   const SizedBox(width: 8),
                                   Row(
                                     children: [
-                                      const Icon(Icons.schedule_rounded, size: 13, color: AppColors.textSecondary),
+                                      Icon(Icons.schedule_rounded, size: 13, color: AppColors.textSecondary),
                                       const SizedBox(width: 4),
                                       Text(
                                         slot.time,
-                                        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                                        style: TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
                                       ),
                                     ],
                                   ),
@@ -382,7 +382,7 @@ class _ManageTimetableScreenState extends State<ManageTimetableScreen> {
                                     borderRadius: BorderRadius.circular(6),
                                     border: Border.all(color: AppColors.textMuted),
                                   ),
-                                  child: const Row(
+                                  child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(Icons.lock_rounded, color: AppColors.textPrimary, size: 11),
@@ -424,7 +424,7 @@ class _ManageTimetableScreenState extends State<ManageTimetableScreen> {
                                   ),
                                   child: Text(
                                     slot.room,
-                                    style: const TextStyle(fontSize: 10, color: AppColors.textSecondary, fontWeight: FontWeight.bold),
+                                    style: TextStyle(fontSize: 10, color: AppColors.textSecondary, fontWeight: FontWeight.bold),
                                   ),
                                 ),
                             ],
@@ -477,7 +477,7 @@ class _ManageTimetableScreenState extends State<ManageTimetableScreen> {
                                         ),
                                         Text(
                                           slot.room,
-                                          style: const TextStyle(fontSize: 11, color: AppColors.textMuted, fontWeight: FontWeight.w600),
+                                          style: TextStyle(fontSize: 11, color: AppColors.textMuted, fontWeight: FontWeight.w600),
                                         ),
                                       ],
                                     ),
@@ -645,7 +645,7 @@ class _ManageTimetableScreenState extends State<ManageTimetableScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Tədris etdiyiniz sinifləri seçin və ya yeni sinif əlavə edin. Bir sinfi bir neçə müəllim sahiplənə bilər.',
                       style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),

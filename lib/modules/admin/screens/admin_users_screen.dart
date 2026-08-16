@@ -133,7 +133,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
           fontSize: 12,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         side: BorderSide(color: isSelected ? AppColors.primary : AppColors.cardBorder),
       ),
     );
@@ -179,7 +179,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                         Expanded(
                           child: Text(
                             user.fullName,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w800,
                               color: AppColors.textPrimary,
@@ -196,7 +196,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                     const SizedBox(height: 2),
                     Text(
                       'İdrak Kodu: ${user.idrakCode} • Login: ${user.username}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
                     ),
                     if (user.role == UserRole.teacher && user.subject != null) ...[
                       const SizedBox(height: 2),
@@ -233,7 +233,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Müəllimə Verilmiş Admin Yetkiləri:',
                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                       ),
@@ -259,7 +259,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
           ],
 
           const SizedBox(height: 10),
-          const Divider(color: AppColors.cardBorder, height: 1),
+          Divider(color: AppColors.cardBorder, height: 1),
           const SizedBox(height: 8),
 
           // Footer: Status toggle & Credentials view
@@ -288,7 +288,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 children: [
                   Text(
                     'Şifrə: ${user.password}',
-                    style: const TextStyle(fontSize: 11, fontFamily: 'monospace', color: AppColors.textMuted),
+                    style: TextStyle(fontSize: 11, fontFamily: 'monospace', color: AppColors.textMuted),
                   ),
                   const SizedBox(width: 10),
                   TextButton(

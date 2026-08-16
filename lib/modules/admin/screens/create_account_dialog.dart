@@ -145,7 +145,7 @@ class _CreateAccountDialogState extends State<CreateAccountDialog> {
       builder: (ctx) {
         final shareText = items.map((i) => '${i.label}: ${i.value}').join('\n');
         return Dialog(
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -160,7 +160,7 @@ class _CreateAccountDialogState extends State<CreateAccountDialog> {
                     Expanded(
                       child: Text(
                         title,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
                       ),
                     ),
                   ],
@@ -184,7 +184,7 @@ class _CreateAccountDialogState extends State<CreateAccountDialog> {
                               width: 110,
                               child: Text(
                                 item.label,
-                                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                                style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -240,8 +240,8 @@ class _CreateAccountDialogState extends State<CreateAccountDialog> {
     return Container(
       height: MediaQuery.of(context).size.height * 0.88,
       padding: const EdgeInsets.all(20),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
@@ -250,7 +250,7 @@ class _CreateAccountDialogState extends State<CreateAccountDialog> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Yeni İstifadəçi Hesabı Yarat',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
               ),
@@ -276,7 +276,7 @@ class _CreateAccountDialogState extends State<CreateAccountDialog> {
           ),
 
           const SizedBox(height: 14),
-          const Divider(color: AppColors.cardBorder),
+          Divider(color: AppColors.cardBorder),
 
           Expanded(
             child: SingleChildScrollView(
@@ -334,7 +334,7 @@ class _CreateAccountDialogState extends State<CreateAccountDialog> {
           ),
         ),
         const SizedBox(height: 8),
-        const Center(
+        Center(
           child: Text(
             'Profil fotosu əlavə edin (ixtiyari)',
             style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
@@ -375,7 +375,7 @@ class _CreateAccountDialogState extends State<CreateAccountDialog> {
         ),
 
         const SizedBox(height: 16),
-        const Text(
+        Text(
           'Admin Tərəfindən Verilən Xüsusi İcazələr (Yetkilər):',
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
         ),
@@ -441,7 +441,7 @@ class _CreateAccountDialogState extends State<CreateAccountDialog> {
           ),
         ),
         const SizedBox(height: 8),
-        const Center(
+        Center(
           child: Text(
             'Şagirdin profil fotosunu çəkin və ya seçin',
             style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
@@ -482,7 +482,7 @@ class _CreateAccountDialogState extends State<CreateAccountDialog> {
         ),
 
         const SizedBox(height: 20),
-        const Divider(color: AppColors.cardBorder),
+        Divider(color: AppColors.cardBorder),
         const SizedBox(height: 10),
 
         // Parent Info (Linked automatically)
@@ -491,7 +491,7 @@ class _CreateAccountDialogState extends State<CreateAccountDialog> {
           style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.goldDark),
         ),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'Valideyn hesabı avtomatik olaraq bu şagirdə bağlanacaq və yalnız onun məlumatlarını görəcək.',
           style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
         ),

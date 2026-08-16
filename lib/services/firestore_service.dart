@@ -13,6 +13,7 @@ import '../data/models/timetable_model.dart';
 import '../data/models/attendance_model.dart';
 import '../data/models/meet_model.dart';
 import '../data/models/notification_model.dart';
+import '../data/models/inventory_model.dart';
 
 class FirestoreService {
   static final FirestoreService _instance = FirestoreService._internal();
@@ -48,9 +49,11 @@ class FirestoreService {
         'createdAt': user.createdAt.toIso8601String(),
         'teacherPermissions': user.teacherPermissions != null
             ? {
-                'canManageCafeteria': user.teacherPermissions!.canManageCafeteria,
+                'canManageCafeteria':
+                    user.teacherPermissions!.canManageCafeteria,
                 'canManageMedical': user.teacherPermissions!.canManageMedical,
-                'canManageInventory': user.teacherPermissions!.canManageInventory,
+                'canManageInventory':
+                    user.teacherPermissions!.canManageInventory,
               }
             : null,
       });
@@ -112,21 +115,27 @@ class FirestoreService {
     }
   }
 
-  Future<void> updateTeacherPermissions(String userId, TeacherPermissions perms) async {
+  Future<void> updateTeacherPermissions(
+    String userId,
+    TeacherPermissions perms,
+  ) async {
     try {
       await db.collection('users').doc(userId).update({
         'teacherPermissions': {
           'canManageCafeteria': perms.canManageCafeteria,
           'canManageMedical': perms.canManageMedical,
           'canManageInventory': perms.canManageInventory,
-        }
+        },
       });
     } catch (e) {
       debugPrint('Firestore updateTeacherPermissions error: $e');
     }
   }
 
-  Future<void> updateTeacherAssignedClasses(String userId, List<String> classes) async {
+  Future<void> updateTeacherAssignedClasses(
+    String userId,
+    List<String> classes,
+  ) async {
     try {
       await db.collection('users').doc(userId).update({
         'assignedClasses': classes,
@@ -137,21 +146,32 @@ class FirestoreService {
   }
 
   // --- TIMETABLE PER CLASS ---
-  Future<void> saveClassTimetable(String className, List<DayTimetable> timetable) async {
+  Future<void> saveClassTimetable(
+    String className,
+    List<DayTimetable> timetable,
+  ) async {
     try {
-      final daysMap = timetable.map((day) => {
-        'dayName': day.dayName,
-        'shortDay': day.shortDay,
-        'lessons': day.lessons.map((l) => {
-          'period': l.period,
-          'time': l.time,
-          'subject': l.subject,
-          'teacher': l.teacher,
-          'room': l.room,
-          'colorHex': l.colorHex,
-          'isCurrent': l.isCurrent,
-        }).toList(),
-      }).toList();
+      final daysMap = timetable
+          .map(
+            (day) => {
+              'dayName': day.dayName,
+              'shortDay': day.shortDay,
+              'lessons': day.lessons
+                  .map(
+                    (l) => {
+                      'period': l.period,
+                      'time': l.time,
+                      'subject': l.subject,
+                      'teacher': l.teacher,
+                      'room': l.room,
+                      'colorHex': l.colorHex,
+                      'isCurrent': l.isCurrent,
+                    },
+                  )
+                  .toList(),
+            },
+          )
+          .toList();
 
       await db.collection('timetables').doc(className).set({
         'className': className,
@@ -229,14 +249,22 @@ class FirestoreService {
 
   Future<void> updateStudentClass(String studentId, String newClassName) async {
     try {
-      await db.collection('students').doc(studentId).update({'className': newClassName});
-      await db.collection('users').doc('usr-$studentId').update({'className': newClassName});
+      await db.collection('students').doc(studentId).update({
+        'className': newClassName,
+      });
+      await db.collection('users').doc('usr-$studentId').update({
+        'className': newClassName,
+      });
     } catch (e) {
       debugPrint('Firestore updateStudentClass error: $e');
     }
   }
 
-  Future<void> updateStudentGPA(String studentId, double gpa, int attendanceRate) async {
+  Future<void> updateStudentGPA(
+    String studentId,
+    double gpa,
+    int attendanceRate,
+  ) async {
     try {
       await db.collection('students').doc(studentId).update({
         'gpa': gpa,
@@ -274,7 +302,10 @@ class FirestoreService {
   }
 
   // --- MEDICAL CARDS (Per Student) ---
-  Future<void> saveMedicalCard(String studentId, StudentMedicalCard card) async {
+  Future<void> saveMedicalCard(
+    String studentId,
+    StudentMedicalCard card,
+  ) async {
     try {
       await db.collection('medical_cards').doc(studentId).set({
         'studentId': studentId,
@@ -285,24 +316,36 @@ class FirestoreService {
         'emergencyContactPhone': card.emergencyContactPhone,
         'lyceumDoctorNotes': card.lyceumDoctorNotes,
         'chronicConditions': card.chronicConditions,
-        'allergies': card.allergies.map((a) => {
-          'name': a.name,
-          'severity': a.severity,
-          'reaction': a.reaction,
-          'firstAid': a.firstAid,
-        }).toList(),
-        'vaccineHistory': card.vaccineHistory.map((v) => {
-          'name': v.name,
-          'date': v.date.toIso8601String(),
-          'status': v.status,
-          'doctor': v.doctor,
-        }).toList(),
-        'parentNotes': card.parentNotes.map((p) => {
-          'id': p.id,
-          'note': p.note,
-          'date': p.date.toIso8601String(),
-          'parentName': p.parentName,
-        }).toList(),
+        'allergies': card.allergies
+            .map(
+              (a) => {
+                'name': a.name,
+                'severity': a.severity,
+                'reaction': a.reaction,
+                'firstAid': a.firstAid,
+              },
+            )
+            .toList(),
+        'vaccineHistory': card.vaccineHistory
+            .map(
+              (v) => {
+                'name': v.name,
+                'date': v.date.toIso8601String(),
+                'status': v.status,
+                'doctor': v.doctor,
+              },
+            )
+            .toList(),
+        'parentNotes': card.parentNotes
+            .map(
+              (p) => {
+                'id': p.id,
+                'note': p.note,
+                'date': p.date.toIso8601String(),
+                'parentName': p.parentName,
+              },
+            )
+            .toList(),
       });
     } catch (e) {
       debugPrint('Firestore saveMedicalCard error: $e');
@@ -315,30 +358,36 @@ class FirestoreService {
       if (!doc.exists || doc.data() == null) return null;
       final data = doc.data()!;
 
-      final allergiesList = (data['allergies'] as List<dynamic>?)?.map((item) {
-        final m = item as Map<String, dynamic>;
-        return AllergyItem(
-          name: m['name'] ?? '',
-          severity: m['severity'] ?? '',
-          reaction: m['reaction'] ?? '',
-          firstAid: m['firstAid'] ?? '',
-        );
-      }).toList() ?? [];
+      final allergiesList =
+          (data['allergies'] as List<dynamic>?)?.map((item) {
+            final m = item as Map<String, dynamic>;
+            return AllergyItem(
+              name: m['name'] ?? '',
+              severity: m['severity'] ?? '',
+              reaction: m['reaction'] ?? '',
+              firstAid: m['firstAid'] ?? '',
+            );
+          }).toList() ??
+          [];
 
-      final vaccinesList = (data['vaccineHistory'] as List<dynamic>?)?.map((item) {
-        final m = item as Map<String, dynamic>;
-        return VaccineRecord(
-          name: m['name'] ?? '',
-          date: DateTime.tryParse(m['date'] ?? '') ?? DateTime.now(),
-          status: m['status'] ?? '',
-          doctor: m['doctor'] ?? '',
-        );
-      }).toList() ?? [];
+      final vaccinesList =
+          (data['vaccineHistory'] as List<dynamic>?)?.map((item) {
+            final m = item as Map<String, dynamic>;
+            return VaccineRecord(
+              name: m['name'] ?? '',
+              date: DateTime.tryParse(m['date'] ?? '') ?? DateTime.now(),
+              status: m['status'] ?? '',
+              doctor: m['doctor'] ?? '',
+            );
+          }).toList() ??
+          [];
 
-      final parentNotesList = (data['parentNotes'] as List<dynamic>?)?.map((item) {
-        final m = item as Map<String, dynamic>;
-        return ParentMedicalNote.fromMap(m);
-      }).toList() ?? [];
+      final parentNotesList =
+          (data['parentNotes'] as List<dynamic>?)?.map((item) {
+            final m = item as Map<String, dynamic>;
+            return ParentMedicalNote.fromMap(m);
+          }).toList() ??
+          [];
 
       return StudentMedicalCard(
         bloodGroup: data['bloodGroup'] ?? 'Məlumat yoxdur',
@@ -366,30 +415,36 @@ class FirestoreService {
         final data = doc.data();
         final studentId = data['studentId'] ?? doc.id;
 
-        final allergiesList = (data['allergies'] as List<dynamic>?)?.map((item) {
-          final m = item as Map<String, dynamic>;
-          return AllergyItem(
-            name: m['name'] ?? '',
-            severity: m['severity'] ?? '',
-            reaction: m['reaction'] ?? '',
-            firstAid: m['firstAid'] ?? '',
-          );
-        }).toList() ?? [];
+        final allergiesList =
+            (data['allergies'] as List<dynamic>?)?.map((item) {
+              final m = item as Map<String, dynamic>;
+              return AllergyItem(
+                name: m['name'] ?? '',
+                severity: m['severity'] ?? '',
+                reaction: m['reaction'] ?? '',
+                firstAid: m['firstAid'] ?? '',
+              );
+            }).toList() ??
+            [];
 
-        final vaccinesList = (data['vaccineHistory'] as List<dynamic>?)?.map((item) {
-          final m = item as Map<String, dynamic>;
-          return VaccineRecord(
-            name: m['name'] ?? '',
-            date: DateTime.tryParse(m['date'] ?? '') ?? DateTime.now(),
-            status: m['status'] ?? '',
-            doctor: m['doctor'] ?? '',
-          );
-        }).toList() ?? [];
+        final vaccinesList =
+            (data['vaccineHistory'] as List<dynamic>?)?.map((item) {
+              final m = item as Map<String, dynamic>;
+              return VaccineRecord(
+                name: m['name'] ?? '',
+                date: DateTime.tryParse(m['date'] ?? '') ?? DateTime.now(),
+                status: m['status'] ?? '',
+                doctor: m['doctor'] ?? '',
+              );
+            }).toList() ??
+            [];
 
-        final parentNotesList = (data['parentNotes'] as List<dynamic>?)?.map((item) {
-          final m = item as Map<String, dynamic>;
-          return ParentMedicalNote.fromMap(m);
-        }).toList() ?? [];
+        final parentNotesList =
+            (data['parentNotes'] as List<dynamic>?)?.map((item) {
+              final m = item as Map<String, dynamic>;
+              return ParentMedicalNote.fromMap(m);
+            }).toList() ??
+            [];
 
         result[studentId] = StudentMedicalCard(
           bloodGroup: data['bloodGroup'] ?? 'Məlumat yoxdur',
@@ -464,11 +519,14 @@ class FirestoreService {
           title: data['title'] ?? '',
           teacherName: data['teacherName'] ?? '',
           instructions: data['instructions'] ?? '',
-          assignedDate: DateTime.tryParse(data['assignedDate'] ?? '') ?? DateTime.now(),
+          assignedDate:
+              DateTime.tryParse(data['assignedDate'] ?? '') ?? DateTime.now(),
           dueDate: DateTime.tryParse(data['dueDate'] ?? '') ?? DateTime.now(),
           attachmentDocUrl: data['attachmentDocUrl'],
           assignedClass: data['assignedClass'],
-          assignedStudentIds: List<String>.from(data['assignedStudentIds'] ?? []),
+          assignedStudentIds: List<String>.from(
+            data['assignedStudentIds'] ?? [],
+          ),
           submissions: submissionsMap,
         );
       }).toList();
@@ -552,14 +610,18 @@ class FirestoreService {
           'date': day.date.toIso8601String(),
           'mealTime': day.mealTime,
           'totalCalories': day.totalCalories,
-          'items': day.items.map((i) => {
-            'name': i.name,
-            'category': i.category,
-            'calories': i.calories,
-            'weightGram': i.weightGram,
-            'allergens': i.allergens,
-            'imageUrl': i.imageUrl,
-          }).toList(),
+          'items': day.items
+              .map(
+                (i) => {
+                  'name': i.name,
+                  'category': i.category,
+                  'calories': i.calories,
+                  'weightGram': i.weightGram,
+                  'allergens': i.allergens,
+                  'imageUrl': i.imageUrl,
+                },
+              )
+              .toList(),
         });
       }
       await batch.commit();
@@ -574,17 +636,19 @@ class FirestoreService {
       if (snapshot.docs.isEmpty) return [];
       return snapshot.docs.map((doc) {
         final data = doc.data();
-        final items = (data['items'] as List<dynamic>?)?.map((it) {
-          final m = it as Map<String, dynamic>;
-          return MenuItem(
-            name: m['name'] ?? '',
-            category: m['category'] ?? '',
-            calories: m['calories'] ?? 200,
-            weightGram: m['weightGram'] ?? '',
-            allergens: List<String>.from(m['allergens'] ?? []),
-            imageUrl: m['imageUrl'] ?? '',
-          );
-        }).toList() ?? [];
+        final items =
+            (data['items'] as List<dynamic>?)?.map((it) {
+              final m = it as Map<String, dynamic>;
+              return MenuItem(
+                name: m['name'] ?? '',
+                category: m['category'] ?? '',
+                calories: m['calories'] ?? 200,
+                weightGram: m['weightGram'] ?? '',
+                allergens: List<String>.from(m['allergens'] ?? []),
+                imageUrl: m['imageUrl'] ?? '',
+              );
+            }).toList() ??
+            [];
 
         return DailyMenu(
           dayName: data['dayName'] ?? doc.id,
@@ -601,7 +665,11 @@ class FirestoreService {
   }
 
   // --- GRADES ---
-  Future<void> saveGrade(GradeRecord grade, String studentId, String? studentName) async {
+  Future<void> saveGrade(
+    GradeRecord grade,
+    String studentId,
+    String? studentName,
+  ) async {
     try {
       await db.collection('grades').doc(grade.id).set({
         'id': grade.id,
@@ -662,7 +730,11 @@ class FirestoreService {
   }
 
   // --- ATTENDANCE ---
-  Future<void> saveStudentDayAttendance(String studentId, int dayOfMonth, DayAttendance attendance) async {
+  Future<void> saveStudentDayAttendance(
+    String studentId,
+    int dayOfMonth,
+    DayAttendance attendance,
+  ) async {
     try {
       await db.collection('attendance').doc('${studentId}_$dayOfMonth').set({
         'studentId': studentId,
@@ -670,12 +742,16 @@ class FirestoreService {
         'date': attendance.date.toIso8601String(),
         'status': attendance.status.name,
         'note': attendance.note,
-        'periodDetails': attendance.periodDetails.map((p) => {
-          'period': p.period,
-          'subject': p.subject,
-          'status': p.status.name,
-          'time': p.time,
-        }).toList(),
+        'periodDetails': attendance.periodDetails
+            .map(
+              (p) => {
+                'period': p.period,
+                'subject': p.subject,
+                'status': p.status.name,
+                'time': p.time,
+              },
+            )
+            .toList(),
       });
     } catch (e) {
       debugPrint('Firestore saveStudentDayAttendance error: $e');
@@ -684,7 +760,10 @@ class FirestoreService {
 
   Future<Map<int, DayAttendance>> fetchAttendance(String studentId) async {
     try {
-      final snapshot = await db.collection('attendance').where('studentId', isEqualTo: studentId).get();
+      final snapshot = await db
+          .collection('attendance')
+          .where('studentId', isEqualTo: studentId)
+          .get();
       final Map<int, DayAttendance> result = {};
 
       for (final doc in snapshot.docs) {
@@ -765,6 +844,56 @@ class FirestoreService {
     }
   }
 
+  // --- QR INVENTORY ITEMS ---
+  Future<void> saveInventoryItem(InventoryItem item) async {
+    try {
+      await db.collection('inventory_items').doc(item.id).set({
+        'id': item.id,
+        'qrCode': item.qrCode,
+        'name': item.name,
+        'category': item.category,
+        'room': item.room,
+        'serialNumber': item.serialNumber,
+        'notes': item.notes,
+        'isActive': item.isActive,
+        'createdAt': item.createdAt.toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('Firestore saveInventoryItem error: $e');
+    }
+  }
+
+  Future<List<InventoryItem>> fetchInventoryItems() async {
+    try {
+      final snapshot = await db.collection('inventory_items').get();
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        return InventoryItem(
+          id: data['id'] ?? doc.id,
+          qrCode: data['qrCode'] ?? '',
+          name: data['name'] ?? '',
+          category: data['category'] ?? 'Digər',
+          room: data['room'] ?? '',
+          serialNumber: data['serialNumber'] ?? '',
+          notes: data['notes'] ?? '',
+          isActive: data['isActive'] ?? true,
+          createdAt: DateTime.tryParse(data['createdAt'] ?? '') ?? DateTime.now(),
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('Firestore fetchInventoryItems error: $e');
+      return [];
+    }
+  }
+
+  Future<void> deleteInventoryItem(String id) async {
+    try {
+      await db.collection('inventory_items').doc(id).delete();
+    } catch (e) {
+      debugPrint('Firestore deleteInventoryItem error: $e');
+    }
+  }
+
   // --- TICKETS ---
   Future<void> saveTicket(HelpdeskTicket ticket) async {
     try {
@@ -781,12 +910,16 @@ class FirestoreService {
         'roomNumber': ticket.roomNumber,
         'inventoryCode': ticket.inventoryCode,
         'attachedImage': ticket.attachedImage,
-        'messages': ticket.messages.map((m) => {
-          'sender': m.sender,
-          'message': m.message,
-          'timestamp': m.timestamp.toIso8601String(),
-          'isFromStaff': m.isFromStaff,
-        }).toList(),
+        'messages': ticket.messages
+            .map(
+              (m) => {
+                'sender': m.sender,
+                'message': m.message,
+                'timestamp': m.timestamp.toIso8601String(),
+                'isFromStaff': m.isFromStaff,
+              },
+            )
+            .toList(),
       });
     } catch (e) {
       debugPrint('Firestore saveTicket error: $e');
@@ -798,15 +931,18 @@ class FirestoreService {
       final snapshot = await db.collection('tickets').get();
       return snapshot.docs.map((doc) {
         final data = doc.data();
-        final msgs = (data['messages'] as List<dynamic>?)?.map((item) {
-          final m = item as Map<String, dynamic>;
-          return TicketMessage(
-            sender: m['sender'] ?? '',
-            message: m['message'] ?? '',
-            timestamp: DateTime.tryParse(m['timestamp'] ?? '') ?? DateTime.now(),
-            isFromStaff: m['isFromStaff'] ?? false,
-          );
-        }).toList() ?? [];
+        final msgs =
+            (data['messages'] as List<dynamic>?)?.map((item) {
+              final m = item as Map<String, dynamic>;
+              return TicketMessage(
+                sender: m['sender'] ?? '',
+                message: m['message'] ?? '',
+                timestamp:
+                    DateTime.tryParse(m['timestamp'] ?? '') ?? DateTime.now(),
+                isFromStaff: m['isFromStaff'] ?? false,
+              );
+            }).toList() ??
+            [];
 
         return HelpdeskTicket(
           id: data['id'] ?? doc.id,
@@ -826,7 +962,8 @@ class FirestoreService {
           senderName: data['senderName'] ?? '',
           senderRole: data['senderRole'] ?? '',
           description: data['description'] ?? '',
-          createdAt: DateTime.tryParse(data['createdAt'] ?? '') ?? DateTime.now(),
+          createdAt:
+              DateTime.tryParse(data['createdAt'] ?? '') ?? DateTime.now(),
           roomNumber: data['roomNumber'],
           inventoryCode: data['inventoryCode'],
           attachedImage: data['attachedImage'],
@@ -858,6 +995,27 @@ class FirestoreService {
     }
   }
 
+  /// Delivers room and participant changes immediately to every connected app.
+  Stream<List<MeetRoom>> watchMeetRooms() {
+    return db
+        .collection('meet_rooms')
+        .snapshots(includeMetadataChanges: true)
+        .map((snapshot) {
+      if (snapshot.metadata.isFromCache) {
+        debugPrint('⚠️ Meet rooms loaded from cache (offline mode)');
+      }
+      final rooms = snapshot.docs
+          .map((doc) => MeetRoom.fromJson(doc.data()))
+          .toList();
+      rooms.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return rooms;
+    }).handleError((error) {
+      debugPrint('Firestore watchMeetRooms error: $error');
+      // Return empty list on error to prevent stream from breaking
+      return <MeetRoom>[];
+    });
+  }
+
   Future<void> deleteMeetRoom(String roomId) async {
     try {
       await db.collection('meet_rooms').doc(roomId).delete();
@@ -866,20 +1024,120 @@ class FirestoreService {
     }
   }
 
-  Future<void> updateMeetParticipants(String roomId, List<MeetParticipant> participants) async {
-    try {
-      await db.collection('meet_rooms').doc(roomId).update({
-        'participants': participants.map((p) => p.toJson()).toList(),
-      });
-    } catch (e) {
-      debugPrint('Firestore updateMeetParticipants error: $e');
+  /// Updates the participant list in a transaction so simultaneous joins never
+  /// overwrite one another.
+  Future<List<MeetParticipant>> joinMeetParticipant(
+    String roomId,
+    MeetParticipant participant,
+  ) {
+    return _changeMeetParticipants(roomId, (participants, room) {
+      final existingIndex = participants.indexWhere(
+        (p) => p.userId == participant.userId,
+      );
+      if (existingIndex == -1) {
+        participants.add(participant);
+      } else {
+        // Keep moderation state if a user reconnects to the same room.
+        final existing = participants[existingIndex];
+        participants[existingIndex] = participant.copyWith(
+          isMuted: existing.isMuted,
+          isMutedByHost: existing.isMutedByHost,
+        );
+      }
+      return participants;
+    });
+  }
+
+  Future<List<MeetParticipant>> leaveMeetParticipant(
+    String roomId,
+    String userId,
+  ) {
+    return _changeMeetParticipants(roomId, (participants, room) {
+      participants.removeWhere((p) => p.userId == userId);
+      return participants;
+    });
+  }
+
+  Future<List<MeetParticipant>> setMeetParticipantMuted(
+    String roomId,
+    String userId,
+    bool muted, {
+    bool? mutedByHost,
+  }) {
+    return _changeMeetParticipants(roomId, (participants, room) {
+      return participants.map((participant) {
+        if (participant.userId != userId) return participant;
+        return participant.copyWith(
+          isMuted: muted,
+          isMutedByHost: mutedByHost ?? participant.isMutedByHost,
+        );
+      }).toList();
+    });
+  }
+
+  Future<List<MeetParticipant>> muteAllMeetParticipants(
+    String roomId,
+    bool muted,
+  ) {
+    return _changeMeetParticipants(roomId, (participants, room) {
+      return participants.map((participant) {
+        if (participant.userId == room.hostId) return participant;
+        return participant.copyWith(isMuted: muted, isMutedByHost: muted);
+      }).toList();
+    });
+  }
+
+  Future<void> setMeetRoomStatus(String roomId, String status) {
+    return db.collection('meet_rooms').doc(roomId).update({'status': status});
+  }
+
+  Future<List<MeetParticipant>> _changeMeetParticipants(
+    String roomId,
+    List<MeetParticipant> Function(List<MeetParticipant>, MeetRoom) change,
+  ) async {
+    final roomRef = db.collection('meet_rooms').doc(roomId);
+    
+    // Retry logic for Firestore connection issues
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        return await db.runTransaction((transaction) async {
+          final snapshot = await transaction.get(roomRef);
+          final data = snapshot.data();
+          if (!snapshot.exists || data == null) {
+            throw StateError('Meet room no longer exists.');
+          }
+
+          final room = MeetRoom.fromJson(data);
+          final updated = change(
+            List<MeetParticipant>.from(room.participants),
+            room,
+          );
+          transaction.update(roomRef, {
+            'participants': updated
+                .map((participant) => participant.toJson())
+                .toList(),
+          });
+          return updated;
+        }, timeout: const Duration(seconds: 15));
+      } catch (e) {
+        if (attempt < 2) {
+          debugPrint('Firestore transaction attempt ${attempt + 1}/3 failed: $e');
+          await Future.delayed(Duration(seconds: 2 * (attempt + 1)));
+        } else {
+          rethrow;
+        }
+      }
     }
+    throw StateError('Firestore transaction failed after 3 attempts');
   }
 
   // --- NOTIFICATIONS ---
   Future<void> saveNotification(AppNotification notification) async {
     try {
-      await db.collection('notifications').doc(notification.id).set(notification.toJson());
+      await db
+          .collection('notifications')
+          .doc(notification.id)
+          .set(notification.toJson());
     } catch (e) {
       debugPrint('Firestore saveNotification error: $e');
     }
@@ -887,7 +1145,10 @@ class FirestoreService {
 
   Future<List<AppNotification>> fetchNotifications() async {
     try {
-      final snap = await db.collection('notifications').orderBy('createdAt', descending: true).get();
+      final snap = await db
+          .collection('notifications')
+          .orderBy('createdAt', descending: true)
+          .get();
       return snap.docs.map((d) => AppNotification.fromJson(d.data())).toList();
     } catch (e) {
       debugPrint('Firestore fetchNotifications error: $e');
@@ -895,7 +1156,10 @@ class FirestoreService {
     }
   }
 
-  Future<void> markNotificationRead(String notificationId, String userId) async {
+  Future<void> markNotificationRead(
+    String notificationId,
+    String userId,
+  ) async {
     try {
       await db.collection('notifications').doc(notificationId).update({
         'readByUserIds': FieldValue.arrayUnion([userId]),
@@ -913,4 +1177,3 @@ class FirestoreService {
     }
   }
 }
-
