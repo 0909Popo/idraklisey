@@ -18,12 +18,10 @@ class _VideoSplashScreenState extends State<VideoSplashScreen> with SingleTicker
   bool _isFadingOut = false;
   bool _hasNavigated = false;
 
-  // Fallback animation controller if video is missing or loading
   late AnimationController _fallbackAnimController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _opacityAnimation;
 
-  // Possible video asset file names
   final List<String> _possibleVideoPaths = [
     'assets/videos/intro.mp4',
     'assets/videos/logo_intro.mp4',
@@ -34,21 +32,19 @@ class _VideoSplashScreenState extends State<VideoSplashScreen> with SingleTicker
   @override
   void initState() {
     super.initState();
-
-    // Hide status bar for immersive cinematic fullscreen intro
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
     _fallbackAnimController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2400),
+      duration: const Duration(milliseconds: 2200),
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.85, end: 1.15).animate(
+    _scaleAnimation = Tween<double>(begin: 0.9, end: 1.05).animate(
       CurvedAnimation(parent: _fallbackAnimController, curve: Curves.easeOutCubic),
     );
 
     _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _fallbackAnimController, curve: const Interval(0.0, 0.5, curve: Curves.easeIn)),
+      CurvedAnimation(parent: _fallbackAnimController, curve: const Interval(0.0, 0.6, curve: Curves.easeIn)),
     );
 
     _initVideo();
@@ -69,7 +65,6 @@ class _VideoSplashScreenState extends State<VideoSplashScreen> with SingleTicker
         _videoController!.setVolume(1.0);
         await _videoController!.play();
 
-        // Listen for video playback end
         _videoController!.addListener(() {
           if (_videoController != null &&
               _videoController!.value.isInitialized &&
@@ -80,15 +75,12 @@ class _VideoSplashScreenState extends State<VideoSplashScreen> with SingleTicker
           }
         });
         return;
-      } catch (e) {
-        // Continue to next path if not found
-      }
+      } catch (_) {}
     }
 
-    // If no video asset found, run cinematic fallback animation
     if (!_isVideoInitialized && mounted) {
       _fallbackAnimController.forward();
-      Future.delayed(const Duration(milliseconds: 2800), () {
+      Future.delayed(const Duration(milliseconds: 2600), () {
         if (mounted && !_hasNavigated) {
           _onVideoComplete();
         }
@@ -103,15 +95,14 @@ class _VideoSplashScreenState extends State<VideoSplashScreen> with SingleTicker
       _isFadingOut = true;
     });
 
-    // Restore standard status bars
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-    Future.delayed(const Duration(milliseconds: 650), () {
+    Future.delayed(const Duration(milliseconds: 600), () {
       if (mounted && !_hasNavigated) {
         _hasNavigated = true;
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
-            transitionDuration: const Duration(milliseconds: 700),
+            transitionDuration: const Duration(milliseconds: 600),
             pageBuilder: (context, animation, secondaryAnimation) => const MainScreen(),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
               return FadeTransition(
@@ -138,7 +129,7 @@ class _VideoSplashScreenState extends State<VideoSplashScreen> with SingleTicker
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.primaryDark,
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -162,11 +153,11 @@ class _VideoSplashScreenState extends State<VideoSplashScreen> with SingleTicker
               ),
             )
           else
-            // 2. Cinematic Golden Fallback Animated Intro
+            // 2. Cinematic Minimal Fallback Animated Intro
             GestureDetector(
               onTap: _onVideoComplete,
               child: Container(
-                color: const Color(0xFF070E1E),
+                color: AppColors.primaryDark,
                 child: Center(
                   child: AnimatedBuilder(
                     animation: _fallbackAnimController,
@@ -179,44 +170,45 @@ class _VideoSplashScreenState extends State<VideoSplashScreen> with SingleTicker
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(24),
+                                padding: const EdgeInsets.all(22),
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
+                                  color: AppColors.primaryAccent.withAlpha(25),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.gold.withAlpha(40),
-                                      blurRadius: 40,
-                                      spreadRadius: 10,
+                                      color: AppColors.primaryAccent.withAlpha(50),
+                                      blurRadius: 36,
+                                      spreadRadius: 8,
                                     ),
                                   ],
                                 ),
-                                child: const IdrakLogo(size: 90, showText: false),
+                                child: const IdrakLogo(size: 84, showText: false, isLightText: true),
                               ),
                               const SizedBox(height: 20),
                               const Text(
                                 'İDRAK LİSEYİ',
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 26,
+                                  fontSize: 24,
                                   fontWeight: FontWeight.w900,
-                                  letterSpacing: 4.0,
+                                  letterSpacing: 3.5,
                                 ),
                               ),
                               const SizedBox(height: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: AppColors.gold.withAlpha(25),
+                                  color: AppColors.primaryAccent.withAlpha(25),
                                   borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: AppColors.gold.withAlpha(80)),
+                                  border: Border.all(color: AppColors.primaryAccent.withAlpha(60)),
                                 ),
                                 child: const Text(
                                   'BEYNƏLXALQ TƏHSİL PORTALI',
                                   style: TextStyle(
-                                    color: AppColors.goldLight,
+                                    color: AppColors.primaryAccent,
                                     fontSize: 10,
                                     fontWeight: FontWeight.w800,
-                                    letterSpacing: 2.0,
+                                    letterSpacing: 1.5,
                                   ),
                                 ),
                               ),
@@ -243,7 +235,7 @@ class _VideoSplashScreenState extends State<VideoSplashScreen> with SingleTicker
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.black.withAlpha(90),
+                      color: Colors.black.withAlpha(80),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: Colors.white24),
                     ),
@@ -264,15 +256,15 @@ class _VideoSplashScreenState extends State<VideoSplashScreen> with SingleTicker
             ),
           ),
 
-          // 4. Smooth Black Fade-Out Overlay at the end
+          // 4. Smooth Dark Fade-Out Overlay at the end
           IgnorePointer(
             ignoring: !_isFadingOut,
             child: AnimatedOpacity(
               opacity: _isFadingOut ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 600),
+              duration: const Duration(milliseconds: 550),
               curve: Curves.easeInOut,
               child: Container(
-                color: Colors.black,
+                color: AppColors.primaryDark,
               ),
             ),
           ),

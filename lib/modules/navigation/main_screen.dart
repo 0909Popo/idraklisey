@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
@@ -26,9 +25,10 @@ import '../student/screens/assignments_timeline_screen.dart';
 import '../student/screens/meet_idrak_screen.dart';
 import '../student/screens/library_screen.dart';
 
+// Teacher Screens
 import '../teacher/screens/teacher_dashboard_screen.dart';
 import '../teacher/screens/teacher_students_screen.dart';
-import '../teacher/screens/teacher_timetable_view_screen.dart'; // ✅ YENİ
+import '../teacher/screens/teacher_timetable_view_screen.dart';
 import '../teacher/screens/quick_grading_screen.dart';
 import '../teacher/screens/qr_inventory_ticket_screen.dart';
 
@@ -46,7 +46,6 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
 
-    // If not authenticated, render LoginScreen
     if (!appState.isAuthenticated) {
       return const LoginScreen();
     }
@@ -66,10 +65,10 @@ class _MainScreenState extends State<MainScreen> {
           GradesAnalyticsScreen(),
         ];
         navItems = const [
-          BottomNavigationBarItem(icon: Icon(Icons.admin_panel_settings_rounded), label: 'İnzibatçı'),
-          BottomNavigationBarItem(icon: Icon(Icons.manage_accounts_rounded), label: 'Hesablar'),
-          BottomNavigationBarItem(icon: Icon(Icons.support_agent_rounded), label: 'Müraciətlər'),
-          BottomNavigationBarItem(icon: Icon(Icons.analytics_rounded), label: 'Analitika'),
+          BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), activeIcon: Icon(Icons.dashboard_rounded), label: 'İnzibatçı'),
+          BottomNavigationBarItem(icon: Icon(Icons.manage_accounts_outlined), activeIcon: Icon(Icons.manage_accounts_rounded), label: 'Hesablar'),
+          BottomNavigationBarItem(icon: Icon(Icons.support_agent_outlined), activeIcon: Icon(Icons.support_agent_rounded), label: 'Müraciətlər'),
+          BottomNavigationBarItem(icon: Icon(Icons.analytics_outlined), activeIcon: Icon(Icons.analytics_rounded), label: 'Analitika'),
         ];
         break;
 
@@ -82,11 +81,11 @@ class _MainScreenState extends State<MainScreen> {
           MedicalCardScreen(),
         ];
         navItems = const [
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Panel'),
-          BottomNavigationBarItem(icon: Icon(Icons.grid_view_rounded), label: 'Gündəlik'),
-          BottomNavigationBarItem(icon: Icon(Icons.insights_rounded), label: 'Qiymətlər'),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_month_rounded), label: 'Davamiyyət'),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite_rounded), label: 'Tibbi Kart'),
+          BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), activeIcon: Icon(Icons.dashboard_rounded), label: 'Panel'),
+          BottomNavigationBarItem(icon: Icon(Icons.grid_view_outlined), activeIcon: Icon(Icons.grid_view_rounded), label: 'Gündəlik'),
+          BottomNavigationBarItem(icon: Icon(Icons.insights_outlined), activeIcon: Icon(Icons.insights_rounded), label: 'Qiymətlər'),
+          BottomNavigationBarItem(icon: Icon(Icons.calendar_month_outlined), activeIcon: Icon(Icons.calendar_month_rounded), label: 'Davamiyyət'),
+          BottomNavigationBarItem(icon: Icon(Icons.favorite_outline_rounded), activeIcon: Icon(Icons.favorite_rounded), label: 'Tibbi Kart'),
         ];
         break;
 
@@ -99,11 +98,11 @@ class _MainScreenState extends State<MainScreen> {
           LibraryScreen(),
         ];
         navItems = const [
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Şagird'),
-          BottomNavigationBarItem(icon: Icon(Icons.badge_rounded), label: 'Digital ID'),
-          BottomNavigationBarItem(icon: Icon(Icons.assignment_rounded), label: 'Tapşırıqlar'),
-          BottomNavigationBarItem(icon: Icon(Icons.video_camera_front_rounded), label: 'Meet İdrak'),
-          BottomNavigationBarItem(icon: Icon(Icons.local_library_rounded), label: 'Kitabxana'),
+          BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), activeIcon: Icon(Icons.dashboard_rounded), label: 'Şagird'),
+          BottomNavigationBarItem(icon: Icon(Icons.badge_outlined), activeIcon: Icon(Icons.badge_rounded), label: 'Digital ID'),
+          BottomNavigationBarItem(icon: Icon(Icons.assignment_outlined), activeIcon: Icon(Icons.assignment_rounded), label: 'Tapşırıqlar'),
+          BottomNavigationBarItem(icon: Icon(Icons.video_camera_front_outlined), activeIcon: Icon(Icons.video_camera_front_rounded), label: 'Meet İdrak'),
+          BottomNavigationBarItem(icon: Icon(Icons.local_library_outlined), activeIcon: Icon(Icons.local_library_rounded), label: 'Kitabxana'),
         ];
         break;
 
@@ -111,21 +110,20 @@ class _MainScreenState extends State<MainScreen> {
         screens = const [
           TeacherDashboardScreen(),
           TeacherStudentsScreen(),
-          TeacherTimetableViewScreen(), // ✅ YENİ: View-only
+          TeacherTimetableViewScreen(),
           QuickGradingScreen(),
           QrInventoryTicketScreen(),
         ];
         navItems = const [
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Müəllim'),
-          BottomNavigationBarItem(icon: Icon(Icons.groups_rounded), label: 'Şagirdlər'),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_month_rounded), label: 'Davamiyyət'),
-          BottomNavigationBarItem(icon: Icon(Icons.edit_note_rounded), label: 'Qiymətlər'),
-          BottomNavigationBarItem(icon: Icon(Icons.qr_code_scanner_rounded), label: 'İnventar'),
+          BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), activeIcon: Icon(Icons.dashboard_rounded), label: 'Müəllim'),
+          BottomNavigationBarItem(icon: Icon(Icons.groups_outlined), activeIcon: Icon(Icons.groups_rounded), label: 'Şagirdlər'),
+          BottomNavigationBarItem(icon: Icon(Icons.calendar_month_outlined), activeIcon: Icon(Icons.calendar_month_rounded), label: 'Davamiyyət'),
+          BottomNavigationBarItem(icon: Icon(Icons.edit_note_outlined), activeIcon: Icon(Icons.edit_note_rounded), label: 'Qiymətlər'),
+          BottomNavigationBarItem(icon: Icon(Icons.qr_code_scanner_outlined), activeIcon: Icon(Icons.qr_code_scanner_rounded), label: 'İnventar'),
         ];
         break;
     }
 
-    // Ensure index is within range
     if (_currentTabIndex >= screens.length) {
       _currentTabIndex = 0;
     }
@@ -135,25 +133,8 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 56,
-        backgroundColor: isDark
-            ? AppColors.darkSurface
-            : (currentRole == UserRole.admin ? const Color(0xFF0F172A) : AppColors.primary),
+        backgroundColor: isDark ? AppColors.darkSurface : AppColors.primary,
         elevation: 0,
-        flexibleSpace: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            child: Container(
-              decoration: BoxDecoration(
-                color: (isDark
-                        ? AppColors.darkSurface
-                        : (currentRole == UserRole.admin
-                            ? const Color(0xFF0F172A)
-                            : AppColors.primary))
-                    .withAlpha(230),
-              ),
-            ),
-          ),
-        ),
         leading: const Padding(
           padding: EdgeInsets.only(left: 12),
           child: Center(
@@ -168,7 +149,7 @@ class _MainScreenState extends State<MainScreen> {
               'İDRAK LİSEYİ',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 15,
+                fontSize: 14.5,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 1.0,
               ),
@@ -178,7 +159,7 @@ class _MainScreenState extends State<MainScreen> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                color: AppColors.goldLight,
+                color: AppColors.primaryAccent,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
               ),
@@ -186,25 +167,20 @@ class _MainScreenState extends State<MainScreen> {
           ],
         ),
         actions: [
-          // Light / Dark theme toggle
           IconButton(
             icon: Icon(
-              appState.isDarkMode
-                  ? Icons.light_mode_rounded
-                  : Icons.dark_mode_rounded,
-              color: AppColors.goldLight,
-              size: 22,
+              appState.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+              color: Colors.white,
+              size: 20,
             ),
             tooltip: appState.isDarkMode ? 'Açıq rejim' : 'Tünd rejim',
             onPressed: () => appState.toggleTheme(),
           ),
-
-          // Notification Bell with Badge
           Stack(
             alignment: Alignment.center,
             children: [
               IconButton(
-                icon: const Icon(Icons.notifications_rounded, color: Colors.white, size: 24),
+                icon: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 22),
                 tooltip: 'Bildirişlər & Elanlar',
                 onPressed: () {
                   Navigator.push(
@@ -223,16 +199,13 @@ class _MainScreenState extends State<MainScreen> {
                       color: AppColors.danger,
                       shape: BoxShape.circle,
                     ),
-                    constraints: const BoxConstraints(
-                      minWidth: 16,
-                      minHeight: 16,
-                    ),
+                    constraints: const BoxConstraints(minWidth: 15, minHeight: 15),
                     child: Text(
                       '${appState.unreadNotificationCount}',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 9,
+                        fontSize: 8.5,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -240,14 +213,10 @@ class _MainScreenState extends State<MainScreen> {
                 ),
             ],
           ),
-
-          // Logout Button
           IconButton(
             icon: const Icon(Icons.logout_rounded, color: Colors.white70, size: 20),
             tooltip: 'Hesabdan Çıxış',
-            onPressed: () {
-              appState.logout();
-            },
+            onPressed: () => appState.logout(),
           ),
           const SizedBox(width: 4),
         ],
@@ -256,46 +225,23 @@ class _MainScreenState extends State<MainScreen> {
         index: _currentTabIndex,
         children: screens,
       ),
-      bottomNavigationBar: ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.darkSurface.withAlpha(200)
-                  : Colors.white.withAlpha(200),
-              border: Border(
-                top: BorderSide(
-                  color: isDark
-                      ? Colors.white.withAlpha(25)
-                      : Colors.white.withAlpha(40),
-                  width: 1,
-                ),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(8),
-                  blurRadius: 10,
-                  offset: const Offset(0, -3),
-                ),
-              ],
-            ),
-            child: BottomNavigationBar(
-              currentIndex: _currentTabIndex,
-              onTap: (index) => setState(() => _currentTabIndex = index),
-              type: BottomNavigationBarType.fixed,
-              backgroundColor: Colors.transparent,
-              selectedItemColor: isDark
-                  ? AppColors.goldLight
-                  : (currentRole == UserRole.admin ? const Color(0xFF0F172A) : AppColors.primary),
-              unselectedItemColor: AppColors.textMuted,
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          border: Border(top: BorderSide(color: AppColors.cardBorder)),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentTabIndex,
+          onTap: (index) => setState(() => _currentTabIndex = index),
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: AppColors.surface,
+          selectedItemColor: AppColors.primaryAccent,
+          unselectedItemColor: AppColors.textMuted,
           selectedFontSize: 11,
           unselectedFontSize: 11,
           selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
           elevation: 0,
           items: navItems,
-            ),
-          ),
         ),
       ),
     );

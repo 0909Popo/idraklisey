@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_shadows.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../../providers/app_state.dart';
 import '../../../data/models/assignment_model.dart';
@@ -92,127 +93,250 @@ class _AssignmentsTimelineScreenState extends State<AssignmentsTimelineScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text('${currentStudent.fullName} • Tapşırıqlar'),
-        elevation: 0,
-      ),
-      body: Column(
-        children: [
-          // Top Summary Banner
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(8),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // ── Collapsing App Bar with gradient ──
+          SliverAppBar(
+            expandedHeight: 130,
+            pinned: true,
+            stretch: true,
+            backgroundColor: AppColors.primary,
+            surfaceTintColor: Colors.transparent,
+            leading: IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withAlpha(25),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              ],
+                child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: Colors.white),
+              ),
+              onPressed: () => Navigator.pop(context),
             ),
-            child: Row(
-              children: [
-                _buildSummaryPill('Gözləyir', '$pendingCount', AppColors.warning, Icons.hourglass_top_rounded),
-                const SizedBox(width: 8),
-                _buildSummaryPill('Təhvil Verildi', '$submittedCount', Colors.teal, Icons.mark_email_read_rounded),
-                const SizedBox(width: 8),
-                _buildSummaryPill('Qiymətləndirildi', '$gradedCount', AppColors.success, Icons.check_circle_rounded),
-              ],
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF1A1B2E),
+                      Color(0xFF2D1B69),
+                      Color(0xFF6C5CE7),
+                    ],
+                  ),
+                ),
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 44, 20, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withAlpha(20),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.assignment_outlined, size: 22, color: Colors.white),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Tapşırıqlar',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: -0.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${currentStudent.fullName} • ${relevantAssignments.length} tapşırıq',
+                                    style: TextStyle(
+                                      color: Colors.white.withAlpha(178),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
 
-          // Filter Chips
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
+          // ── Stats Row ──
+          SliverToBoxAdapter(
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Row(
                 children: [
-                  _buildFilter('Hamısı (${relevantAssignments.length})', null),
-                  _buildFilter('⏳ Yeni ($pendingCount)', AssignmentStatus.pending),
-                  _buildFilter('📤 Təhvil Verilənlər ($submittedCount)', AssignmentStatus.submitted),
-                  _buildFilter('⭐ Yoxlanılanlar ($gradedCount)', AssignmentStatus.graded),
+                  _buildStatCard(
+                    'Gözləyir',
+                    pendingCount,
+                    Icons.hourglass_top_rounded,
+                    const Color(0xFFF59E0B),
+                    const Color(0xFFFFFBEB),
+                  ),
+                  const SizedBox(width: 10),
+                  _buildStatCard(
+                    'Təhvil',
+                    submittedCount,
+                    Icons.mark_email_read_rounded,
+                    const Color(0xFF0D9488),
+                    const Color(0xFFF0FDFA),
+                  ),
+                  const SizedBox(width: 10),
+                  _buildStatCard(
+                    'Yoxlanıldı',
+                    gradedCount,
+                    Icons.check_circle_rounded,
+                    const Color(0xFF22C55E),
+                    const Color(0xFFF0FDF4),
+                  ),
                 ],
               ),
             ),
           ),
 
-          // Assignment Timeline List
-          Expanded(
-            child: filtered.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withAlpha(15),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.assignment_turned_in_rounded, size: 56, color: AppColors.primary),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Tapşırıq tapılmadı',
-                            style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'Seçilmiş kateqoriya üzrə aktiv ev tapşırığı mövcud deyil.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                    itemCount: filtered.length,
-                    itemBuilder: (context, index) {
-                      final item = filtered[index];
-                      return _buildTimelineCard(context, item, currentStudent.id);
-                    },
-                  ),
+          // ── Filter Chips ──
+          SliverToBoxAdapter(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: [
+                    _buildFilterChip('Hamısı', relevantAssignments.length, null),
+                    const SizedBox(width: 6),
+                    _buildFilterChip('Gözləyir', pendingCount, AssignmentStatus.pending),
+                    const SizedBox(width: 6),
+                    _buildFilterChip('Təhvil Verildi', submittedCount, AssignmentStatus.submitted),
+                    const SizedBox(width: 6),
+                    _buildFilterChip('Qiymətləndirilən', gradedCount, AssignmentStatus.graded),
+                  ],
+                ),
+              ),
+            ),
           ),
+
+          // ── Empty State ──
+          if (filtered.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(40),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryAccent.withAlpha(12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.assignment_turned_in_outlined, size: 52, color: AppColors.primaryAccent.withAlpha(120)),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Tapşırıq tapılmadı',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Seçilmiş kateqoriya üzrə aktiv\nev tapşırığı mövcud deyil.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+          // ── Timeline List ──
+          if (filtered.isNotEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final item = filtered[index];
+                    final isLast = index == filtered.length - 1;
+                    return _buildTimelineCard(context, item, currentStudent.id, isLast);
+                  },
+                  childCount: filtered.length,
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryPill(String label, String value, Color color, IconData icon) {
+  // ── Stat Card ──
+  Widget _buildStatCard(String label, int count, IconData icon, Color color, Color bgColor) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         decoration: BoxDecoration(
-          color: color.withAlpha(15),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withAlpha(40)),
+          color: bgColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withAlpha(30)),
         ),
-        child: Row(
+        child: Column(
           children: [
-            Icon(icon, color: color, size: 18),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    value,
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: color),
-                  ),
-                  Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color),
-                  ),
-                ],
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withAlpha(20),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 18, color: color),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '$count',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: color,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: color.withAlpha(178),
               ),
             ),
           ],
@@ -221,29 +345,58 @@ class _AssignmentsTimelineScreenState extends State<AssignmentsTimelineScreen> {
     );
   }
 
-  Widget _buildFilter(String title, AssignmentStatus? status) {
+  // ── Filter Chip ──
+  Widget _buildFilterChip(String title, int count, AssignmentStatus? status) {
     final isSelected = _selectedStatus == status;
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: FilterChip(
-        label: Text(title),
-        selected: isSelected,
-        onSelected: (_) => setState(() => _selectedStatus = status),
-        selectedColor: AppColors.primary,
-        checkmarkColor: Colors.white,
-        labelStyle: TextStyle(
-          color: isSelected ? Colors.white : AppColors.textPrimary,
-          fontSize: 12,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+    return GestureDetector(
+      onTap: () => setState(() => _selectedStatus = status),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primaryAccent : AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? AppColors.primaryAccent : AppColors.cardBorder,
+            width: isSelected ? 1.5 : 1,
+          ),
+          boxShadow: isSelected ? [BoxShadow(color: AppColors.primaryAccent.withAlpha(40), blurRadius: 8, offset: const Offset(0, 2))] : [],
         ),
-        backgroundColor: const Color(0xFFF1F5F9),
-        side: BorderSide(color: isSelected ? AppColors.primary : AppColors.cardBorder),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                color: isSelected ? Colors.white : AppColors.textPrimary,
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+            const SizedBox(width: 5),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              decoration: BoxDecoration(
+                color: isSelected ? Colors.white.withAlpha(30) : AppColors.cardBorder.withAlpha(80),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '$count',
+                style: TextStyle(
+                  color: isSelected ? Colors.white : AppColors.textSecondary,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildTimelineCard(BuildContext context, HomeworkAssignment assignment, String studentId) {
+  // ── Timeline Card with left connector ──
+  Widget _buildTimelineCard(BuildContext context, HomeworkAssignment assignment, String studentId, bool isLast) {
     final dateFormat = DateFormat('dd.MM.yyyy HH:mm');
     final status = assignment.getStatusForStudent(studentId);
     final mySub = assignment.getSubmissionForStudent(studentId);
@@ -270,7 +423,7 @@ class _AssignmentsTimelineScreenState extends State<AssignmentsTimelineScreen> {
         statusIcon = Icons.edit_note_rounded;
         break;
       case AssignmentStatus.submitted:
-        statusColor = Colors.teal;
+        statusColor = const Color(0xFF0D9488);
         statusTitle = 'Təhvil Verildi';
         statusIcon = Icons.mark_email_read_rounded;
         break;
@@ -281,170 +434,248 @@ class _AssignmentsTimelineScreenState extends State<AssignmentsTimelineScreen> {
         break;
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cardBorder),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(6),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => HomeworkSubmissionScreen(assignment: assignment),
-              ),
-            );
-          },
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(15),
-            child: IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Left Accent Strip
-                  Container(
-                    width: 6,
-                    color: color,
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // ── Left timeline connector ──
+          SizedBox(
+            width: 32,
+            child: Column(
+              children: [
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: statusColor.withAlpha(30),
+                    border: Border.all(color: statusColor, width: 2.5),
                   ),
-
-                  // Assignment Content
+                ),
+                if (!isLast)
                   Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Top Header: Subject Badge + Status Badge
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(
-                                      color: color.withAlpha(20),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Icon(icon, size: 16, color: color),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    assignment.subject,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w900,
-                                      color: color,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              StatusBadge(
-                                label: statusTitle,
-                                color: statusColor,
-                                icon: statusIcon,
-                                fontSize: 11,
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 10),
-
-                          // Assignment Title
-                          Text(
-                            assignment.title,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-
-                          const SizedBox(height: 4),
-
-                          // Instructions / Description preview
-                          Text(
-                            assignment.instructions,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.3),
-                          ),
-
-                          const SizedBox(height: 12),
-                          Divider(color: AppColors.cardBorder, height: 1),
-                          const SizedBox(height: 8),
-
-                          // Bottom Row: Due Date & Action CTA
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.access_time_rounded,
-                                    size: 13,
-                                    color: isOverdue ? AppColors.danger : AppColors.textMuted,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Son: ${dateFormat.format(assignment.dueDate)}',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: isOverdue ? AppColors.danger : AppColors.textSecondary,
-                                      fontWeight: isOverdue ? FontWeight.bold : FontWeight.w500,
-                                    ),
-                                  ),
-                                  if (!isOverdue && diffHours >= 0 && diffHours <= 48 && status == AssignmentStatus.pending) ...[
-                                    const SizedBox(width: 6),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.warning.withAlpha(25),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        diffHours < 24 ? 'Bu gün' : 'Sabah',
-                                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.warning),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  Text(
-                                    status == AssignmentStatus.graded
-                                        ? 'Qiymətə Bax'
-                                        : (status == AssignmentStatus.submitted ? 'Təhvilə Bax' : 'Kamera ilə Təhvil'),
-                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primaryAccent),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  const Icon(Icons.arrow_forward_ios_rounded, size: 11, color: AppColors.primaryAccent),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ],
+                    child: Container(
+                      width: 2,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [statusColor.withAlpha(60), AppColors.cardBorder.withAlpha(40)],
+                        ),
                       ),
                     ),
                   ),
-                ],
+              ],
+            ),
+          ),
+
+          // ── Card Body ──
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 14),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: AppColors.cardBorder),
+                boxShadow: AppShadows.sm,
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(18),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => HomeworkSubmissionScreen(assignment: assignment),
+                      ),
+                    );
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ── Color accent top bar ──
+                      Container(
+                        height: 4,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [color, color.withAlpha(100)],
+                          ),
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(18),
+                            topRight: Radius.circular(18),
+                          ),
+                        ),
+                      ),
+
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // ── Subject badge + Status ──
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(7),
+                                        decoration: BoxDecoration(
+                                          color: color.withAlpha(18),
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Icon(icon, size: 16, color: color),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Flexible(
+                                        child: Text(
+                                          assignment.subject,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w800,
+                                            color: color,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                StatusBadge(
+                                  label: statusTitle,
+                                  color: statusColor,
+                                  icon: statusIcon,
+                                  fontSize: 10,
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            // ── Title ──
+                            Text(
+                              assignment.title,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
+                                letterSpacing: -0.3,
+                                height: 1.3,
+                              ),
+                            ),
+
+                            const SizedBox(height: 6),
+
+                            // ── Description preview ──
+                            Text(
+                              assignment.instructions,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                color: AppColors.textSecondary,
+                                height: 1.45,
+                              ),
+                            ),
+
+                            const SizedBox(height: 14),
+
+                            // ── Thin separator ──
+                            Container(
+                              height: 1,
+                              color: AppColors.cardBorder.withAlpha(100),
+                            ),
+
+                            const SizedBox(height: 10),
+
+                            // ── Bottom: Due date & CTA ──
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.schedule_rounded,
+                                        size: 14,
+                                        color: isOverdue ? AppColors.danger : AppColors.textMuted,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Flexible(
+                                        child: Text(
+                                          'Son: ${dateFormat.format(assignment.dueDate)}',
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: isOverdue ? AppColors.danger : AppColors.textSecondary,
+                                            fontWeight: isOverdue ? FontWeight.w700 : FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                      if (!isOverdue && diffHours >= 0 && diffHours <= 48 && status == AssignmentStatus.pending) ...[
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.warning.withAlpha(20),
+                                            borderRadius: BorderRadius.circular(6),
+                                            border: Border.all(color: AppColors.warning.withAlpha(50)),
+                                          ),
+                                          child: Text(
+                                            diffHours < 24 ? 'Bu gün' : 'Sabah',
+                                            style: const TextStyle(
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.w800,
+                                              color: AppColors.warning,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryAccent.withAlpha(12),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        status == AssignmentStatus.graded
+                                            ? 'Qiymətə Bax'
+                                            : (status == AssignmentStatus.submitted ? 'Təhvilə Bax' : 'Təhvil Ver'),
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.primaryAccent,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Icon(Icons.arrow_forward_ios_rounded, size: 10, color: AppColors.primaryAccent),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

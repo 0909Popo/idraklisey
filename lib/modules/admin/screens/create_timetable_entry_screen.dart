@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_shadows.dart';
 import '../../../providers/app_state.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/models/timetable_model.dart';
@@ -46,7 +47,7 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
   void initState() {
     super.initState();
     _animController = AnimationController(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -69,43 +70,31 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
     final classes = appState.allDistinctClasses;
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFF0F172A),
-              const Color(0xFF1E293B),
-              AppColors.primary,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Modern Header
-              _buildModernHeader(),
+      backgroundColor: const Color(0xFF0F172A),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Modern Header
+            _buildModernHeader(),
 
-              // Progress Stepper
-              _buildProgressStepper(),
+            // Progress Stepper
+            _buildProgressStepper(),
 
-              // Content
-              Expanded(
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: Container(
-                    margin: const EdgeInsets.only(top: 16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                    ),
-                    child: _buildStepContent(appState, teachers, classes),
+            // Content
+            Expanded(
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: Container(
+                  margin: const EdgeInsets.only(top: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
                   ),
+                  child: _buildStepContent(appState, teachers, classes),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -113,35 +102,37 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
 
   Widget _buildModernHeader() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Row(
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 16),
             style: IconButton.styleFrom(
-              backgroundColor: Colors.white.withAlpha(25),
+              backgroundColor: Colors.white.withAlpha(15),
+              padding: const EdgeInsets.all(8),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  '✨ Yeni Dərs Əlavə Et',
+                  'Yeni Dərs Əlavə Et',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 22,
+                    fontSize: 18,
                     fontWeight: FontWeight.w900,
+                    letterSpacing: -0.4,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
-                  'Addım ${_currentStep + 1}/5',
+                  'Addım ${_currentStep + 1} / 5',
                   style: TextStyle(
                     color: Colors.white.withAlpha(180),
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -161,14 +152,15 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
           final isActive = index == _currentStep;
           final isCompleted = index < _currentStep;
           return Expanded(
-            child: Container(
-              margin: EdgeInsets.only(right: index < 4 ? 8 : 0),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              margin: EdgeInsets.only(right: index < 4 ? 6 : 0),
               height: 4,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(2),
                 color: isCompleted || isActive
                     ? AppColors.goldLight
-                    : Colors.white.withAlpha(40),
+                    : Colors.white.withAlpha(30),
               ),
             ),
           );
@@ -197,39 +189,40 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
   // ========== ADDIM 1: MÜƏLLİM SEÇİMİ ==========
   Widget _buildTeacherSelection(List<AppUser> teachers) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withAlpha(20),
+                  color: AppColors.primaryAccent.withAlpha(15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.person_search_rounded, color: AppColors.primary, size: 28),
+                child: Icon(Icons.person_search_rounded, color: AppColors.primaryAccent, size: 24),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Müəllimi Seçin',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
                     ),
                     Text(
                       'Bu dərsi tədris edəcək müəllim',
-                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
           if (teachers.isEmpty)
             _buildEmptyState('Müəllim yoxdur', 'Əvvəlcə İstifadəçi İdarəsindən müəllim yaradın.')
           else
@@ -242,28 +235,17 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
   Widget _buildTeacherCard(AppUser teacher) {
     final isSelected = _selectedTeacher?.id == teacher.id;
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        gradient: isSelected
-            ? LinearGradient(
-                colors: [AppColors.primary, AppColors.primaryAccent],
-              )
-            : null,
-        color: isSelected ? null : AppColors.background,
-        borderRadius: BorderRadius.circular(16),
+        color: isSelected ? AppColors.primaryAccent.withAlpha(12) : AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isSelected ? Colors.transparent : AppColors.cardBorder,
-          width: 2,
+          color: isSelected ? AppColors.primaryAccent : AppColors.cardBorder,
+          width: isSelected ? 2 : 1,
         ),
         boxShadow: isSelected
-            ? [
-                BoxShadow(
-                  color: AppColors.primary.withAlpha(80),
-                  blurRadius: 15,
-                  offset: const Offset(0, 5),
-                ),
-              ]
-            : null,
+            ? [BoxShadow(color: AppColors.primaryAccent.withAlpha(30), blurRadius: 10, offset: const Offset(0, 2))]
+            : AppShadows.sm,
       ),
       child: Material(
         color: Colors.transparent,
@@ -276,22 +258,31 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
             _animController.reset();
             _animController.forward();
           },
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: isSelected ? Colors.white.withAlpha(30) : AppColors.primary.withAlpha(30),
-                  backgroundImage: teacher.photoUrl != null ? NetworkImage(teacher.photoUrl!) : null,
-                  child: teacher.photoUrl == null
-                      ? Icon(
-                          Icons.person_rounded,
-                          size: 28,
-                          color: isSelected ? Colors.white : AppColors.primary,
-                        )
-                      : null,
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.primaryAccent.withAlpha(30)),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(13),
+                    child: Container(
+                      width: 50,
+                      height: 50,
+                      color: AppColors.primaryAccent.withAlpha(12),
+                      child: teacher.photoUrl != null
+                          ? Image.network(
+                              teacher.photoUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Icon(Icons.person_rounded, size: 24, color: AppColors.primaryAccent),
+                            )
+                          : const Icon(Icons.person_rounded, size: 24, color: AppColors.primaryAccent),
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -303,24 +294,22 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
-                          color: isSelected ? Colors.white : AppColors.textPrimary,
+                          color: isSelected ? AppColors.primaryAccent : AppColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 3),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: isSelected
-                              ? Colors.white.withAlpha(30)
-                              : AppColors.goldDark.withAlpha(25),
+                          color: AppColors.goldDark.withAlpha(15),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           teacher.subject ?? 'Fənn yoxdur',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: isSelected ? Colors.white : AppColors.goldDark,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.goldDark,
                           ),
                         ),
                       ),
@@ -328,9 +317,9 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
                   ),
                 ),
                 if (isSelected)
-                  const Icon(Icons.check_circle_rounded, color: Colors.white, size: 28)
+                  const Icon(Icons.check_circle_rounded, color: AppColors.primaryAccent, size: 24)
                 else
-                  Icon(Icons.circle_outlined, color: AppColors.textMuted, size: 28),
+                  Icon(Icons.chevron_right_rounded, color: AppColors.textMuted, size: 22),
               ],
             ),
           ),
@@ -342,39 +331,40 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
   // ========== ADDIM 2: SİNİF SEÇİMİ ==========
   Widget _buildClassSelection(List<String> classes) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryAccent.withAlpha(20),
+                  color: AppColors.primaryAccent.withAlpha(15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.class_rounded, color: AppColors.primaryAccent, size: 28),
+                child: Icon(Icons.class_rounded, color: AppColors.primaryAccent, size: 24),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Sinif Seçin',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
                     ),
                     Text(
                       'Hansı sinfə dərs təyin edilsin',
-                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
           if (classes.isEmpty)
             _buildEmptyState('Sinif yoxdur', 'Əvvəlcə Sinif İdarəsindən sinif yaradın.')
           else
@@ -383,7 +373,7 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
               runSpacing: 10,
               children: classes.map((cls) => _buildClassChip(cls)).toList(),
             ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           _buildBackButton(),
         ],
       ),
@@ -392,7 +382,7 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
 
   Widget _buildClassChip(String className) {
     final isSelected = _selectedClass == className;
-    return InkWell(
+    return GestureDetector(
       onTap: () {
         setState(() {
           _selectedClass = className;
@@ -401,36 +391,25 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
         _animController.reset();
         _animController.forward();
       },
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         decoration: BoxDecoration(
-          gradient: isSelected
-              ? LinearGradient(
-                  colors: [AppColors.primaryAccent, const Color(0xFF3B82F6)],
-                )
-              : null,
-          color: isSelected ? null : AppColors.background,
+          color: isSelected ? AppColors.primaryAccent : AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? Colors.transparent : AppColors.cardBorder,
-            width: 2,
+            color: isSelected ? AppColors.primaryAccent : AppColors.cardBorder,
+            width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppColors.primaryAccent.withAlpha(80),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
+              ? [BoxShadow(color: AppColors.primaryAccent.withAlpha(30), blurRadius: 8, offset: const Offset(0, 2))]
+              : AppShadows.sm,
         ),
         child: Text(
           className,
           style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w900,
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
             color: isSelected ? Colors.white : AppColors.textPrimary,
           ),
         ),
@@ -441,41 +420,42 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
   // ========== ADDIM 3: GÜN SEÇİMİ ==========
   Widget _buildDaySelection() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.goldDark.withAlpha(25),
+                  color: AppColors.goldDark.withAlpha(15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.calendar_today_rounded, color: AppColors.goldDark, size: 28),
+                child: Icon(Icons.calendar_today_rounded, color: AppColors.goldDark, size: 24),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Gün Seçin',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
                     ),
                     Text(
                       'Dərsin hansı gündə olacağını seçin',
-                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
           ..._days.map((day) => _buildDayCard(day)),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           _buildBackButton(),
         ],
       ),
@@ -485,19 +465,17 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
   Widget _buildDayCard(String day) {
     final isSelected = _selectedDay == day;
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        gradient: isSelected
-            ? LinearGradient(
-                colors: [AppColors.goldDark, AppColors.gold],
-              )
-            : null,
-        color: isSelected ? null : AppColors.background,
-        borderRadius: BorderRadius.circular(16),
+        color: isSelected ? AppColors.goldDark.withAlpha(12) : AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isSelected ? Colors.transparent : AppColors.cardBorder,
-          width: 2,
+          color: isSelected ? AppColors.goldDark : AppColors.cardBorder,
+          width: isSelected ? 2 : 1,
         ),
+        boxShadow: isSelected
+            ? [BoxShadow(color: AppColors.goldDark.withAlpha(25), blurRadius: 8, offset: const Offset(0, 2))]
+            : AppShadows.sm,
       ),
       child: Material(
         color: Colors.transparent,
@@ -510,29 +488,34 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
             _animController.reset();
             _animController.forward();
           },
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           child: Padding(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Icon(
-                  Icons.event_rounded,
-                  color: isSelected ? Colors.white : AppColors.goldDark,
-                  size: 28,
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.goldDark.withAlpha(15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.event_rounded, color: AppColors.goldDark, size: 22),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Text(
                     day,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.w800,
-                      color: isSelected ? Colors.white : AppColors.textPrimary,
+                      color: isSelected ? AppColors.goldDark : AppColors.textPrimary,
                     ),
                   ),
                 ),
                 if (isSelected)
-                  const Icon(Icons.check_circle_rounded, color: Colors.white, size: 26),
+                  const Icon(Icons.check_circle_rounded, color: AppColors.goldDark, size: 24)
+                else
+                  Icon(Icons.chevron_right_rounded, color: AppColors.textMuted, size: 22),
               ],
             ),
           ),
@@ -544,41 +527,42 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
   // ========== ADDIM 4: DƏRS SAATİ SEÇİMİ ==========
   Widget _buildPeriodSelection() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.success.withAlpha(25),
+                  color: AppColors.success.withAlpha(15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.schedule_rounded, color: AppColors.success, size: 28),
+                child: Icon(Icons.schedule_rounded, color: AppColors.success, size: 24),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Dərs Saatı Seçin',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
                     ),
                     Text(
                       'Neçənci dərs olacağını seçin',
-                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
           ..._lessonPeriods.entries.map((entry) => _buildPeriodCard(entry.key, entry.value)),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           _buildBackButton(),
         ],
       ),
@@ -588,19 +572,17 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
   Widget _buildPeriodCard(String period, String time) {
     final isSelected = _selectedPeriod == period;
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        gradient: isSelected
-            ? LinearGradient(
-                colors: [AppColors.success, const Color(0xFF059669)],
-              )
-            : null,
-        color: isSelected ? null : AppColors.background,
-        borderRadius: BorderRadius.circular(16),
+        color: isSelected ? AppColors.success.withAlpha(12) : AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isSelected ? Colors.transparent : AppColors.cardBorder,
-          width: 2,
+          color: isSelected ? AppColors.success : AppColors.cardBorder,
+          width: isSelected ? 2 : 1,
         ),
+        boxShadow: isSelected
+            ? [BoxShadow(color: AppColors.success.withAlpha(25), blurRadius: 8, offset: const Offset(0, 2))]
+            : AppShadows.sm,
       ),
       child: Material(
         color: Colors.transparent,
@@ -613,24 +595,18 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
             _animController.reset();
             _animController.forward();
           },
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           child: Padding(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: isSelected
-                        ? Colors.white.withAlpha(30)
-                        : AppColors.success.withAlpha(20),
+                    color: AppColors.success.withAlpha(15),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(
-                    Icons.access_time_rounded,
-                    color: isSelected ? Colors.white : AppColors.success,
-                    size: 22,
-                  ),
+                  child: Icon(Icons.access_time_rounded, color: AppColors.success, size: 22),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -640,25 +616,27 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
                       Text(
                         period,
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 15,
                           fontWeight: FontWeight.w800,
-                          color: isSelected ? Colors.white : AppColors.textPrimary,
+                          color: isSelected ? AppColors.success : AppColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         time,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: isSelected ? Colors.white.withAlpha(200) : AppColors.textSecondary,
+                          color: isSelected ? AppColors.success : AppColors.textSecondary,
                         ),
                       ),
                     ],
                   ),
                 ),
                 if (isSelected)
-                  const Icon(Icons.check_circle_rounded, color: Colors.white, size: 26),
+                  const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 24)
+                else
+                  Icon(Icons.chevron_right_rounded, color: AppColors.textMuted, size: 22),
               ],
             ),
           ),
@@ -670,39 +648,40 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
   // ========== ADDIM 5: OTAQ VƏ TƏSDİQ ==========
   Widget _buildRoomAndConfirm(AppState appState) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withAlpha(20),
+                  color: AppColors.primaryAccent.withAlpha(15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.meeting_room_rounded, color: AppColors.primary, size: 28),
+                child: Icon(Icons.meeting_room_rounded, color: AppColors.primaryAccent, size: 24),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Otaq & Təsdiq',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
                     ),
                     Text(
                       'Son məlumatlar və təsdiq',
-                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
           // Otaq Input
           TextField(
@@ -710,16 +689,20 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
             decoration: InputDecoration(
               labelText: 'Otaq / Sinif Nömrəsi',
               hintText: 'məs: 301, Lab-A, 2B',
-              prefixIcon: const Icon(Icons.door_front_door_rounded),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+              prefixIcon: const Icon(Icons.door_front_door_rounded, color: AppColors.primaryAccent),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: AppColors.cardBorder),
               ),
-              filled: true,
-              fillColor: AppColors.background,
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: AppColors.primaryAccent, width: 1.5),
+              ),
             ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
           // Xülasə
           _buildSummaryCard(),
@@ -729,34 +712,27 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
           // Təsdiq Düyməsi
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton(
+            child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(vertical: 18),
+                backgroundColor: AppColors.primaryAccent,
+                padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                elevation: 8,
-                shadowColor: AppColors.primary.withAlpha(100),
+                elevation: 0,
               ),
               onPressed: () => _createTimetableEntry(context, appState),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.check_circle_rounded, color: Colors.white, size: 24),
-                  SizedBox(width: 10),
-                  Text(
-                    'Dərsi Əlavə Et',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ],
+              icon: const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+              label: const Text(
+                'Dərsi Əlavə Et',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           _buildBackButton(),
         ],
       ),
@@ -765,35 +741,38 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
 
   Widget _buildSummaryCard() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primary.withAlpha(15),
-            AppColors.primaryAccent.withAlpha(10),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primary.withAlpha(60)),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.primaryAccent.withAlpha(40)),
+        boxShadow: AppShadows.sm,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.summarize_rounded, color: AppColors.primary, size: 22),
-              SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryAccent.withAlpha(12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.summarize_rounded, color: AppColors.primaryAccent, size: 16),
+              ),
+              const SizedBox(width: 8),
               Text(
                 'Xülasə',
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.primary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           _buildSummaryRow('👤 Müəllim', _selectedTeacher?.fullName ?? '-'),
           _buildSummaryRow('📚 Fənn', _selectedTeacher?.subject ?? '-'),
           _buildSummaryRow('🎓 Sinif', _selectedClass ?? '-'),
@@ -806,7 +785,7 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
 
   Widget _buildSummaryRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
           Expanded(
@@ -814,7 +793,7 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textSecondary,
               ),
@@ -825,7 +804,7 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
             child: Text(
               value,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textPrimary,
               ),
@@ -847,8 +826,8 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
           }
         });
       },
-      icon: const Icon(Icons.arrow_back_rounded),
-      label: const Text('Geri'),
+      icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 14),
+      label: const Text('Geri Qayıt', style: TextStyle(fontWeight: FontWeight.w700)),
     );
   }
 
@@ -858,17 +837,17 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
         padding: const EdgeInsets.all(40),
         child: Column(
           children: [
-            Icon(Icons.inbox_rounded, size: 64, color: AppColors.textMuted),
-            const SizedBox(height: 16),
+            Icon(Icons.inbox_rounded, size: 54, color: AppColors.textMuted),
+            const SizedBox(height: 14),
             Text(
               title,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
             ),
           ],
         ),
@@ -877,7 +856,6 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
   }
 
   void _createTimetableEntry(BuildContext context, AppState appState) {
-    // Validasiya
     if (_selectedTeacher == null || _selectedClass == null || _selectedDay == null || _selectedPeriod == null) {
       _showModernError(context, 'Bütün məlumatları doldurun!', 'Zəhmət olmasa bütün addımları tamamlayın.');
       return;
@@ -920,61 +898,26 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
       lesson: newLesson,
     );
 
-    // Uğur animasiyası
     _showModernSuccess(context);
   }
 
   void _showModernError(BuildContext context, String title, String message) {
     showDialog(
       context: context,
-      builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Container(
-          padding: const EdgeInsets.all(28),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Colors.white, AppColors.danger.withAlpha(10)],
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+        content: Text(message, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Bağla', style: TextStyle(color: Colors.white)),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.danger.withAlpha(25),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 48),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.danger,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Bağla', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }
@@ -982,63 +925,20 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
   void _showModernConflict(BuildContext context, String message) {
     showDialog(
       context: context,
-      builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Container(
-          padding: const EdgeInsets.all(28),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Colors.white, AppColors.warning.withAlpha(10)],
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        title: const Text('⚠️ Cədvəl Konflikti', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+        content: Text(message, style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4)),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.warning,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Geri Qayıt', style: TextStyle(color: Colors.white)),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.warning.withAlpha(25),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 56),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                '⚠️ Cədvəl Konflikti',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.warning.withAlpha(15),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.warning.withAlpha(60)),
-                ),
-                child: Text(
-                  message,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 14, height: 1.5),
-                ),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.warning,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                onPressed: () => Navigator.pop(ctx),
-                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-                label: const Text('Geri Qayıt', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }
@@ -1047,58 +947,26 @@ class _CreateTimetableEntryScreenState extends State<CreateTimetableEntryScreen>
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Container(
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Colors.white, AppColors.success.withAlpha(10)],
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppColors.success.withAlpha(25),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 64),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                '🎉 Dərs Uğurla Əlavə Edildi!',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Dərs cədvəli yeniləndi və şagirdlər üçün görünəcək.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 28),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.success,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  Navigator.pop(context);
-                },
-                icon: const Icon(Icons.done_all_rounded, color: Colors.white),
-                label: const Text('Tamamdır', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        title: const Text('🎉 Dərs Uğurla Əlavə Edildi!', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+        content: Text(
+          'Dərs cədvəli yeniləndi və şagirdlər üçün görünəcək.',
+          style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
         ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.success,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.pop(context);
+            },
+            child: const Text('Tamamdır', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+          ),
+        ],
       ),
     );
   }

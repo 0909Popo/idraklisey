@@ -51,7 +51,7 @@ class _DigitalIdCardScreenState extends State<DigitalIdCardScreen> with SingleTi
     final medCard = appState.medicalCard;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF070D1B),
+      backgroundColor: AppColors.primaryDark,
       appBar: AppBar(
         title: const Text('Rəqəmsal Şagird Vəsiqəsi'),
         backgroundColor: Colors.transparent,
@@ -59,6 +59,7 @@ class _DigitalIdCardScreenState extends State<DigitalIdCardScreen> with SingleTi
         elevation: 0,
       ),
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Column(
           children: [
@@ -84,15 +85,15 @@ class _DigitalIdCardScreenState extends State<DigitalIdCardScreen> with SingleTi
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                           decoration: BoxDecoration(
-                            color: !_showBack ? AppColors.gold : Colors.transparent,
+                            color: !_showBack ? AppColors.primaryAccent : Colors.transparent,
                             borderRadius: BorderRadius.circular(25),
                           ),
                           child: Text(
                             'Ön Tərəf',
                             style: TextStyle(
-                              color: !_showBack ? const Color(0xFF0F2552) : Colors.white70,
+                              color: !_showBack ? Colors.white : Colors.white70,
                               fontWeight: FontWeight.w900,
-                              fontSize: 13,
+                              fontSize: 12.5,
                             ),
                           ),
                         ),
@@ -104,15 +105,15 @@ class _DigitalIdCardScreenState extends State<DigitalIdCardScreen> with SingleTi
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                           decoration: BoxDecoration(
-                            color: _showBack ? AppColors.gold : Colors.transparent,
+                            color: _showBack ? AppColors.primaryAccent : Colors.transparent,
                             borderRadius: BorderRadius.circular(25),
                           ),
                           child: Text(
-                            'Arxa Tərəf',
+                            'Arxa Tərəf (Tibbi)',
                             style: TextStyle(
-                              color: _showBack ? const Color(0xFF0F2552) : Colors.white70,
+                              color: _showBack ? Colors.white : Colors.white70,
                               fontWeight: FontWeight.w900,
-                              fontSize: 13,
+                              fontSize: 12.5,
                             ),
                           ),
                         ),
@@ -125,80 +126,90 @@ class _DigitalIdCardScreenState extends State<DigitalIdCardScreen> with SingleTi
 
             const SizedBox(height: 20),
 
-            // 3D Flippable Student ID Card
+            // 3D Animated Flip Card
             GestureDetector(
               onTap: _flipCard,
               child: AnimatedBuilder(
                 animation: _animController,
                 builder: (context, child) {
                   final angle = _animController.value * pi;
-                  final isUnder = angle > (pi / 2);
+                  final isUnder = angle > pi / 2;
 
                   return Transform(
                     transform: Matrix4.identity()
-                      ..setEntry(3, 2, 0.0015)
+                      ..setEntry(3, 2, 0.001) // Perspective
                       ..rotateY(angle),
                     alignment: Alignment.center,
                     child: isUnder
                         ? Transform(
                             transform: Matrix4.identity()..rotateY(pi),
                             alignment: Alignment.center,
-                            child: _buildCardBack(student, medCard),
+                            child: _buildCardBack(context, student, medCard),
                           )
-                        : _buildCardFront(student),
+                        : _buildCardFront(context, student),
                   );
                 },
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
 
-            // NFC / Tap Hint — frosted glass pill
-            ClipRRect(
-              borderRadius: BorderRadius.circular(30),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(15),
-                    borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: Colors.white.withAlpha(25)),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.touch_app_rounded, color: AppColors.goldLight, size: 18),
-                      SizedBox(width: 8),
-                      Text(
-                        'Kartın digər üzünə baxmaq üçün üzərinə toxunun',
-                        style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
+            // Tap hint
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.touch_app_rounded, color: Colors.white60, size: 16),
+                const SizedBox(width: 6),
+                Text(
+                  'Kartı çevirmək üçün üzərinə toxunun',
+                  style: TextStyle(color: Colors.white.withAlpha(160), fontSize: 12),
                 ),
-              ),
+              ],
             ),
 
             const SizedBox(height: 24),
 
-            // Quick Action Buttons — dark frosted glass
-            Row(
-              children: [
-                Expanded(child: _buildGlassAction(
-                  icon: Icons.nfc_rounded,
-                  iconColor: AppColors.goldLight,
-                  title: 'NFC Keçid',
-                  subtitle: 'Turniket aktivdir',
-                )),
-                const SizedBox(width: 12),
-                Expanded(child: _buildGlassAction(
-                  icon: Icons.qr_code_scanner_rounded,
-                  iconColor: AppColors.success,
-                  title: 'Kitabxana Kodu',
-                  subtitle: 'Skan üçün hazır',
-                )),
-              ],
+            // Security Information Box
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha(10),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withAlpha(20)),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryAccent.withAlpha(30),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.security_rounded, color: AppColors.primaryAccent, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Rəsmi İdrak Liseyi Kimliyi',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Bu vəsiqə məktəbə giriş, kitabxana və yeməkxanada etibarlıdır.',
+                              style: TextStyle(color: Colors.white70, fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -206,63 +217,7 @@ class _DigitalIdCardScreenState extends State<DigitalIdCardScreen> with SingleTi
     );
   }
 
-  // Dark frosted-glass quick action button (NFC / Library)
-  Widget _buildGlassAction({
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String subtitle,
-  }) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white.withAlpha(15),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withAlpha(25)),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, color: iconColor, size: 24),
-              const SizedBox(height: 6),
-              Text(title, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-              Text(subtitle, style: const TextStyle(color: Colors.white54, fontSize: 10)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Diagonal light sheen overlay — gives the card a holographic glass feel.
-  Widget _buildHologramSheen() {
-    return Positioned.fill(
-      child: IgnorePointer(
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              stops: const [0.0, 0.25, 0.5, 1.0],
-              colors: [
-                Colors.white.withAlpha(20),
-                Colors.white.withAlpha(4),
-                Colors.transparent,
-                Colors.white.withAlpha(10),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // --- FRONT OF THE CARD ---
-  Widget _buildCardFront(dynamic student) {
+  Widget _buildCardFront(BuildContext context, dynamic student) {
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 380),
@@ -271,233 +226,198 @@ class _DigitalIdCardScreenState extends State<DigitalIdCardScreen> with SingleTi
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFF0A1628),
-            Color(0xFF0F2552),
-            Color(0xFF1E3E7B),
-            Color(0xFF1D4ED8),
-            Color(0xFF0A1935),
+            Color(0xFF1A1B2E),
+            Color(0xFF2E304F),
+            Color(0xFF161827),
           ],
         ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.gold, width: 2),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.primaryAccent.withAlpha(120), width: 1.5),
         boxShadow: [
-          // Gold glow + deep blue drop shadow
           BoxShadow(
-            color: AppColors.gold.withAlpha(30),
-            blurRadius: 30,
-            offset: const Offset(0, 6),
+            color: AppColors.primaryAccent.withAlpha(40),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
           BoxShadow(
-            color: AppColors.primaryAccent.withAlpha(90),
-            blurRadius: 25,
+            color: Colors.black.withAlpha(120),
+            blurRadius: 20,
             offset: const Offset(0, 10),
           ),
         ],
       ),
       child: Stack(
         children: [
+          // Holographic sheen effect
           _buildHologramSheen(),
+
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(18),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header with Logo and School Info
+                // Top Header: Logo + Contactless Wave Icon + School Title
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const IdrakLogo(size: 42),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            'İDRAK LİSEYİ',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.5,
+                    const Row(
+                      children: [
+                        IdrakLogo(size: 32),
+                        SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'İDRAK LİSEYİ',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.5,
+                              ),
                             ),
-                          ),
-                          Text(
-                            'RƏQƏMSAL TƏLƏBƏ / ŞAGİRD VƏSİQƏSİ',
-                            style: TextStyle(
-                              color: AppColors.goldLight,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.8,
+                            Text(
+                              'BEYNƏLXALQ TƏHSİL MƏKTƏBİ',
+                              style: TextStyle(
+                                color: AppColors.primaryAccent,
+                                fontSize: 7.5,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.8,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                      ],
                     ),
+                    const Icon(Icons.contactless_rounded, color: Colors.white70, size: 24),
+                  ],
+                ),
+
+                const SizedBox(height: 14),
+
+                // EMV Chip + Gold Laser Pass Badge
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildEmvChip(),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                       decoration: BoxDecoration(
-                        color: AppColors.success.withAlpha(40),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppColors.success),
+                        gradient: AppColors.accentGradient,
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.circle, color: AppColors.success, size: 8),
-                          SizedBox(width: 4),
-                          Text(
-                            'AKTİV',
-                            style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                          ),
-                        ],
+                      child: const Text(
+                        'STUDENT PASS',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.2,
+                        ),
                       ),
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 16),
-                const Divider(color: Colors.white24, height: 1),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
 
-                // Student Photo & Core Details
+                // Photo + Student Details
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Photo with gold border
                     Container(
+                      width: 72,
+                      height: 88,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: AppColors.gold, width: 2.5),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.primaryAccent, width: 1.5),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.gold.withAlpha(40),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
+                            color: Colors.black.withAlpha(80),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(10.5),
                         child: Image.network(
                           student.photoUrl,
-                          width: 100,
-                          height: 120,
                           fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: const Color(0xFF1E293B),
+                            child: const Icon(Icons.person, color: Colors.white54, size: 36),
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 16),
+
+                    const SizedBox(width: 14),
+
+                    // Details Column
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             student.fullName,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 17,
+                              fontSize: 14.5,
                               fontWeight: FontWeight.w900,
+                              letterSpacing: -0.2,
                             ),
                           ),
                           const SizedBox(height: 6),
-                          // Role badge — frosted gold pill
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                            decoration: BoxDecoration(
-                              gradient: AppColors.goldGradient,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.gold.withAlpha(60),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: const Text(
-                              'Ş A G İ R D',
-                              style: TextStyle(
-                                color: Color(0xFF0F2552),
-                                fontSize: 9,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          _buildCardField('Sinfi', student.className),
-                          const SizedBox(height: 4),
-                          _buildCardField('İdrak ID', student.studentNumber),
-                          const SizedBox(height: 4),
-                          _buildCardField('Tədris İli', student.academicYear),
+                          _buildCardField('TƏLƏBƏ NO', student.studentNumber),
+                          const SizedBox(height: 3),
+                          _buildCardField('SİNİF', student.className),
                         ],
                       ),
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 18),
+                const SizedBox(height: 14),
+                Divider(color: Colors.white.withAlpha(25), height: 1),
+                const SizedBox(height: 10),
 
-                // QR Code Section — frosted glass panel over the card gradient
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
+                // Bottom QR Code Row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'TƏSDİQ EDİLMİŞ ŞAGİRD',
+                          style: TextStyle(color: AppColors.primaryAccent, fontSize: 8.5, fontWeight: FontWeight.bold, letterSpacing: 0.8),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Etibarlılıq: 2025/2026 Tədris İli',
+                          style: TextStyle(color: Colors.white.withAlpha(160), fontSize: 9),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: Colors.white.withAlpha(235),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.white.withAlpha(80)),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          QrImageView(
-                            data: student.qrData,
-                            version: QrVersions.auto,
-                            size: 85.0,
-                            eyeStyle: const QrEyeStyle(
-                              eyeShape: QrEyeShape.square,
-                              color: Color(0xFF0F2552),
-                            ),
-                            dataModuleStyle: const QrDataModuleStyle(
-                              dataModuleShape: QrDataModuleShape.square,
-                              color: Color(0xFF0F2552),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Turniket & Keçid QR',
-                                  style: TextStyle(
-                                    color: AppColors.textPrimary,
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const SizedBox(height: 3),
-                                Text(
-                                  'Turniketə və ya kitabxana skanerinə yaxınlaşdırın.',
-                                  style: TextStyle(color: AppColors.textSecondary, fontSize: 10, height: 1.3),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Barkod: ${student.barcodeData}',
-                                  style: const TextStyle(
-                                    fontFamily: 'monospace',
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 10,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                      child: QrImageView(
+                        data: student.studentNumber,
+                        version: QrVersions.auto,
+                        size: 38,
+                        padding: EdgeInsets.zero,
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),
@@ -507,8 +427,7 @@ class _DigitalIdCardScreenState extends State<DigitalIdCardScreen> with SingleTi
     );
   }
 
-  // --- BACK OF THE CARD ---
-  Widget _buildCardBack(dynamic student, dynamic medCard) {
+  Widget _buildCardBack(BuildContext context, dynamic student, dynamic medCard) {
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 380),
@@ -517,22 +436,22 @@ class _DigitalIdCardScreenState extends State<DigitalIdCardScreen> with SingleTi
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
           colors: [
-            Color(0xFF0F172A),
-            Color(0xFF1E293B),
-            Color(0xFF0A0F1D),
+            Color(0xFF1A1B2E),
+            Color(0xFF2E304F),
+            Color(0xFF161827),
           ],
         ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.gold, width: 2),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.primaryAccent.withAlpha(120), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: AppColors.gold.withAlpha(25),
-            blurRadius: 30,
-            offset: const Offset(0, 6),
+            color: AppColors.primaryAccent.withAlpha(40),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
           BoxShadow(
             color: Colors.black.withAlpha(120),
-            blurRadius: 25,
+            blurRadius: 20,
             offset: const Offset(0, 10),
           ),
         ],
@@ -540,106 +459,163 @@ class _DigitalIdCardScreenState extends State<DigitalIdCardScreen> with SingleTi
       child: Stack(
         children: [
           _buildHologramSheen(),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Official Header Back
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Text(
-                      'TƏHLÜKƏSİZLİK VƏ ƏLAQƏ',
-                      style: TextStyle(color: AppColors.goldLight, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.2),
-                    ),
-                    Icon(Icons.verified_user_rounded, color: AppColors.goldLight, size: 18),
-                  ],
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Magnetic Stripe
+              Container(
+                margin: const EdgeInsets.only(top: 18),
+                height: 38,
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color(0xFF111111),
+                      Color(0xFF222222),
+                      Color(0xFF0A0A0A),
+                    ],
+                  ),
                 ),
+              ),
 
-                const SizedBox(height: 12),
-                const Divider(color: Colors.white24, height: 1),
-                const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Official Header Back
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'TƏHLÜKƏSİZLİK VƏ ƏLAQƏ',
+                          style: TextStyle(color: AppColors.primaryAccent, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.2),
+                        ),
+                        Icon(Icons.verified_user_rounded, color: AppColors.primaryAccent, size: 18),
+                      ],
+                    ),
 
-                // Emergency & Medical Info — dark frosted glass panel
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-                    child: Container(
+                    const SizedBox(height: 10),
+
+                    // Emergency & Medical Info — dark frosted glass panel
+                    Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white.withAlpha(18),
+                        color: Colors.white.withAlpha(15),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white.withAlpha(30)),
+                        border: Border.all(color: Colors.white.withAlpha(25)),
                       ),
                       child: Column(
                         children: [
                           _buildBackRow('🩸 Qan Qrupu', medCard.bloodGroup),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           _buildBackRow('👨‍👩‍👧 Valideyn', student.parentName),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           _buildBackRow('📞 Təcili Əlaqə', student.parentPhone),
-                          const SizedBox(height: 8),
-                          _buildBackRow('🏢 Ünvan', 'Bakı şəhəri, İdrak Liseyi Baş Korpus'),
+                          const SizedBox(height: 6),
+                          _buildBackRow('🏢 Ünvan', 'Bakı şəhəri, İdrak Liseyi'),
                         ],
                       ),
                     ),
-                  ),
-                ),
 
-                const SizedBox(height: 14),
+                    const SizedBox(height: 10),
 
-                // Legal & Disclaimer text
-                const Text(
-                  'Bu vəsiqə İdrak Liseyinin mülkiyyətidir. Tapıldığı təqdirdə liseyin mühafizə xidmətinə və ya rəhbərliyinə təhvil verilməsi xahiş olunur.',
-                  style: TextStyle(color: Colors.white54, fontSize: 9, height: 1.4),
-                ),
-
-                const SizedBox(height: 14),
-
-                // Bottom Barcode & Official Stamp — gold glow frame
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.goldLight.withAlpha(50)),
-                    gradient: LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      colors: [
-                        AppColors.goldLight.withAlpha(10),
-                        Colors.transparent,
-                      ],
+                    // Legal & Disclaimer text
+                    const Text(
+                      'Bu vəsiqə İdrak Liseyinin mülkiyyətidir. Tapıldığı təqdirdə liseyin mühafizə xidmətinə təhvil verilməsi xahiş olunur.',
+                      style: TextStyle(color: Colors.white54, fontSize: 8.5, height: 1.3),
                     ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+
+                    const SizedBox(height: 10),
+
+                    // Bottom Signature & Official Stamp
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.primaryAccent.withAlpha(40)),
+                        color: Colors.white.withAlpha(8),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('RƏSMİ ELEKTRON İMZA', style: TextStyle(color: Colors.white38, fontSize: 8, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 2),
-                          Text(student.id, style: const TextStyle(color: AppColors.goldLight, fontSize: 10, fontFamily: 'monospace')),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('RƏSMİ ELEKTRON İMZA', style: TextStyle(color: Colors.white38, fontSize: 7.5, fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 2),
+                              Text(student.id, style: const TextStyle(color: AppColors.primaryAccent, fontSize: 9.5, fontFamily: 'monospace')),
+                            ],
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryAccent.withAlpha(40),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: AppColors.primaryAccent),
+                            ),
+                            child: const Text('TƏSDİQ EDİLDİ', style: TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.w900)),
+                          ),
                         ],
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryAccent.withAlpha(40),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: AppColors.primaryAccent),
-                        ),
-                        child: const Text('TƏSDİQ EDİLDİ', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildHologramSheen() {
+    return Positioned(
+      top: -30,
+      right: -30,
+      child: Container(
+        width: 140,
+        height: 140,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: [
+              AppColors.primaryAccent.withAlpha(35),
+              Colors.transparent,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmvChip() {
+    return Container(
+      width: 26,
+      height: 20,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFFFDF7A),
+            Color(0xFFD4AF37),
+            Color(0xFFAA820A),
+            Color(0xFFE5C158),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: const Color(0xFF8A6A00), width: 0.8),
+      ),
+      child: Center(
+        child: Container(
+          width: 18,
+          height: 12,
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFF8A6A00).withAlpha(160), width: 0.5),
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
       ),
     );
   }
@@ -649,13 +625,13 @@ class _DigitalIdCardScreenState extends State<DigitalIdCardScreen> with SingleTi
       children: [
         Text(
           '$label: ',
-          style: const TextStyle(color: Colors.white60, fontSize: 12, fontWeight: FontWeight.w500),
+          style: const TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.w500),
         ),
         Flexible(
           child: Text(
             value,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: AppColors.goldLight, fontSize: 13, fontWeight: FontWeight.w700),
+            style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w700),
           ),
         ),
       ],
@@ -666,8 +642,8 @@ class _DigitalIdCardScreenState extends State<DigitalIdCardScreen> with SingleTi
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 11)),
-        Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11)),
+        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 10.5)),
+        Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10.5)),
       ],
     );
   }

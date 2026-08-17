@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/custom_card.dart';
+import '../../../core/theme/app_shadows.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../../providers/app_state.dart';
 import '../../../data/models/user_model.dart';
@@ -43,76 +43,215 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('İstifadəçi Hesabları & Yetkilər'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person_add_rounded),
-            tooltip: 'Yeni Hesab Yarat',
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (_) => const CreateAccountDialog(),
-              );
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Search & Filter Header
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                TextField(
-                  controller: _searchCtrl,
-                  onChanged: (_) => setState(() {}),
-                  decoration: InputDecoration(
-                    hintText: 'Ad, İdrak kodu və ya istifadəçi adı axtar...',
-                    prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary),
-                    suffixIcon: _searchCtrl.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear_rounded),
-                            onPressed: () {
-                              _searchCtrl.clear();
-                              setState(() {});
-                            },
-                          )
-                        : null,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // ── Gradient Header ──
+          SliverAppBar(
+            expandedHeight: 140,
+            pinned: true,
+            elevation: 0,
+            backgroundColor: AppColors.primary,
+            surfaceTintColor: Colors.transparent,
+            leading: IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withAlpha(20),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: Colors.white),
+              ),
+              onPressed: () => Navigator.pop(context),
+            ),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: IconButton(
+                  icon: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryAccent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.person_add_rounded, size: 18, color: Colors.white),
+                  ),
+                  tooltip: 'Yeni Hesab Yarat',
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => const CreateAccountDialog(),
+                    );
+                  },
+                ),
+              ),
+            ],
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF0D9488)],
                   ),
                 ),
-                const SizedBox(height: 12),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _buildRoleFilterChip('Hamısı (${users.length})', null),
-                      _buildRoleFilterChip('Müəllimlər', UserRole.teacher),
-                      _buildRoleFilterChip('Şagirdlər', UserRole.student),
-                      _buildRoleFilterChip('Valideynlər', UserRole.parent),
-                      _buildRoleFilterChip('İnzibatçılar', UserRole.admin),
-                    ],
-                  ),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      right: -15,
+                      bottom: -15,
+                      child: Icon(Icons.manage_accounts_rounded, size: 130, color: Colors.white.withAlpha(10)),
+                    ),
+                    SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 44, 20, 16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withAlpha(20),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(Icons.people_alt_rounded, size: 22, color: Colors.white),
+                                ),
+                                const SizedBox(width: 12),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'İstifadəçi Hesabları',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${users.length} qeydiyyatlı hesab & yetkilər',
+                                      style: TextStyle(
+                                        color: Colors.white.withAlpha(180),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
 
-          // User Cards List
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              itemCount: filtered.length,
-              itemBuilder: (context, index) {
-                final user = filtered[index];
-                return _buildUserCard(context, appState, user, dateFormat);
-              },
+          // ── Search & Filter Controls ──
+          SliverToBoxAdapter(
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Column(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.cardBorder),
+                      boxShadow: AppShadows.sm,
+                    ),
+                    child: TextField(
+                      controller: _searchCtrl,
+                      onChanged: (_) => setState(() {}),
+                      decoration: InputDecoration(
+                        hintText: 'Ad, İdrak kodu və ya istifadəçi adı axtar...',
+                        hintStyle: TextStyle(fontSize: 12.5, color: AppColors.textMuted),
+                        filled: true,
+                        fillColor: AppColors.surface,
+                        prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primaryAccent, size: 20),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(color: AppColors.primaryAccent, width: 1.5),
+                        ),
+                        suffixIcon: _searchCtrl.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear_rounded, size: 18),
+                                onPressed: () {
+                                  _searchCtrl.clear();
+                                  setState(() {});
+                                },
+                              )
+                            : null,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    child: Row(
+                      children: [
+                        _buildRoleFilterChip('Hamısı (${users.length})', null),
+                        _buildRoleFilterChip('Müəllimlər', UserRole.teacher),
+                        _buildRoleFilterChip('Şagirdlər', UserRole.student),
+                        _buildRoleFilterChip('Valideynlər', UserRole.parent),
+                        _buildRoleFilterChip('İnzibatçılar', UserRole.admin),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
+
+          // ── Users List ──
+          if (filtered.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryAccent.withAlpha(8),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.person_search_rounded, size: 44, color: AppColors.textMuted),
+                    ),
+                    const SizedBox(height: 14),
+                    Text('Axtarışa uyğun istifadəçi tapılmadı.', style: TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final user = filtered[index];
+                    return _buildUserCard(context, appState, user, dateFormat);
+                  },
+                  childCount: filtered.length,
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -122,19 +261,31 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     final isSelected = _filterRole == role;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
-      child: FilterChip(
-        label: Text(label),
-        selected: isSelected,
-        onSelected: (_) => setState(() => _filterRole = role),
-        selectedColor: AppColors.primary,
-        checkmarkColor: Colors.white,
-        labelStyle: TextStyle(
-          color: isSelected ? Colors.white : AppColors.textPrimary,
-          fontSize: 12,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      child: GestureDetector(
+        onTap: () => setState(() => _filterRole = role),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primaryAccent : AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected ? AppColors.primaryAccent : AppColors.cardBorder,
+              width: isSelected ? 1.5 : 1,
+            ),
+            boxShadow: isSelected
+                ? [BoxShadow(color: AppColors.primaryAccent.withAlpha(30), blurRadius: 6, offset: const Offset(0, 2))]
+                : [],
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? Colors.white : AppColors.textPrimary,
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            ),
+          ),
         ),
-        backgroundColor: AppColors.surface,
-        side: BorderSide(color: isSelected ? AppColors.primary : AppColors.cardBorder),
       ),
     );
   }
@@ -156,16 +307,28 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
         break;
     }
 
-    return CustomCard(
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.cardBorder),
+        boxShadow: AppShadows.sm,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 22,
-                backgroundColor: roleColor.withAlpha(25),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: roleColor.withAlpha(15),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: roleColor.withAlpha(30)),
+                ),
                 child: Icon(user.role.icon, color: roleColor, size: 22),
               ),
               const SizedBox(width: 12),
@@ -183,6 +346,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                               fontSize: 15,
                               fontWeight: FontWeight.w800,
                               color: AppColors.textPrimary,
+                              letterSpacing: -0.2,
                             ),
                           ),
                         ),
@@ -193,23 +357,23 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 3),
                     Text(
                       'İdrak Kodu: ${user.idrakCode} • Login: ${user.username}',
-                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                      style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
                     ),
                     if (user.role == UserRole.teacher && user.subject != null) ...[
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 3),
                       Text(
                         'Fənn: ${user.subject} (${user.roomNumber ?? "Otaq təyin olunmayıb"})',
-                        style: const TextStyle(fontSize: 12, color: AppColors.primary),
+                        style: const TextStyle(fontSize: 11.5, color: AppColors.primaryAccent, fontWeight: FontWeight.w600),
                       ),
                     ],
                     if (user.role == UserRole.parent && user.linkedStudentId != null) ...[
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 3),
                       Text(
                         'Əlaqəli Şagird ID: ${user.linkedStudentId}',
-                        style: const TextStyle(fontSize: 12, color: AppColors.goldDark, fontWeight: FontWeight.bold),
+                        style: const TextStyle(fontSize: 11.5, color: AppColors.goldDark, fontWeight: FontWeight.w700),
                       ),
                     ],
                   ],
@@ -222,10 +386,11 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
           if (user.role == UserRole.teacher && user.teacherPermissions != null) ...[
             const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: AppColors.background,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.cardBorder),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -235,15 +400,15 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                     children: [
                       Text(
                         'Müəllimə Verilmiş Admin Yetkiləri:',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                       ),
                       GestureDetector(
                         onTap: () => _showEditPermissionsDialog(context, appState, user),
-                        child: const Text('Dəyiş', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryAccent)),
+                        child: const Text('Dəyiş', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.primaryAccent)),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Wrap(
                     spacing: 6,
                     runSpacing: 4,
@@ -278,7 +443,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                     user.isActive ? 'Aktiv Hesab' : 'Deaktiv Edilib',
                     style: TextStyle(
                       fontSize: 11,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w700,
                       color: user.isActive ? AppColors.success : AppColors.danger,
                     ),
                   ),
@@ -291,15 +456,21 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                     style: TextStyle(fontSize: 11, fontFamily: 'monospace', color: AppColors.textMuted),
                   ),
                   const SizedBox(width: 10),
-                  TextButton(
-                    style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(40, 24)),
-                    onPressed: () => appState.toggleUserStatus(user.id),
-                    child: Text(
-                      user.isActive ? 'Deaktiv et' : 'Aktivləşdir',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: user.isActive ? AppColors.danger : AppColors.success,
-                        fontWeight: FontWeight.bold,
+                  GestureDetector(
+                    onTap: () => appState.toggleUserStatus(user.id),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: (user.isActive ? AppColors.danger : AppColors.success).withAlpha(12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        user.isActive ? 'Deaktiv et' : 'Aktivləşdir',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: user.isActive ? AppColors.danger : AppColors.success,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),
@@ -314,17 +485,17 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
 
   Widget _buildPermChip(String label, bool isEnabled, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: isEnabled ? color.withAlpha(20) : Colors.black12,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: isEnabled ? color : Colors.transparent),
+        color: isEnabled ? color.withAlpha(15) : AppColors.background,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: isEnabled ? color.withAlpha(50) : AppColors.cardBorder),
       ),
       child: Text(
         '${isEnabled ? "✓" : "✗"} $label',
         style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
+          fontSize: 10.5,
+          fontWeight: FontWeight.w700,
           color: isEnabled ? color : AppColors.textMuted,
         ),
       ),
@@ -342,25 +513,25 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: Text('${user.fullName} üçün Yetkilər'),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+              title: Text('${user.fullName} üçün Yetkilər', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   SwitchListTile(
-                    title: const Text('Yeməkxana Menyu İdarəsi', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                    title: const Text('Yeməkxana Menyu İdarəsi', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
                     value: pCaf,
                     activeThumbColor: AppColors.gold,
                     onChanged: (v) => setDialogState(() => pCaf = v),
                   ),
                   SwitchListTile(
-                    title: const Text('Tibbi Kart & Allergiya Qeydləri', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                    title: const Text('Tibbi Kart & Allergiya Qeydləri', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
                     value: pMed,
                     activeThumbColor: AppColors.danger,
                     onChanged: (v) => setDialogState(() => pMed = v),
                   ),
                   SwitchListTile(
-                    title: const Text('İnventar & QR Ticket Göndərmə', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                    title: const Text('İnventar & QR Ticket Göndərmə', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
                     value: pInv,
                     activeThumbColor: AppColors.primaryAccent,
                     onChanged: (v) => setDialogState(() => pInv = v),
@@ -373,6 +544,10 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                   child: const Text('Ləğv et'),
                 ),
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryAccent,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                   onPressed: () {
                     appState.updateTeacherPermissions(
                       user.id,
@@ -384,10 +559,10 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                     );
                     Navigator.pop(ctx);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Müəllim yetkiləri uğurla yeniləndi!')),
+                      const SnackBar(content: Text('Müəllim yetkiləri uğurla yeniləndi!'), backgroundColor: AppColors.success),
                     );
                   },
-                  child: const Text('Yadda Saxla'),
+                  child: const Text('Yadda Saxla', style: TextStyle(color: Colors.white)),
                 ),
               ],
             );

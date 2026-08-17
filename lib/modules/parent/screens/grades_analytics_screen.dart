@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/custom_card.dart';
+import '../../../core/theme/app_shadows.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../../core/widgets/section_header.dart';
 import '../../../providers/app_state.dart';
@@ -25,7 +25,6 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
     final appState = Provider.of<AppState>(context);
     final currentStudent = appState.student;
 
-    // Filter grades for active student if role is student or parent
     final studentGrades = (appState.currentRole == UserRole.student || appState.currentRole == UserRole.parent)
         ? appState.grades.where((g) => g.studentId == null || g.studentId == currentStudent.id).toList()
         : appState.grades;
@@ -51,8 +50,10 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
         title: Text(appState.currentRole == UserRole.admin
             ? 'Ümumi Məktəb Qiymətləri'
             : '${currentStudent.fullName} • Qiymətlər & GPA'),
+        elevation: 0,
       ),
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.only(bottom: 30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,17 +61,11 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
             // Top Overview Card
             Container(
               margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 gradient: AppColors.primaryGradient,
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withAlpha(80),
-                    blurRadius: 15,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
+                boxShadow: AppShadows.sm,
               ),
               child: Column(
                 children: [
@@ -82,7 +77,7 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
                         children: [
                           const Text(
                             'Ümumi Tərəqqi İndeksi',
-                            style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500),
+                            style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
                           ),
                           const SizedBox(height: 4),
                           Row(
@@ -90,32 +85,32 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
                             children: [
                               Text(
                                 avgScore > 0 ? avgScore.toStringAsFixed(1) : '0.0',
-                                style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900),
+                                style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w900),
                               ),
                               const Text(
                                 ' / 100 Bal',
-                                style: TextStyle(color: AppColors.goldLight, fontSize: 14, fontWeight: FontWeight.w700),
+                                style: TextStyle(color: AppColors.primaryAccent, fontSize: 13, fontWeight: FontWeight.w700),
                               ),
                             ],
                           ),
                         ],
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                         decoration: BoxDecoration(
-                          color: Colors.white.withAlpha(30),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.goldLight, width: 1.2),
+                          color: Colors.white.withAlpha(20),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.primaryAccent.withAlpha(80), width: 1.2),
                         ),
                         child: Column(
                           children: [
                             const Text(
                               'GPA (Ortalama)',
-                              style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                              style: TextStyle(color: Colors.white70, fontSize: 10.5, fontWeight: FontWeight.w600),
                             ),
                             Text(
                               gpaDisplay,
-                              style: const TextStyle(color: AppColors.goldLight, fontSize: 15, fontWeight: FontWeight.w900),
+                              style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900),
                             ),
                           ],
                         ),
@@ -126,21 +121,21 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
               ),
             ),
 
-            if (studentGrades.isEmpty) ...[
+            if (studentGrades.isEmpty)
               Center(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+                  padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
                   child: Column(
                     children: [
-                      Icon(Icons.insights_rounded, size: 64, color: AppColors.textMuted),
-                      SizedBox(height: 14),
+                      Icon(Icons.insights_outlined, size: 56, color: AppColors.textMuted),
+                      const SizedBox(height: 12),
                       Text(
                         'Hələlik heç bir qiymət daxil edilməyib.',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                       ),
-                      SizedBox(height: 6),
+                      const SizedBox(height: 4),
                       Text(
-                        'Müəllim tərəfindən KSQ, BSQ və ya digər qiymətləndirmə daxil edildikdə burada tərəqqi qrafikləri əks olunacaq.',
+                        'Müəllim tərəfindən KSQ, BSQ daxil edildikdə burada tərəqqi qrafikləri əks olunacaq.',
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                       ),
@@ -148,10 +143,18 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
                   ),
                 ),
               ),
-            ] else ...[
-              // Dynamic Chart Card with Switcher (Line / Bar)
-              CustomCard(
+
+            if (studentGrades.isNotEmpty) ...[
+              // Dynamic Chart Card
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
                 padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppColors.cardBorder),
+                  boxShadow: AppShadows.sm,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -161,16 +164,15 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
                         Text(
                           'Tədris Dinamikası',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 15,
                             fontWeight: FontWeight.w800,
                             color: AppColors.textPrimary,
                           ),
                         ),
-                        // Chart Type Toggle
                         Container(
                           decoration: BoxDecoration(
                             color: AppColors.background,
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: AppColors.cardBorder),
                           ),
                           child: Row(
@@ -182,11 +184,10 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 18),
 
-                    // Chart Display
                     SizedBox(
-                      height: 200,
+                      height: 190,
                       child: _selectedChartType == 0
                           ? _buildLineChart(studentGrades)
                           : _buildBarChart(studentGrades),
@@ -195,24 +196,21 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
 
               // Filter Chips
-              Container(
-                color: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _buildFilterChip('Bütün Qiymətlər', null),
-                      _buildFilterChip('KSQ', AssessmentType.ksq),
-                      _buildFilterChip('BSQ', AssessmentType.bsq),
-                      _buildFilterChip('Diaqnostik', AssessmentType.diagnostic),
-                      _buildFilterChip('Monitorinq', AssessmentType.monitoring),
-                      _buildFilterChip('Beynəlxalq (IB/STR)', AssessmentType.international),
-                    ],
-                  ),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    _buildFilterChip('Bütün Qiymətlər', null),
+                    _buildFilterChip('KSQ', AssessmentType.ksq),
+                    _buildFilterChip('BSQ', AssessmentType.bsq),
+                    _buildFilterChip('Diaqnostik', AssessmentType.diagnostic),
+                    _buildFilterChip('Monitorinq', AssessmentType.monitoring),
+                    _buildFilterChip('Beynəlxalq', AssessmentType.international),
+                  ],
                 ),
               ),
 
@@ -237,19 +235,19 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
     return GestureDetector(
       onTap: () => setState(() => _selectedChartType = index),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
+          color: isSelected ? AppColors.primaryAccent : Colors.transparent,
+          borderRadius: BorderRadius.circular(7),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 14, color: isSelected ? Colors.white : AppColors.textSecondary),
-            const SizedBox(width: 4),
+            Icon(icon, size: 13, color: isSelected ? Colors.white : AppColors.textSecondary),
+            const SizedBox(width: 3),
             Text(
               label,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10.5,
                 fontWeight: FontWeight.bold,
                 color: isSelected ? Colors.white : AppColors.textSecondary,
               ),
@@ -263,26 +261,26 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
   Widget _buildFilterChip(String label, AssessmentType? type) {
     final isSelected = _selectedFilter == type;
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.only(right: 6),
       child: FilterChip(
         label: Text(label),
         selected: isSelected,
         onSelected: (_) => setState(() => _selectedFilter = type),
-        selectedColor: AppColors.primary,
+        selectedColor: AppColors.primaryAccent,
         checkmarkColor: Colors.white,
         labelStyle: TextStyle(
           color: isSelected ? Colors.white : AppColors.textPrimary,
-          fontSize: 12,
+          fontSize: 11.5,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
         backgroundColor: AppColors.surface,
-        side: BorderSide(color: isSelected ? AppColors.primary : AppColors.cardBorder),
+        side: BorderSide(color: isSelected ? AppColors.primaryAccent : AppColors.cardBorder),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
 
   Widget _buildLineChart(List<GradeRecord> grades) {
-    // Chronological order: oldest to newest
     final chronological = grades.reversed.toList();
     final spots = chronological.asMap().entries.map((e) {
       return FlSpot(e.key.toDouble(), e.value.percentage);
@@ -305,12 +303,12 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 32,
-              interval: 20,
+              reservedSize: 28,
+              interval: 25,
               getTitlesWidget: (val, meta) {
                 return Text(
                   '${val.toInt()}',
-                  style: TextStyle(color: AppColors.textMuted, fontSize: 10),
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 9.5),
                 );
               },
             ),
@@ -322,27 +320,22 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
             spots: spots,
             isCurved: true,
             color: AppColors.primaryAccent,
-            barWidth: 3,
+            barWidth: 2.5,
             isStrokeCapRound: true,
             dotData: FlDotData(
               show: true,
-              getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-                radius: 4,
-                color: Colors.white,
-                strokeWidth: 2,
-                strokeColor: AppColors.primaryAccent,
-              ),
+              getDotPainter: (spot, percent, barData, index) {
+                return FlDotCirclePainter(
+                  radius: 3.5,
+                  color: AppColors.primaryAccent,
+                  strokeWidth: 1.5,
+                  strokeColor: Colors.white,
+                );
+              },
             ),
             belowBarData: BarAreaData(
               show: true,
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  AppColors.primaryAccent.withAlpha(50),
-                  AppColors.primaryAccent.withAlpha(0),
-                ],
-              ),
+              color: AppColors.primaryAccent.withAlpha(25),
             ),
           ),
         ],
@@ -351,9 +344,28 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
   }
 
   Widget _buildBarChart(List<GradeRecord> grades) {
-    final chronological = grades.reversed.toList();
+    final chronological = grades.reversed.toList().take(8).toList();
+    final barGroups = chronological.asMap().entries.map((e) {
+      final isHigh = e.value.percentage >= 80;
+      final isMid = e.value.percentage >= 60;
+      final barColor = isHigh ? AppColors.success : (isMid ? AppColors.primaryAccent : AppColors.warning);
+
+      return BarChartGroupData(
+        x: e.key,
+        barRods: [
+          BarChartRodData(
+            toY: e.value.percentage,
+            color: barColor,
+            width: 14,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(5)),
+          ),
+        ],
+      );
+    }).toList();
+
     return BarChart(
       BarChartData(
+        minY: 0,
         maxY: 100,
         gridData: FlGridData(
           show: true,
@@ -367,107 +379,83 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 32,
-              interval: 20,
+              reservedSize: 28,
+              interval: 25,
               getTitlesWidget: (val, meta) {
                 return Text(
                   '${val.toInt()}',
-                  style: TextStyle(color: AppColors.textMuted, fontSize: 10),
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 9.5),
                 );
               },
             ),
           ),
         ),
         borderData: FlBorderData(show: false),
-        barGroups: chronological.asMap().entries.map((e) {
-          final isHigh = e.value.percentage >= 80;
-          return BarChartGroupData(
-            x: e.key,
-            barRods: [
-              BarChartRodData(
-                toY: e.value.percentage,
-                color: isHigh ? AppColors.success : AppColors.primaryAccent,
-                width: 14,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
-              ),
-            ],
-          );
-        }).toList(),
+        barGroups: barGroups,
       ),
     );
   }
 
   Widget _buildGradeCard(BuildContext context, AppState appState, GradeRecord grade, String currentStudentId) {
-    final dateFormat = DateFormat('dd.MM.yyyy');
+    final isHigh = grade.percentage >= 80;
+    final isMid = grade.percentage >= 60;
+    final badgeColor = isHigh ? AppColors.success : (isMid ? AppColors.primaryAccent : AppColors.warning);
+    final displayScoreStr = grade.score == grade.score.toInt() ? '${grade.score.toInt()}' : '${grade.score}';
 
-    Color badgeColor;
-    switch (grade.type) {
-      case AssessmentType.diagnostic:
-        badgeColor = Colors.blue;
-        break;
-      case AssessmentType.monitoring:
-        badgeColor = Colors.orange;
-        break;
-      case AssessmentType.ksq:
-        badgeColor = AppColors.primary;
-        break;
-      case AssessmentType.bsq:
-        badgeColor = Colors.purple;
-        break;
-      case AssessmentType.international:
-        badgeColor = AppColors.goldDark;
-        break;
-    }
-
-    final isIb = grade.type == AssessmentType.international && grade.maxScore == 7.0;
-    final displayScoreStr = isIb
-        ? '${grade.displayScore.toInt()} / 7 Band'
-        : grade.displayScore.toStringAsFixed(grade.displayScore % 1 == 0 ? 0 : 1);
-
-    return CustomCard(
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.cardBorder),
+        boxShadow: AppShadows.sm,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              StatusBadge(
-                label: grade.type.displayName,
-                color: badgeColor,
-                fontSize: 10,
-              ),
               Row(
                 children: [
-                  Text(
-                    dateFormat.format(grade.date),
-                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                  StatusBadge(
+                    label: grade.type.displayName,
+                    color: AppColors.primaryAccent,
+                    fontSize: 9.5,
                   ),
-                  PopupMenuButton<String>(
-                    icon: Icon(Icons.more_vert_rounded, size: 16, color: AppColors.textMuted),
-                    padding: EdgeInsets.zero,
-                    onSelected: (val) {
-                      if (val == 'delete') {
-                        _showDeleteGradeDialog(context, appState, grade, currentStudentId);
-                      }
-                    },
-                    itemBuilder: (ctx) => [
-                      const PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete_outline_rounded, color: AppColors.danger, size: 16),
-                            SizedBox(width: 8),
-                            Text('Qiyməti Sil', style: TextStyle(color: AppColors.danger, fontSize: 12)),
-                          ],
-                        ),
-                      ),
-                    ],
+                  const SizedBox(width: 8),
+                  Text(
+                    DateFormat('dd.MM.yyyy').format(grade.date),
+                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
                 ],
               ),
+              if (appState.currentRole == UserRole.admin || appState.currentRole == UserRole.teacher)
+                PopupMenuButton<String>(
+                  icon: Icon(Icons.more_vert_rounded, size: 16, color: AppColors.textMuted),
+                  padding: EdgeInsets.zero,
+                  onSelected: (val) {
+                    if (val == 'delete') {
+                      _showDeleteGradeDialog(context, appState, grade, currentStudentId);
+                    }
+                  },
+                  itemBuilder: (ctx) => [
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete_outline_rounded, color: AppColors.danger, size: 15),
+                          SizedBox(width: 8),
+                          Text('Qiyməti Sil', style: TextStyle(color: AppColors.danger, fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -478,15 +466,15 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
                     Text(
                       grade.subject,
                       style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: 11.5,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
+                        color: AppColors.primaryAccent,
                       ),
                     ),
                     Text(
                       grade.title,
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13.5,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
                       ),
@@ -495,18 +483,18 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: badgeColor.withAlpha(20),
+                  color: badgeColor.withAlpha(15),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: badgeColor.withAlpha(80)),
+                  border: Border.all(color: badgeColor.withAlpha(60)),
                 ),
                 child: Column(
                   children: [
                     Text(
                       displayScoreStr,
                       style: TextStyle(
-                        fontSize: 17,
+                        fontSize: 15,
                         fontWeight: FontWeight.w900,
                         color: badgeColor,
                       ),
@@ -514,7 +502,7 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
                     Text(
                       grade.gradeLetter,
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 9.5,
                         fontWeight: FontWeight.bold,
                         color: badgeColor,
                       ),
@@ -525,18 +513,18 @@ class _GradesAnalyticsScreenState extends State<GradesAnalyticsScreen> {
             ],
           ),
           if (grade.teacherFeedback.isNotEmpty) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: AppColors.background,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 'Müəllim Rəyi: "${grade.teacherFeedback}"',
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11.5,
                   fontStyle: FontStyle.italic,
                   color: AppColors.textSecondary,
                 ),

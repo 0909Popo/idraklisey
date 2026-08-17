@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/custom_card.dart';
+import '../../../core/theme/app_shadows.dart';
 import '../../../providers/app_state.dart';
 import '../../shared/screens/voice_room_screen.dart';
 
@@ -64,6 +64,18 @@ class _CreateMeetScreenState extends State<CreateMeetScreen> {
       initialDate: now,
       firstDate: now,
       lastDate: now.add(const Duration(days: 30)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppColors.primaryAccent,
+              onPrimary: Colors.white,
+              onSurface: AppColors.textPrimary,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
     if (pickedDate == null || !mounted) return;
 
@@ -142,303 +154,501 @@ class _CreateMeetScreenState extends State<CreateMeetScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Yeni Görüş / Dərs Yarat'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Hero Banner
-              Container(
-                padding: const EdgeInsets.all(18),
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // ── Gradient Header ──
+          SliverAppBar(
+            expandedHeight: 140,
+            pinned: true,
+            elevation: 0,
+            backgroundColor: AppColors.primary,
+            surfaceTintColor: Colors.transparent,
+            leading: IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF0D9488)],
+                  color: Colors.white.withAlpha(20),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: Colors.white),
+              ),
+              onPressed: () => Navigator.pop(context),
+            ),
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
+                    colors: [Color(0xFF1A1B2E), Color(0xFF0D9488), Color(0xFF14B8A6)],
                   ),
-                  borderRadius: BorderRadius.circular(20),
                 ),
-                child: Row(
+                child: Stack(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withAlpha(20),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.mic_external_on_rounded, color: AppColors.goldLight, size: 28),
+                    Positioned(
+                      right: -15,
+                      bottom: -15,
+                      child: Icon(Icons.video_call_rounded, size: 130, color: Colors.white.withAlpha(10)),
                     ),
-                    const SizedBox(width: 14),
-                    const Expanded(
+                    SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 44, 20, 16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withAlpha(20),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(Icons.mic_external_on_rounded, size: 22, color: Colors.white),
+                                ),
+                                const SizedBox(width: 12),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Meet İdrak Otaq',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Real-vaxt interaktiv səsli dərslər',
+                                      style: TextStyle(
+                                        color: Colors.white.withAlpha(180),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // ── Form Body ──
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title Input Card
+                    Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.cardBorder),
+                        boxShadow: AppShadows.sm,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Meet İdrak Səsli Otaq',
-                            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryAccent.withAlpha(12),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(Icons.title_rounded, color: AppColors.primaryAccent, size: 16),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Görüşün Mövzusu / Başlığı *',
+                                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: AppColors.textPrimary),
+                              ),
+                            ],
                           ),
-                          SizedBox(height: 3),
-                          Text(
-                            'Gecikməsiz real-vaxt səsli interaktiv dərs və toplantı',
-                            style: TextStyle(color: Colors.white70, fontSize: 11),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _titleController,
+                            decoration: InputDecoration(
+                              hintText: 'məs: Riyaziyyat: Triqonometriya Canlı Müzakirə',
+                              hintStyle: TextStyle(fontSize: 12.5, color: AppColors.textMuted),
+                              prefixIcon: const Icon(Icons.subtitles_rounded, color: AppColors.primaryAccent, size: 20),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(color: AppColors.cardBorder),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(color: AppColors.primaryAccent, width: 1.5),
+                              ),
+                            ),
+                            validator: (v) => (v == null || v.trim().isEmpty) ? 'Mövzunu qeyd edin' : null,
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
-              ),
 
-              const SizedBox(height: 20),
+                    const SizedBox(height: 14),
 
-              // Title Input
-              CustomCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Görüşün Mövzusu / Başlığı *',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textPrimary),
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _titleController,
-                      decoration: InputDecoration(
-                        hintText: 'məs: Riyaziyyat: Triqonometriya Canlı Müzakirə',
-                        prefixIcon: const Icon(Icons.title_rounded, color: AppColors.primary),
-                        filled: true,
-                        fillColor: AppColors.background,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    // Subject Input & Quick Selection Card
+                    Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.cardBorder),
+                        boxShadow: AppShadows.sm,
                       ),
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Mövzunu qeyd edin' : null,
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
-              // Subject Input & Quick Selection
-              CustomCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Fənn / Kateqoriya *',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textPrimary),
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _subjectController,
-                      decoration: InputDecoration(
-                        hintText: 'Fənni daxil edin',
-                        prefixIcon: const Icon(Icons.menu_book_rounded, color: AppColors.primary),
-                        filled: true,
-                        fillColor: AppColors.background,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                      ),
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Fənni qeyd edin' : null,
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: _quickSubjects.map((sub) {
-                        final isSelected = _subjectController.text.trim() == sub;
-                        return ChoiceChip(
-                          label: Text(sub, style: TextStyle(fontSize: 11, color: isSelected ? Colors.white : AppColors.textPrimary)),
-                          selected: isSelected,
-                          selectedColor: AppColors.primary,
-                          onSelected: (_) {
-                            setState(() {
-                              _subjectController.text = sub;
-                            });
-                          },
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
-              // Participation & Target Permissions
-              CustomCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.security_rounded, color: AppColors.primaryAccent, size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          'İştirakçılar və Giriş İcazələri',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textPrimary),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Allow Teachers Toggle
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Digər Müəllimlər Qoşula Bilsin', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                      subtitle: const Text('Kafedra və lisey müəllimlərinin dəvətsiz girişi', style: TextStyle(fontSize: 11)),
-                      value: _allowTeachers,
-                      activeThumbColor: AppColors.primary,
-                      onChanged: (v) => setState(() => _allowTeachers = v),
-                    ),
-
-                    const Divider(height: 1),
-
-                    // Allow Students Toggle
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Şagirdlər Qoşula Bilsin', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                      subtitle: const Text('Təyin olunmuş siniflərin şagirdlərinə açıq olsun', style: TextStyle(fontSize: 11)),
-                      value: _allowStudents,
-                      activeThumbColor: AppColors.primary,
-                      onChanged: (v) => setState(() => _allowStudents = v),
-                    ),
-
-                    if (_allowStudents) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        'Hansı Siniflər Qoşula Bilər?',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textPrimary),
-                      ),
-                      const SizedBox(height: 8),
-
-                      CheckboxListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Bütün Siniflər (Ümumi Dərs / Seminar)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                        value: _allowAllClasses,
-                        activeColor: AppColors.primary,
-                        onChanged: (v) {
-                          setState(() {
-                            _allowAllClasses = v ?? false;
-                          });
-                        },
-                      ),
-
-                      if (!_allowAllClasses) ...[
-                        const SizedBox(height: 6),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: _availableClasses.map((cls) {
-                            final isSel = _selectedClasses.contains(cls);
-                            return FilterChip(
-                              label: Text(
-                                cls,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: isSel ? Colors.white : AppColors.textPrimary,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryAccent.withAlpha(12),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
+                                child: const Icon(Icons.menu_book_rounded, color: AppColors.primaryAccent, size: 16),
                               ),
-                              selected: isSel,
-                              selectedColor: AppColors.primaryAccent,
-                              checkmarkColor: Colors.white,
-                              onSelected: (sel) {
+                              const SizedBox(width: 8),
+                              Text(
+                                'Fənn / Kateqoriya *',
+                                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: AppColors.textPrimary),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _subjectController,
+                            decoration: InputDecoration(
+                              hintText: 'Fənni daxil edin',
+                              hintStyle: TextStyle(fontSize: 12.5, color: AppColors.textMuted),
+                              prefixIcon: const Icon(Icons.category_rounded, color: AppColors.primaryAccent, size: 20),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(color: AppColors.cardBorder),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(color: AppColors.primaryAccent, width: 1.5),
+                              ),
+                            ),
+                            validator: (v) => (v == null || v.trim().isEmpty) ? 'Fənni qeyd edin' : null,
+                          ),
+                          const SizedBox(height: 12),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(),
+                            child: Row(
+                              children: _quickSubjects.map((sub) {
+                                final isSelected = _subjectController.text.trim() == sub;
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 6),
+                                  child: GestureDetector(
+                                    onTap: () => setState(() => _subjectController.text = sub),
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 200),
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: isSelected ? AppColors.primaryAccent : AppColors.background,
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: isSelected ? AppColors.primaryAccent : AppColors.cardBorder,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        sub,
+                                        style: TextStyle(
+                                          fontSize: 11.5,
+                                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                          color: isSelected ? Colors.white : AppColors.textPrimary,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    // Participation & Target Permissions Card
+                    Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.cardBorder),
+                        boxShadow: AppShadows.sm,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryAccent.withAlpha(12),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(Icons.security_rounded, color: AppColors.primaryAccent, size: 16),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'İştirakçılar və Giriş İcazələri',
+                                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: AppColors.textPrimary),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Allow Teachers Toggle
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('Digər Müəllimlər Qoşula Bilsin', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                            subtitle: Text('Kafedra və lisey müəllimlərinin dəvətsiz girişi', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                            value: _allowTeachers,
+                            activeThumbColor: AppColors.primaryAccent,
+                            onChanged: (v) => setState(() => _allowTeachers = v),
+                          ),
+
+                          Divider(height: 1, color: AppColors.cardBorder),
+
+                          // Allow Students Toggle
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('Şagirdlər Qoşula Bilsin', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                            subtitle: Text('Təyin olunmuş siniflərin şagirdlərinə açıq olsun', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                            value: _allowStudents,
+                            activeThumbColor: AppColors.primaryAccent,
+                            onChanged: (v) => setState(() => _allowStudents = v),
+                          ),
+
+                          if (_allowStudents) ...[
+                            const SizedBox(height: 12),
+                            Text(
+                              'Hansı Siniflər Qoşula Bilər?',
+                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: AppColors.textPrimary),
+                            ),
+                            const SizedBox(height: 8),
+
+                            CheckboxListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('Bütün Siniflər (Ümumi Dərs / Seminar)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                              value: _allowAllClasses,
+                              activeColor: AppColors.primaryAccent,
+                              onChanged: (v) {
                                 setState(() {
-                                  if (sel) {
-                                    _selectedClasses.add(cls);
-                                  } else {
-                                    _selectedClasses.remove(cls);
-                                  }
+                                  _allowAllClasses = v ?? false;
                                 });
                               },
-                            );
-                          }).toList(),
+                            ),
+
+                            if (!_allowAllClasses) ...[
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: _availableClasses.map((cls) {
+                                  final isSel = _selectedClasses.contains(cls);
+                                  return GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        if (isSel) {
+                                          _selectedClasses.remove(cls);
+                                        } else {
+                                          _selectedClasses.add(cls);
+                                        }
+                                      });
+                                    },
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 200),
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                                      decoration: BoxDecoration(
+                                        color: isSel ? AppColors.primaryAccent : AppColors.background,
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: isSel ? AppColors.primaryAccent : AppColors.cardBorder,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        cls,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          color: isSel ? Colors.white : AppColors.textPrimary,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ],
+                          ],
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    // Timing: Live Now vs Scheduled Card
+                    Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.cardBorder),
+                        boxShadow: AppShadows.sm,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryAccent.withAlpha(12),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(Icons.schedule_rounded, color: AppColors.primaryAccent, size: 16),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Görüşün Vaxtı',
+                                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: AppColors.textPrimary),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => setState(() => _isLiveNow = true),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    decoration: BoxDecoration(
+                                      color: _isLiveNow ? AppColors.success.withAlpha(15) : AppColors.background,
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: _isLiveNow ? AppColors.success : AppColors.cardBorder,
+                                        width: _isLiveNow ? 1.5 : 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.play_circle_fill_rounded, color: _isLiveNow ? AppColors.success : AppColors.textSecondary, size: 18),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'İndi Canlı Başlat',
+                                          style: TextStyle(
+                                            color: _isLiveNow ? AppColors.success : AppColors.textPrimary,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: _pickScheduleTime,
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    decoration: BoxDecoration(
+                                      color: !_isLiveNow ? AppColors.primaryAccent.withAlpha(15) : AppColors.background,
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: !_isLiveNow ? AppColors.primaryAccent : AppColors.cardBorder,
+                                        width: !_isLiveNow ? 1.5 : 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.calendar_today_rounded, color: !_isLiveNow ? AppColors.primaryAccent : AppColors.textSecondary, size: 16),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          _scheduledTime != null
+                                              ? '${_scheduledTime!.hour.toString().padLeft(2, '0')}:${_scheduledTime!.minute.toString().padLeft(2, '0')}'
+                                              : 'Planlaşdır',
+                                          style: TextStyle(
+                                            color: !_isLiveNow ? AppColors.primaryAccent : AppColors.textPrimary,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Submit Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0D9488),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          elevation: 0,
                         ),
-                      ],
-                    ],
+                        onPressed: _isCreating ? null : _submitCreate,
+                        icon: _isCreating
+                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : const Icon(Icons.video_call_rounded, color: Colors.white, size: 22),
+                        label: Text(
+                          _isCreating ? 'Otaq Hazırlanır...' : (_isLiveNow ? 'Canlı Otağı Başlat & Daxil Ol' : 'Planlaşdırılmış Dərsi Yadda Saxla'),
+                          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 14),
-
-              // Timing: Live Now vs Scheduled
-              CustomCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Görüşün Vaxtı',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textPrimary),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            style: OutlinedButton.styleFrom(
-                              backgroundColor: _isLiveNow ? AppColors.success.withAlpha(20) : null,
-                              side: BorderSide(color: _isLiveNow ? AppColors.success : AppColors.cardBorder, width: 2),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                            onPressed: () => setState(() => _isLiveNow = true),
-                            icon: const Icon(Icons.play_circle_fill_rounded, color: AppColors.success),
-                            label: Text('İndi Canlı Başlat', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            style: OutlinedButton.styleFrom(
-                              backgroundColor: !_isLiveNow ? AppColors.primary.withAlpha(20) : null,
-                              side: BorderSide(color: !_isLiveNow ? AppColors.primary : AppColors.cardBorder, width: 2),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                            onPressed: _pickScheduleTime,
-                            icon: const Icon(Icons.calendar_today_rounded, color: AppColors.primary),
-                            label: Text(
-                              _scheduledTime != null ? '${_scheduledTime!.hour.toString().padLeft(2, '0')}:${_scheduledTime!.minute.toString().padLeft(2, '0')}' : 'Planlaşdır',
-                              style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Submit Button
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                  onPressed: _isCreating ? null : _submitCreate,
-                  icon: _isCreating
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Icon(Icons.video_call_rounded, color: Colors.white, size: 24),
-                  label: Text(
-                    _isCreating ? 'Otaq Hazırlanır...' : (_isLiveNow ? 'Canlı Otağı Başlat & Daxil Ol' : 'Planlaşdırılmış Dərsi Yadda Saxla'),
-                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 30),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

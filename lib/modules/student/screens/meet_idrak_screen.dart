@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/custom_card.dart';
+import '../../../core/theme/app_shadows.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../../providers/app_state.dart';
 import '../../../data/models/meet_model.dart';
@@ -24,10 +24,11 @@ class MeetIdrakScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Meet İdrak • Canlı Səsli Dərslər'),
+        elevation: 0,
         actions: [
           if (isTeacherOrAdmin)
             IconButton(
-              icon: const Icon(Icons.add_call, color: AppColors.goldLight),
+              icon: const Icon(Icons.add_call, color: AppColors.primaryAccent),
               tooltip: 'Yeni Görüş Yarat',
               onPressed: () {
                 Navigator.push(
@@ -39,6 +40,7 @@ class MeetIdrakScreen extends StatelessWidget {
         ],
       ),
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.only(bottom: 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,22 +48,12 @@ class MeetIdrakScreen extends StatelessWidget {
             // Meet Idrak Hero Banner
             Container(
               margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF065F46)],
-                ),
+                gradient: AppColors.primaryGradient,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.gold.withAlpha(60)),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF065F46).withAlpha(80),
-                    blurRadius: 18,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
+                border: Border.all(color: Colors.white.withAlpha(25)),
+                boxShadow: AppShadows.sm,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,13 +63,13 @@ class MeetIdrakScreen extends StatelessWidget {
                     children: [
                       Row(
                         children: const [
-                          Icon(Icons.mic_external_on_rounded, color: AppColors.goldLight, size: 28),
-                          SizedBox(width: 10),
+                          Icon(Icons.mic_external_on_rounded, color: AppColors.primaryAccent, size: 22),
+                          SizedBox(width: 8),
                           Text(
                             'MEET İDRAK',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 18,
+                              fontSize: 15,
                               fontWeight: FontWeight.w900,
                               letterSpacing: 1.2,
                             ),
@@ -85,37 +77,37 @@ class MeetIdrakScreen extends StatelessWidget {
                         ],
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
                           color: AppColors.success.withAlpha(30),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.success),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppColors.success.withAlpha(80)),
                         ),
                         child: const Row(
                           children: [
-                            Icon(Icons.circle, color: AppColors.success, size: 8),
-                            SizedBox(width: 5),
-                            Text('Canlı Şəbəkə', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                            Icon(Icons.circle, color: AppColors.success, size: 6),
+                            SizedBox(width: 4),
+                            Text('Canlı', style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   const Text(
                     'Gecikməsiz real-vaxt səsli dərslər, sinif müzakirələri və interaktiv virtual otaqlar.',
-                    style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.3),
+                    style: TextStyle(color: Colors.white70, fontSize: 11.5, height: 1.35),
                   ),
 
                   if (isTeacherOrAdmin) ...[
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          backgroundColor: AppColors.primaryAccent,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
                         ),
                         onPressed: () {
                           Navigator.push(
@@ -123,10 +115,10 @@ class MeetIdrakScreen extends StatelessWidget {
                             MaterialPageRoute(builder: (_) => const CreateMeetScreen()),
                           );
                         },
-                        icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white, size: 20),
+                        icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white, size: 16),
                         label: const Text(
                           'Yeni Səsli Toplantı Başlat',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5),
                         ),
                       ),
                     ),
@@ -142,11 +134,11 @@ class MeetIdrakScreen extends StatelessWidget {
                 children: [
                   Text(
                     'Aktiv & Planlaşdırılmış Dərslər',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
+                    style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: AppColors.textPrimary, letterSpacing: -0.2),
                   ),
                   Text(
                     '${rooms.length} Otaq',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primaryAccent),
+                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: AppColors.primaryAccent),
                   ),
                 ],
               ),
@@ -154,30 +146,30 @@ class MeetIdrakScreen extends StatelessWidget {
 
             if (rooms.isEmpty)
               Container(
-                margin: const EdgeInsets.all(20),
-                padding: const EdgeInsets.all(32),
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(28),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppColors.cardBorder),
                 ),
                 child: Center(
                   child: Column(
                     children: [
-                      Icon(Icons.voice_over_off_rounded, size: 56, color: AppColors.textMuted),
-                      const SizedBox(height: 16),
+                      Icon(Icons.voice_over_off_rounded, size: 44, color: AppColors.textMuted),
+                      const SizedBox(height: 12),
                       Text(
                         'Hal-hazırda aktiv dərs və ya toplantı yoxdur',
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textPrimary),
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: AppColors.textPrimary),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
                       Text(
                         isTeacherOrAdmin
                             ? 'Yuxarıdakı düyməyə basaraq sinifiniz üçün yeni canlı səsli görüş başlada bilərsiniz.'
-                            : 'Müəlliminiz dərs başlatdıqda burada görünəcək və dərhal qoşula biləcəksiniz.',
+                            : 'Müəlliminiz dərs başlatdıqda burada görünəcək.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
                       ),
                     ],
                   ),
@@ -190,7 +182,7 @@ class MeetIdrakScreen extends StatelessWidget {
       ),
       floatingActionButton: isTeacherOrAdmin
           ? FloatingActionButton.extended(
-              backgroundColor: AppColors.primary,
+              backgroundColor: AppColors.primaryAccent,
               icon: const Icon(Icons.mic_rounded, color: Colors.white),
               label: const Text('Görüş Yarat', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               onPressed: () {
@@ -209,153 +201,161 @@ class MeetIdrakScreen extends StatelessWidget {
     final currentUserId = Provider.of<AppState>(context, listen: false).currentUser?.id ?? '';
     final isHost = room.hostId == currentUserId;
 
-    return CustomCard(
-      border: isLive ? Border.all(color: AppColors.success, width: 2) : Border.all(color: AppColors.cardBorder),
-      backgroundColor: isLive ? const Color(0xFFF0FDF4) : Colors.white,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              StatusBadge(
-                label: room.subject,
-                color: AppColors.primary,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isLive ? AppColors.success.withAlpha(80) : AppColors.cardBorder,
+          width: isLive ? 1.5 : 1,
+        ),
+        boxShadow: AppShadows.sm,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                StatusBadge(
+                  label: room.subject,
+                  color: AppColors.primaryAccent,
+                  fontSize: 9.5,
+                ),
+                if (isLive)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                    decoration: BoxDecoration(
+                      color: AppColors.danger,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.circle, color: Colors.white, size: 6),
+                        SizedBox(width: 4),
+                        Text(
+                          'CANLI',
+                          style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Text(
+                    room.status,
+                    style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              room.title,
+              style: TextStyle(
+                fontSize: 14.5,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+                letterSpacing: -0.2,
               ),
-              if (isLive)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.danger,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.danger.withAlpha(80),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 10,
+                  backgroundImage: NetworkImage(
+                    room.hostPhotoUrl ?? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400',
                   ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.circle, color: Colors.white, size: 8),
-                      SizedBox(width: 5),
-                      Text(
-                        'CANLI SƏSLİ OTAQ',
-                        style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900),
-                      ),
-                    ],
-                  ),
-                )
-              else
+                ),
+                const SizedBox(width: 7),
                 Text(
-                  room.status,
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            room.title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w900,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 12,
-                backgroundImage: NetworkImage(
-                  room.hostPhotoUrl ?? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400',
-                ),
-                child: null, // No overlay icon
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Təşkilatçı: ${room.hostName}',
-                style: TextStyle(fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              const Icon(Icons.people_alt_rounded, size: 16, color: AppColors.primaryAccent),
-              const SizedBox(width: 6),
-              Text(
-                '${room.participants.length} İştirakçı içəridədir',
-                style: const TextStyle(fontSize: 12, color: AppColors.primaryAccent, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-
-          if (room.targetClasses.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 6,
-              children: room.targetClasses.map((cls) {
-                return Chip(
-                  label: Text('Sinif $cls', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                  backgroundColor: AppColors.primary.withAlpha(15),
-                  padding: EdgeInsets.zero,
-                  visualDensity: VisualDensity.compact,
-                );
-              }).toList(),
-            ),
-          ],
-
-          const SizedBox(height: 14),
-          Divider(color: AppColors.cardBorder, height: 1),
-          const SizedBox(height: 10),
-
-          // Action Row
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isLive ? AppColors.success : AppColors.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => VoiceRoomScreen(room: room),
-                      ),
-                    );
-                  },
-                  icon: Icon(isLive ? Icons.mic_rounded : Icons.headset_mic_rounded, color: Colors.white),
-                  label: Text(
-                    isLive ? 'Dərsə Canlı Qoşul (Səsli)' : 'Otağa Daxil Ol',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
-                ),
-              ),
-
-              if (isHost || isTeacherOrAdmin) ...[
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger),
-                  tooltip: 'Otağı Sil',
-                  onPressed: () async {
-                    final appState = Provider.of<AppState>(context, listen: false);
-                    await appState.deleteMeetRoom(room.id);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Toplantı otağı silindi'), backgroundColor: AppColors.danger),
-                      );
-                    }
-                  },
+                  'Təşkilatçı: ${room.hostName}',
+                  style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
                 ),
               ],
+            ),
+            const SizedBox(height: 5),
+            Row(
+              children: [
+                const Icon(Icons.people_alt_outlined, size: 13, color: AppColors.primaryAccent),
+                const SizedBox(width: 4),
+                Text(
+                  '${room.participants.length} İştirakçı içəridədir',
+                  style: const TextStyle(fontSize: 10.5, color: AppColors.primaryAccent, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+
+            if (room.targetClasses.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 5,
+                children: room.targetClasses.map((cls) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryAccent.withAlpha(12),
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(color: AppColors.primaryAccent.withAlpha(30)),
+                    ),
+                    child: Text('Sinif $cls', style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: AppColors.primaryAccent)),
+                  );
+                }).toList(),
+              ),
             ],
-          ),
-        ],
+
+            const SizedBox(height: 10),
+            Divider(color: AppColors.cardBorder, height: 1),
+            const SizedBox(height: 8),
+
+            // Action Row
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isLive ? AppColors.success : AppColors.primaryAccent,
+                      padding: const EdgeInsets.symmetric(vertical: 9),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => VoiceRoomScreen(room: room),
+                        ),
+                      );
+                    },
+                    icon: Icon(isLive ? Icons.mic_rounded : Icons.headset_mic_outlined, color: Colors.white, size: 16),
+                    label: Text(
+                      isLive ? 'Dərsə Canlı Qoşul' : 'Otağa Daxil Ol',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
+                  ),
+                ),
+
+                if (isHost || isTeacherOrAdmin) ...[
+                  const SizedBox(width: 6),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger, size: 18),
+                    tooltip: 'Otağı Sil',
+                    onPressed: () async {
+                      final appState = Provider.of<AppState>(context, listen: false);
+                      await appState.deleteMeetRoom(room.id);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Toplantı otağı silindi'), backgroundColor: AppColors.danger),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

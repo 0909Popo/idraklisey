@@ -360,36 +360,30 @@ class _SendNotificationDialogState extends State<SendNotificationDialog> {
                       if (isTeacher || isDirectStudent) ...[
                         const Text('Qəbul Edən Tərəf:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                         const SizedBox(height: 6),
-                        Row(
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
                           children: [
-                            Expanded(
-                              child: ChoiceChip(
-                                label: const Text('👨‍👩‍👧 Valideyn', style: TextStyle(fontSize: 11)),
-                                selected: _teacherRecipientType == 'parent',
-                                selectedColor: AppColors.primary,
-                                labelStyle: TextStyle(color: _teacherRecipientType == 'parent' ? Colors.white : AppColors.textPrimary),
-                                onSelected: (_) => setState(() => _teacherRecipientType = 'parent'),
-                              ),
+                            ChoiceChip(
+                              label: const Text('👨‍👩‍👧 Valideyn', style: TextStyle(fontSize: 11)),
+                              selected: _teacherRecipientType == 'parent',
+                              selectedColor: AppColors.primary,
+                              labelStyle: TextStyle(color: _teacherRecipientType == 'parent' ? Colors.white : AppColors.textPrimary),
+                              onSelected: (_) => setState(() => _teacherRecipientType = 'parent'),
                             ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: ChoiceChip(
-                                label: const Text('🎓 Şagird', style: TextStyle(fontSize: 11)),
-                                selected: _teacherRecipientType == 'student',
-                                selectedColor: AppColors.primary,
-                                labelStyle: TextStyle(color: _teacherRecipientType == 'student' ? Colors.white : AppColors.textPrimary),
-                                onSelected: (_) => setState(() => _teacherRecipientType = 'student'),
-                              ),
+                            ChoiceChip(
+                              label: const Text('🎓 Şagird', style: TextStyle(fontSize: 11)),
+                              selected: _teacherRecipientType == 'student',
+                              selectedColor: AppColors.primary,
+                              labelStyle: TextStyle(color: _teacherRecipientType == 'student' ? Colors.white : AppColors.textPrimary),
+                              onSelected: (_) => setState(() => _teacherRecipientType = 'student'),
                             ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: ChoiceChip(
-                                label: const Text('👥 Hər İkisi', style: TextStyle(fontSize: 11)),
-                                selected: _teacherRecipientType == 'parent_and_student',
-                                selectedColor: AppColors.primary,
-                                labelStyle: TextStyle(color: _teacherRecipientType == 'parent_and_student' ? Colors.white : AppColors.textPrimary),
-                                onSelected: (_) => setState(() => _teacherRecipientType = 'parent_and_student'),
-                              ),
+                            ChoiceChip(
+                              label: const Text('👥 Hər İkisi', style: TextStyle(fontSize: 11)),
+                              selected: _teacherRecipientType == 'parent_and_student',
+                              selectedColor: AppColors.primary,
+                              labelStyle: TextStyle(color: _teacherRecipientType == 'parent_and_student' ? Colors.white : AppColors.textPrimary),
+                              onSelected: (_) => setState(() => _teacherRecipientType = 'parent_and_student'),
                             ),
                           ],
                         ),
@@ -460,7 +454,9 @@ class _SendNotificationDialogState extends State<SendNotificationDialog> {
                       // Priority
                       const Text('Dərəcə / Vaciblik:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                       const SizedBox(height: 6),
-                      Row(
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
                         children: [
                           ChoiceChip(
                             label: const Text('Adi (Normal)'),
@@ -469,7 +465,6 @@ class _SendNotificationDialogState extends State<SendNotificationDialog> {
                             labelStyle: TextStyle(color: _priority == 'normal' ? Colors.white : AppColors.textPrimary, fontSize: 11),
                             onSelected: (_) => setState(() => _priority = 'normal'),
                           ),
-                          const SizedBox(width: 8),
                           ChoiceChip(
                             label: const Text('⚠️ Vacib'),
                             selected: _priority == 'important',
@@ -477,7 +472,6 @@ class _SendNotificationDialogState extends State<SendNotificationDialog> {
                             labelStyle: TextStyle(color: _priority == 'important' ? Colors.white : AppColors.textPrimary, fontSize: 11),
                             onSelected: (_) => setState(() => _priority = 'important'),
                           ),
-                          const SizedBox(width: 8),
                           ChoiceChip(
                             label: const Text('🚨 Təcili'),
                             selected: _priority == 'urgent',

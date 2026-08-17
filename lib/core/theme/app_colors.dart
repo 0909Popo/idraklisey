@@ -1,51 +1,51 @@
 import 'package:flutter/material.dart';
 
-/// App color palette.
+/// App color palette — Modern 2026 Material 3 Design System.
 ///
-/// Brand colors (navy, gold, status) are constant and shared by both themes.
-/// The neutral subset (background, surfaces, borders, text) is adaptive:
-/// [applyDark] swaps these mutable statics in place so every screen that
-/// reads `AppColors.background` etc. instantly follows the active theme
-/// without any per-screen logic.
+/// Brand colors:
+/// - Primary: #1A1B2E (Deep Onyx / Midnight Navy)
+/// - Accent: #6C5CE7 (Vibrant Purple / Indigo)
+/// - Background: #F7F7FB (Ultra Clean M3 Light) / #0E0F19 (Sleek Dark)
+/// - Surface: #FFFFFF / #161827
 class AppColors {
-  // Primary Navy Brand Colors
-  static const Color primary = Color(0xFF0F2552); // Deep Idrak Navy
-  static const Color primaryDark = Color(0xFF0A1935);
-  static const Color primaryLight = Color(0xFF1E3E7B);
-  static const Color primaryAccent = Color(0xFF2563EB);
+  // Primary Onyx / Midnight Brand Colors
+  static const Color primary = Color(0xFF1A1B2E);
+  static const Color primaryDark = Color(0xFF111220);
+  static const Color primaryLight = Color(0xFF2E304F);
+  static const Color primaryAccent = Color(0xFF6C5CE7); // Modern Purple/Indigo
 
-  // Gold / Amber Accent Colors (From Logo)
+  // Gold / Amber Luxury Accents
   static const Color gold = Color(0xFFF59E0B);
   static const Color goldLight = Color(0xFFFBBF24);
   static const Color goldDark = Color(0xFFD97706);
 
-  // Status Colors
-  static const Color success = Color(0xFF10B981); // Emerald (Attended)
+  // Status Colors (Soft, refined M3 variants)
+  static const Color success = Color(0xFF10B981);
   static const Color successLight = Color(0xFFD1FAE5);
-  static const Color warning = Color(0xFFF59E0B); // Amber (Late)
+  static const Color warning = Color(0xFFF59E0B);
   static const Color warningLight = Color(0xFFFEF3C7);
-  static const Color danger = Color(0xFFEF4444);  // Red (Absent)
+  static const Color danger = Color(0xFFEF4444);
   static const Color dangerLight = Color(0xFFFEE2E2);
-  static const Color info = Color(0xFF3B82F6);    // Blue (Info)
+  static const Color info = Color(0xFF3B82F6);
   static const Color infoLight = Color(0xFFDBEAFE);
 
-  // Dark palette (constant source for the adaptive values below)
-  static const Color darkBackground = Color(0xFF090D16);
-  static const Color darkSurface = Color(0xFF131B2E);
-  static const Color darkCard = Color(0xFF1E293B);
-  static const Color darkBorder = Color(0xFF334155);
+  // Dark palette
+  static const Color darkBackground = Color(0xFF0E0F19);
+  static const Color darkSurface = Color(0xFF161827);
+  static const Color darkCard = Color(0xFF1F2238);
+  static const Color darkBorder = Color(0xFF2D3150);
 
-  // --- Adaptive neutral palette (swapped by applyDark) ---
-  static const Color _lightBackground = Color(0xFFF8FAFC);
+  // Light palette
+  static const Color _lightBackground = Color(0xFFF7F7FB);
   static const Color _lightSurface = Color(0xFFFFFFFF);
-  static const Color _lightCardBorder = Color(0xFFE2E8F0);
-  static const Color _lightTextPrimary = Color(0xFF0F172A);
-  static const Color _lightTextSecondary = Color(0xFF64748B);
-  static const Color _lightTextMuted = Color(0xFF94A3B8);
+  static const Color _lightCardBorder = Color(0xFFE8E8F0);
+  static const Color _lightTextPrimary = Color(0xFF1A1B2E);
+  static const Color _lightTextSecondary = Color(0xFF6B6E8A);
+  static const Color _lightTextMuted = Color(0xFF9EA2BD);
 
-  static const Color _darkTextPrimary = Color(0xFFF1F5F9);
-  static const Color _darkTextSecondary = Color(0xFF94A3B8);
-  static const Color _darkTextMuted = Color(0xFF64748B);
+  static const Color _darkTextPrimary = Color(0xFFF0F1F8);
+  static const Color _darkTextSecondary = Color(0xFF9EA2BD);
+  static const Color _darkTextMuted = Color(0xFF6B6E8A);
 
   static Color background = _lightBackground;
   static Color surface = _lightSurface;
@@ -58,7 +58,7 @@ class AppColors {
   static Color textMuted = _lightTextMuted;
   static const Color textOnPrimary = Color(0xFFFFFFFF);
 
-  /// Swaps every adaptive neutral to the requested palette.
+  /// Swaps adaptive colors according to active theme mode.
   static void applyDark(bool dark) {
     if (dark) {
       background = darkBackground;
@@ -83,25 +83,24 @@ class AppColors {
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF0F2552), Color(0xFF1E3E7B), Color(0xFF1D4ED8)],
+    colors: [Color(0xFF1A1B2E), Color(0xFF2E304F)],
+  );
+
+  static const LinearGradient accentGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF6C5CE7), Color(0xFF8070F6)],
   );
 
   static const LinearGradient goldGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFFF59E0B), Color(0xFFFBBF24), Color(0xFFFDE68A)],
+    colors: [Color(0xFFD97706), Color(0xFFF59E0B)],
   );
 
-  /// Card gradient built from the current adaptive surfaces.
   static LinearGradient get cardGradient => LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [surface, background],
       );
-
-  static const LinearGradient heroGradient = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [Color(0xFF0F2552), Color(0xFF0A1935)],
-  );
 }

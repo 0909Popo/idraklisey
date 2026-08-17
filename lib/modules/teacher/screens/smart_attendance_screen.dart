@@ -162,73 +162,112 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0C1322),
-      appBar: AppBar(
-        title: const Text('Smart Davamiyyət (Tinder-Style)'),
-        backgroundColor: const Color(0xFF0F172A),
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Sessiyanı Sıfırla',
-            onPressed: () {
-              appState.resetAttendanceSession();
-            },
-          ),
-        ],
-      ),
+      backgroundColor: const Color(0xFF0B0E1A),
       body: Column(
         children: [
-          // Class & Live Stats Bar
+          // ── Premium Dark Header ──
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 8,
+              left: 16,
+              right: 16,
+              bottom: 12,
+            ),
             decoration: const BoxDecoration(
-              color: Color(0xFF131D33),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF0F1023), Color(0xFF1A1B2E)],
+              ),
               border: Border(bottom: BorderSide(color: Color(0xFF1E293B))),
             ),
-            child: Row(
+            child: Column(
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '$className • $subject',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '$timeStr • Canlı Qeydiyyat',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: AppColors.goldLight, fontSize: 11, fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
+                // Top bar with back & reset
                 Row(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildMiniBadge('İ: $presentCount', AppColors.success),
-                    const SizedBox(width: 4),
-                    _buildMiniBadge('G: $lateCount', AppColors.warning),
-                    const SizedBox(width: 4),
-                    _buildMiniBadge('Q: $absentCount', AppColors.danger),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withAlpha(10),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: Colors.white),
+                      ),
+                    ),
+                    const Text(
+                      'Smart Davamiyyət',
+                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: -0.3),
+                    ),
+                    GestureDetector(
+                      onTap: () => appState.resetAttendanceSession(),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withAlpha(10),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.refresh_rounded, size: 16, color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Class info & live stats
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '$className • $subject',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14),
+                          ),
+                          const SizedBox(height: 3),
+                          Row(
+                            children: [
+                              Icon(Icons.schedule_rounded, size: 12, color: AppColors.goldLight.withAlpha(180)),
+                              const SizedBox(width: 4),
+                              Text(
+                                '$timeStr • Canlı Qeydiyyat',
+                                style: TextStyle(color: AppColors.goldLight.withAlpha(180), fontSize: 11, fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildMiniBadge('İ: $presentCount', AppColors.success),
+                        const SizedBox(width: 4),
+                        _buildMiniBadge('G: $lateCount', AppColors.warning),
+                        const SizedBox(width: 4),
+                        _buildMiniBadge('Q: $absentCount', AppColors.danger),
+                      ],
+                    ),
                   ],
                 ),
               ],
             ),
           ),
 
-          // Gesture Hint Bar (Overflow-proof scrollable)
+          // ── Gesture Hints ──
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            color: const Color(0xFF0B0E1A),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
               child: Row(
                 children: [
                   _buildGestureHint('⬅️ Sola', 'Qayıb', AppColors.danger),
@@ -241,7 +280,7 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
             ),
           ),
 
-          // Main Swipe Area
+          // ── Main Swipe Area ──
           Expanded(
             child: Center(
               child: !canAccessAttendance
@@ -253,18 +292,17 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
                       : Stack(
                           alignment: Alignment.center,
                           children: [
-                            // Background Card Placeholder
+                            // Background Card
                             if (pendingStudents.length > 1)
                               _buildBackgroundCard(pendingStudents[1]),
-
-                            // Top Active Swipable Card
+                            // Active Swipable Card
                             _buildActiveSwipableCard(context, appState, pendingStudents.first),
                           ],
                         )),
             ),
           ),
 
-          // Bottom Action Bar
+          // ── Bottom Action Bar ──
           if (pendingStudents.isNotEmpty && canAccessAttendance)
             _buildBottomControls(appState, pendingStudents.first),
         ],
@@ -274,40 +312,42 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
 
   Widget _buildEmptyClassState(BuildContext context, String className) {
     return Padding(
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(32),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.white.withAlpha(10),
+              color: AppColors.goldLight.withAlpha(10),
               shape: BoxShape.circle,
+              border: Border.all(color: AppColors.goldLight.withAlpha(30)),
             ),
-            child: const Icon(Icons.group_off_rounded, size: 54, color: AppColors.goldLight),
+            child: const Icon(Icons.group_off_rounded, size: 52, color: AppColors.goldLight),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 20),
           Text(
-            '$className sinfində hələ heç bir şagird qeydiyyatda deyil.',
+            '$className sinfində hələ heç bir\nşagird qeydiyyatda deyil.',
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
           const Text(
             'Məktəb İnzibatçısı (Admin) şagird yaratdıqda və ya sinfi bu qrupa təyin etdikdə avtomatik siyahıda görünəcək.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white60, fontSize: 12),
+            style: TextStyle(color: Colors.white60, fontSize: 12, height: 1.5),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              backgroundColor: AppColors.primaryAccent,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 13),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              elevation: 0,
             ),
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-            label: const Text('Geri Qayıt', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 18),
+            label: const Text('Geri Qayıt', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -323,40 +363,47 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppColors.warning.withAlpha(30),
+              color: AppColors.warning.withAlpha(15),
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.warning, width: 2),
+              border: Border.all(color: AppColors.warning.withAlpha(40), width: 2),
             ),
-            child: const Icon(Icons.timer_rounded, size: 64, color: AppColors.warning),
+            child: const Icon(Icons.timer_rounded, size: 60, color: AppColors.warning),
           ),
           const SizedBox(height: 24),
           const Text(
-            '⏰ Dərs Saatı Hələ Başlamayıb',
+            'Dərs Saatı Hələ Başlamayıb',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900),
+            style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.3),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
+            style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.5),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 14),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.info.withAlpha(25),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.info.withAlpha(60)),
+              color: const Color(0xFF1E3A5F).withAlpha(60),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFF3B82F6).withAlpha(40)),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.info_outline_rounded, color: AppColors.info, size: 20),
-                SizedBox(width: 10),
-                Expanded(
+                Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3B82F6).withAlpha(20),
+                    borderRadius: BorderRadius.circular(7),
+                  ),
+                  child: const Icon(Icons.info_outline_rounded, color: Color(0xFF60A5FA), size: 16),
+                ),
+                const SizedBox(width: 10),
+                const Expanded(
                   child: Text(
                     'Davamiyyət qeydiyyatı yalnız dərs saatından 10 dəqiqə əvvəl aktivləşir.',
-                    style: TextStyle(color: AppColors.info, fontSize: 12, fontWeight: FontWeight.w600),
+                    style: TextStyle(color: Color(0xFF93C5FD), fontSize: 11.5, fontWeight: FontWeight.w600),
                   ),
                 ),
               ],
@@ -365,13 +412,14 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
           const SizedBox(height: 32),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              backgroundColor: AppColors.primaryAccent,
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              elevation: 0,
             ),
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-            label: const Text('Geri Qayıt', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 18),
+            label: const Text('Geri Qayıt', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -382,9 +430,9 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withAlpha(30),
+        color: color.withAlpha(20),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withAlpha(60)),
+        border: Border.all(color: color.withAlpha(50)),
       ),
       child: Text(
         text,
@@ -397,16 +445,16 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withAlpha(20),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withAlpha(50)),
+        color: color.withAlpha(12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withAlpha(35)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(action, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold)),
+          Text(action, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700)),
           const SizedBox(width: 4),
-          Text('($meaning)', style: const TextStyle(color: Colors.white70, fontSize: 10)),
+          Text('($meaning)', style: TextStyle(color: Colors.white.withAlpha(140), fontSize: 10)),
         ],
       ),
     );
@@ -416,16 +464,16 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
     return Transform.scale(
       scale: 0.94,
       child: Opacity(
-        opacity: 0.6,
+        opacity: 0.5,
         child: Container(
           width: 320,
           height: 440,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white12),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: Colors.white.withAlpha(8)),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(28),
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -434,7 +482,7 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
                   fit: BoxFit.cover,
                   errorBuilder: (ctx, err, stack) => Container(
                     color: const Color(0xFF1E293B),
-                    child: const Icon(Icons.person_rounded, size: 80, color: Colors.white30),
+                    child: const Icon(Icons.person_rounded, size: 80, color: Colors.white24),
                   ),
                 ),
                 Container(
@@ -447,12 +495,12 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
                   ),
                 ),
                 Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: 16,
+                  left: 18,
+                  right: 18,
+                  bottom: 18,
                   child: Text(
                     student.fullName,
-                    style: const TextStyle(color: Colors.white70, fontSize: 18, fontWeight: FontWeight.w700),
+                    style: const TextStyle(color: Colors.white60, fontSize: 18, fontWeight: FontWeight.w700),
                   ),
                 ),
               ],
@@ -513,21 +561,27 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
             width: 320,
             height: 440,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(28),
               border: Border.all(
-                color: overlayColor != Colors.transparent ? overlayColor : Colors.white24,
+                color: overlayColor != Colors.transparent ? overlayColor : Colors.white.withAlpha(15),
                 width: 2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withAlpha(120),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
+                  color: Colors.black.withAlpha(100),
+                  blurRadius: 24,
+                  offset: const Offset(0, 12),
                 ),
+                if (overlayColor != Colors.transparent)
+                  BoxShadow(
+                    color: overlayColor.withAlpha(40),
+                    blurRadius: 30,
+                    spreadRadius: 4,
+                  ),
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(26),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -543,13 +597,13 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
                     ),
                   ),
 
-                  // Bottom Gradient Overlay for text readability
+                  // Bottom Gradient Overlay
                   Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        stops: [0.35, 0.65, 1.0],
+                        stops: [0.3, 0.6, 1.0],
                         colors: [
                           Colors.transparent,
                           Colors.black54,
@@ -561,9 +615,9 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
 
                   // Bottom Info Section
                   Positioned(
-                    left: 16,
-                    right: 16,
-                    bottom: 16,
+                    left: 18,
+                    right: 18,
+                    bottom: 18,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
@@ -572,20 +626,20 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              color: AppColors.danger.withAlpha(220),
-                              borderRadius: BorderRadius.circular(8),
+                              color: AppColors.danger.withAlpha(210),
+                              borderRadius: BorderRadius.circular(10),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.warning_amber_rounded, size: 14, color: Colors.white),
+                                const Icon(Icons.warning_amber_rounded, size: 13, color: Colors.white),
                                 const SizedBox(width: 6),
                                 Flexible(
                                   child: Text(
                                     'Allergiya: ${currentMed.allergies.first.name}',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                    style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w700),
                                   ),
                                 ),
                               ],
@@ -599,27 +653,28 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
                             color: Colors.white,
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
-                            shadows: [Shadow(color: Colors.black87, blurRadius: 6)],
+                            letterSpacing: -0.3,
+                            shadows: [Shadow(color: Colors.black87, blurRadius: 8)],
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 5),
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: AppColors.goldDark,
-                                borderRadius: BorderRadius.circular(6),
+                                color: AppColors.primaryAccent.withAlpha(180),
+                                borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 student.className,
-                                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
                               ),
                             ),
                             const SizedBox(width: 8),
                             Text(
                               'ID: ${student.studentNumber}',
-                              style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
+                              style: TextStyle(color: Colors.white.withAlpha(180), fontSize: 12, fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),
@@ -628,7 +683,7 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
                           'Valideyn: ${student.parentName} (${student.parentPhone})',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: Colors.white60, fontSize: 11),
+                          style: TextStyle(color: Colors.white.withAlpha(140), fontSize: 11),
                         ),
                       ],
                     ),
@@ -637,7 +692,10 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
                   // Live Swipe Feedback Overlay
                   if (overlayColor != Colors.transparent)
                     Container(
-                      color: overlayColor,
+                      decoration: BoxDecoration(
+                        color: overlayColor,
+                        borderRadius: BorderRadius.circular(26),
+                      ),
                       child: Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -646,7 +704,7 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
                             const SizedBox(height: 8),
                             Text(
                               overlayText,
-                              style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900),
+                              style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 0.5),
                             ),
                           ],
                         ),
@@ -671,45 +729,59 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
 
   Widget _buildBottomControls(AppState appState, StudentProfile student) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      decoration: const BoxDecoration(
-        color: Color(0xFF0F172A),
-        border: Border(top: BorderSide(color: Color(0xFF1E293B))),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF0F1023), Color(0xFF1A1B2E)],
+        ),
+        border: Border(top: BorderSide(color: Colors.white.withAlpha(8))),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          // Undo Button
-          IconButton(
-            onPressed: () => appState.undoLastSwipe(),
-            icon: const Icon(Icons.undo_rounded, color: Colors.white54, size: 24),
-            tooltip: 'Geri Qaytar',
-          ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            // Undo
+            GestureDetector(
+              onTap: () => appState.undoLastSwipe(),
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withAlpha(8),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withAlpha(15)),
+                ),
+                child: const Icon(Icons.undo_rounded, color: Colors.white54, size: 20),
+              ),
+            ),
 
-          // Absent Button (Left Swipe)
-          _buildActionButton(
-            icon: Icons.close_rounded,
-            color: AppColors.danger,
-            label: 'Qayıb',
-            onTap: () => _handleSwipe(appState, student.id, AttendanceStatus.absent),
-          ),
+            // Absent
+            _buildActionButton(
+              icon: Icons.close_rounded,
+              color: AppColors.danger,
+              label: 'Qayıb',
+              onTap: () => _handleSwipe(appState, student.id, AttendanceStatus.absent),
+            ),
 
-          // Late Button (Up Swipe)
-          _buildActionButton(
-            icon: Icons.access_time_filled_rounded,
-            color: AppColors.warning,
-            label: 'Gecikmə',
-            onTap: () => _handleSwipe(appState, student.id, AttendanceStatus.late),
-          ),
+            // Late
+            _buildActionButton(
+              icon: Icons.access_time_filled_rounded,
+              color: AppColors.warning,
+              label: 'Gecikmə',
+              onTap: () => _handleSwipe(appState, student.id, AttendanceStatus.late),
+            ),
 
-          // Present Button (Right Swipe)
-          _buildActionButton(
-            icon: Icons.check_rounded,
-            color: AppColors.success,
-            label: 'İştirak',
-            onTap: () => _handleSwipe(appState, student.id, AttendanceStatus.present),
-          ),
-        ],
+            // Present
+            _buildActionButton(
+              icon: Icons.check_rounded,
+              color: AppColors.success,
+              label: 'İştirak',
+              onTap: () => _handleSwipe(appState, student.id, AttendanceStatus.present),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -720,23 +792,22 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
     required String label,
     required VoidCallback onTap,
   }) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(30),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: color.withAlpha(25),
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: color, width: 1.5),
+          color: color.withAlpha(15),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withAlpha(60), width: 1.5),
         ),
         child: Row(
           children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(width: 6),
+            Icon(icon, color: color, size: 18),
+            const SizedBox(width: 5),
             Text(
               label,
-              style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 13),
+              style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 12),
             ),
           ],
         ),
@@ -752,32 +823,32 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
     int absent,
   ) {
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(28),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
-              color: AppColors.success.withAlpha(30),
+              color: AppColors.success.withAlpha(15),
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.success, width: 2),
+              border: Border.all(color: AppColors.success.withAlpha(40), width: 2),
             ),
-            child: const Icon(Icons.done_all_rounded, color: AppColors.success, size: 54),
+            child: const Icon(Icons.done_all_rounded, color: AppColors.success, size: 52),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
           const Text(
-            'Bütün Sinfin Davamiyyəti Tamamlandı!',
+            'Bütün Sinfin Davamiyyəti\nTamamlandı!',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900),
+            style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.3),
           ),
           const SizedBox(height: 8),
           const Text(
-            'Məlumatlar həm Firestore bulud bazasına, həm də valideyn portallarına canlı sinxronizasiya edilir.',
+            'Məlumatlar həm Firestore bulud bazasına, həm də\nvalideyn portallarına canlı sinxronizasiya edilir.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white70, fontSize: 12),
+            style: TextStyle(color: Colors.white60, fontSize: 12, height: 1.5),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
 
           // Summary Stats
           Row(
@@ -794,8 +865,9 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.success,
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              elevation: 0,
             ),
             onPressed: () {
               appState.completeAttendanceSession();
@@ -807,8 +879,11 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
                 ),
               );
             },
-            icon: const Icon(Icons.cloud_upload_rounded, color: Colors.white),
-            label: const Text('Davamiyyəti Təsdiqlə və Yadda Saxla', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+            icon: const Icon(Icons.cloud_upload_rounded, color: Colors.white, size: 18),
+            label: const Text(
+              'Davamiyyəti Təsdiqlə və Yadda Saxla',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -817,17 +892,17 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
 
   Widget _buildResultCard(String label, String value, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: color.withAlpha(20),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withAlpha(60)),
+        color: color.withAlpha(12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withAlpha(40)),
       ),
       child: Column(
         children: [
-          Text(value, style: TextStyle(color: color, fontSize: 24, fontWeight: FontWeight.w900)),
+          Text(value, style: TextStyle(color: color, fontSize: 26, fontWeight: FontWeight.w900)),
           const SizedBox(height: 4),
-          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+          Text(label, style: TextStyle(color: Colors.white.withAlpha(160), fontSize: 12, fontWeight: FontWeight.w600)),
         ],
       ),
     );

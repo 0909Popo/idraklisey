@@ -1,9 +1,7 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/custom_card.dart';
-import '../../../core/widgets/status_badge.dart';
+import '../../../core/theme/app_shadows.dart';
 import '../../../core/widgets/section_header.dart';
 import '../../../core/widgets/idrak_logo.dart';
 import '../../../providers/app_state.dart';
@@ -23,315 +21,310 @@ class ParentDashboardScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: CustomScrollView(
-        slivers: [
-          // Elegant Header with Student Profile
-          SliverAppBar(
-            expandedHeight: 180.0,
-            floating: false,
-            pinned: true,
-            backgroundColor: AppColors.primary,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: AppColors.primaryGradient,
-                ),
-                padding: const EdgeInsets.only(left: 20, right: 20, top: 45, bottom: 20),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Student Photo with Gold Border
-                    Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.gold, width: 2.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withAlpha(50),
-                            blurRadius: 10,
-                          ),
-                        ],
+      body: SafeArea(
+        top: false,
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // Floating Parent Header Bar
+            SliverAppBar(
+              expandedHeight: 130.0,
+              floating: false,
+              pinned: true,
+              elevation: 0,
+              backgroundColor: AppColors.primary,
+              flexibleSpace: FlexibleSpaceBar(
+                background: Container(
+                  decoration: const BoxDecoration(
+                    gradient: AppColors.primaryGradient,
+                  ),
+                  padding: const EdgeInsets.only(left: 20, right: 20, top: 48, bottom: 14),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.primaryAccent, width: 2),
+                        ),
+                        child: CircleAvatar(
+                          radius: 26,
+                          backgroundImage: NetworkImage(student.photoUrl),
+                        ),
                       ),
-                      child: CircleAvatar(
-                        radius: 36,
-                        backgroundImage: NetworkImage(student.photoUrl),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const IdrakLogo(size: 18),
-                              const SizedBox(width: 6),
-                              Text(
-                                'VALİDEYN KABİNETİ',
-                                style: TextStyle(
-                                  color: AppColors.goldLight,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.0,
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const IdrakLogo(size: 15),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1.5),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryAccent.withAlpha(30),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Text(
+                                    'VALİDEYN KABİNETİ',
+                                    style: TextStyle(
+                                      color: AppColors.primaryAccent,
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
                                 ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              student.fullName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16.5,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.2,
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            student.fullName,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
                             ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${student.className} • ${student.studentNumber}',
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                            const SizedBox(height: 2),
+                            Text(
+                              'Övladınız: ${student.className} • ${student.studentNumber}',
+                              style: TextStyle(
+                                color: Colors.white.withAlpha(190),
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Quick Stats Bar
+                    Row(
+                      children: [
+                        _buildParentStatChip('GPA Balı', '${student.gpa}', Icons.star_rounded, AppColors.goldDark),
+                        const SizedBox(width: 8),
+                        _buildParentStatChip('Davamiyyət', '${student.attendanceRate}%', Icons.check_circle_rounded, AppColors.success),
+                        const SizedBox(width: 8),
+                        _buildParentStatChip('Qan Qrupu', 'A(II)+', Icons.favorite_rounded, AppColors.danger),
+                      ],
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    const SectionHeader(
+                      title: 'Nəzarət və İzləmə Modulları',
+                      subtitle: 'Qiymətlər, davamiyyət, tibb və müəllim əlaqəsi',
+                      padding: EdgeInsets.zero,
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // 2-Column Grid for Parent Modules
+                    GridView.count(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                      childAspectRatio: 1.25,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: [
+                        _buildParentGridTile(
+                          context: context,
+                          title: 'Həftəlik Matris',
+                          subtitle: 'Gündəlik dərslər',
+                          icon: Icons.grid_view_outlined,
+                          accentColor: const Color(0xFF0284C7),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const TimetableMatrixScreen()),
+                          ),
+                        ),
+                        _buildParentGridTile(
+                          context: context,
+                          title: 'Qiymət Qrafiki',
+                          subtitle: 'KSQ / BSQ dinamika',
+                          icon: Icons.insights_outlined,
+                          accentColor: AppColors.primaryAccent,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const GradesAnalyticsScreen()),
+                          ),
+                        ),
+                        _buildParentGridTile(
+                          context: context,
+                          title: 'Davamiyyət',
+                          subtitle: 'Rəqəmsal təqvim',
+                          icon: Icons.calendar_month_outlined,
+                          accentColor: AppColors.success,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const AttendanceCalendarScreen()),
+                          ),
+                        ),
+                        _buildParentGridTile(
+                          context: context,
+                          title: 'Tibbi Kart',
+                          subtitle: 'Allergiya & Peyvənd',
+                          icon: Icons.medical_services_outlined,
+                          accentColor: AppColors.danger,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const MedicalCardScreen()),
+                          ),
+                        ),
+                        _buildParentGridTile(
+                          context: context,
+                          title: 'Helpdesk Ticket',
+                          subtitle: 'Məktəb & Psixoloq',
+                          icon: Icons.support_agent_outlined,
+                          accentColor: AppColors.goldDark,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const ParentTicketsScreen()),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
             ),
-          ),
-
-          // Main Dashboard Body
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 4 Quick Stats Bar
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        _buildQuickStat('GPA Nəticəsi', '${student.gpa}', Icons.school_rounded, AppColors.primary, isDark: appState.isDarkMode),
-                        const SizedBox(width: 8),
-                        _buildQuickStat('Davamiyyət', '${student.attendanceRate}%', Icons.event_available_rounded, AppColors.success, isDark: appState.isDarkMode),
-                        const SizedBox(width: 8),
-                        _buildQuickStat('Qan Qrupu', 'A(II)+', Icons.favorite_rounded, AppColors.danger, isDark: appState.isDarkMode),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  const SectionHeader(
-                    title: 'Əsas Bölmələr',
-                    subtitle: 'Valideyn idarəetmə və nəzarət modulları',
-                  ),
-
-                  // 1. Həftəlik Matris Gündəlik Card
-                  _buildModuleActionCard(
-                    context: context,
-                    title: 'Həftəlik Matris Gündəlik',
-                    subtitle: 'B.E - Cümə tam grid cədvəl, dərslər və müəllimlər',
-                    icon: Icons.grid_view_rounded,
-                    accentColor: AppColors.primaryAccent,
-                    tag: '5 Tədris Günü',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const TimetableMatrixScreen()),
-                    ),
-                  ),
-
-                  // 2. Qiymətlər və İnteraktiv Qrafiklər Card
-                  _buildModuleActionCard(
-                    context: context,
-                    title: 'Qiymətlər & İnteraktiv Qrafiklər',
-                    subtitle: 'KSQ, BSQ, Diaqnostik və IB STR dinamika diaqramları',
-                    icon: Icons.insights_rounded,
-                    accentColor: Colors.purple,
-                    tag: 'Line & Bar Chart',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const GradesAnalyticsScreen()),
-                    ),
-                  ),
-
-                  // 3. Davamiyyət Təqvimi Card
-                  _buildModuleActionCard(
-                    context: context,
-                    title: 'Davamiyyət Təqvimi',
-                    subtitle: '🟢 İştirak, 🟡 Gecikmə, 🔴 Qayıb rəqəmsal rəngli aylıq təqvim',
-                    icon: Icons.calendar_month_rounded,
-                    accentColor: AppColors.success,
-                    tag: 'Fevral 2025',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const AttendanceCalendarScreen()),
-                    ),
-                  ),
-
-                  // 4. Tibbi İzləmə Paneli Card
-                  _buildModuleActionCard(
-                    context: context,
-                    title: 'Tibbi İzləmə Paneli (Rəqəmsal Kart)',
-                    subtitle: 'Qan qrupu, allergiyalar (qlüten, qoz, penisillin), peyvəndlər',
-                    icon: Icons.medical_services_rounded,
-                    accentColor: AppColors.danger,
-                    tag: 'Tibb Mərkəzi',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const MedicalCardScreen()),
-                    ),
-                  ),
-
-                  // 5. Helpdesk Ticket Müraciətlər Card
-                  _buildModuleActionCard(
-                    context: context,
-                    title: 'Ünsiyyət & Elektron Müraciətlər',
-                    subtitle: 'Rəhbərlik, psixoloq və müəllimlə birbaşa Ticket əlaqəsi',
-                    icon: Icons.support_agent_rounded,
-                    accentColor: AppColors.goldDark,
-                    tag: 'Helpdesk Sistem',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ParentTicketsScreen()),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickStat(String title, String value, IconData icon, Color color, {bool isDark = false}) {
-    return Expanded(
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.darkSurface.withAlpha(190)
-                  : Colors.white.withAlpha(190),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isDark ? Colors.white.withAlpha(28) : Colors.white.withAlpha(50),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(10),
-                  blurRadius: 12,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: color.withAlpha(30),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: color.withAlpha(40)),
-                  ),
-                  child: Icon(icon, color: color, size: 18),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                    color: color,
-                  ),
-                ),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildModuleActionCard({
+  Widget _buildParentStatChip(String title, String value, IconData icon, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 6),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.cardBorder),
+          boxShadow: AppShadows.sm,
+        ),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: color, size: 13),
+                const SizedBox(width: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 9.5,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildParentGridTile({
     required BuildContext context,
     required String title,
     required String subtitle,
     required IconData icon,
     required Color accentColor,
-    required String tag,
     required VoidCallback onTap,
   }) {
-    return CustomCard(
-      onTap: onTap,
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: accentColor.withAlpha(22),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: accentColor, size: 28),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.cardBorder),
+        boxShadow: AppShadows.sm,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
-                        ),
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: accentColor.withAlpha(18),
+                        borderRadius: BorderRadius.circular(10),
                       ),
+                      child: Icon(icon, color: accentColor, size: 18),
                     ),
-                    StatusBadge(
-                      label: tag,
-                      color: accentColor,
-                      fontSize: 10,
-                    ),
+                    Icon(Icons.arrow_outward_rounded, size: 15, color: AppColors.textMuted),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                    height: 1.3,
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textMuted),
-        ],
+        ),
       ),
     );
   }

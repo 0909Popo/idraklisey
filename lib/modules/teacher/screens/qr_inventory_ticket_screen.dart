@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/custom_card.dart';
+import '../../../core/theme/app_shadows.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../../providers/app_state.dart';
 import '../../../data/models/ticket_model.dart';
@@ -46,7 +46,6 @@ class _QrInventoryTicketScreenState extends State<QrInventoryTicketScreen> {
     setState(() {
       _scannedQrCode = code;
       _scannedItem = item;
-      // Do not auto-fill problem text - teacher enters custom description from scratch!
       _problemTitleCtrl.clear();
       _problemDescCtrl.clear();
     });
@@ -100,8 +99,6 @@ class _QrInventoryTicketScreenState extends State<QrInventoryTicketScreen> {
 
     appState.addTicket(newTicket);
 
-    // Real in-app notification for the admin: which device + the problem
-    // exactly as the teacher described it.
     final deviceLabel = item != null
         ? '${item.name} (${item.room})'
         : 'Qeydiyyatsız avadanlıq [QR: $_scannedQrCode]';
@@ -137,232 +134,402 @@ class _QrInventoryTicketScreenState extends State<QrInventoryTicketScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('İnventar & QR Texniki Ticket'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.only(bottom: 30),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Top Scanner Action Card
-            Container(
-              margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF334155)],
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // ── Gradient Header ──
+          SliverAppBar(
+            expandedHeight: 140,
+            pinned: true,
+            elevation: 0,
+            backgroundColor: AppColors.primary,
+            surfaceTintColor: Colors.transparent,
+            leading: IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withAlpha(20),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(50),
-                    blurRadius: 15,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
+                child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: Colors.white),
               ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: const [
-                          Icon(Icons.qr_code_scanner_rounded, color: AppColors.goldLight, size: 28),
-                          SizedBox(width: 10),
-                          Text(
-                            'İnventar QR Skaneri',
-                            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900),
-                          ),
-                        ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryAccent.withAlpha(40),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Text('İT Dəstək', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Müəllim otağındakı proyektor, kompüter və ya elektron avadanlığın üzərindəki QR kodu skan edərək anında ticket göndərin.',
-                    style: TextStyle(color: Colors.white70, fontSize: 12, height: 1.3),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.goldDark),
-                      onPressed: _startRealScan,
-                      icon: const Icon(Icons.camera_alt_rounded),
-                      label: const Text('Avadanlıq QR Kodunu Skan Et'),
-                    ),
-                  ),
-                ],
-              ),
+              onPressed: () => Navigator.pop(context),
             ),
-
-            // Scanned Equipment Details & Report Form
-            if (_scannedQrCode != null) ...[
-              if (_scannedItem != null) ...[
-                // Known device — green confirmation card
-                CustomCard(
-                  backgroundColor: AppColors.success.withAlpha(22),
-                  border: Border.all(color: AppColors.success.withAlpha(60)),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.precision_manufacturing_rounded, color: AppColors.success, size: 20),
-                          const SizedBox(width: 8),
-                          const Expanded(
-                            child: Text(
-                              'Aşkar Edilmiş Avadanlıq:',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                            ),
-                          ),
-                          StatusBadge(
-                            label: 'QR Təsdiqləndi',
-                            color: AppColors.success,
-                            fontSize: 9,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(_scannedItem!.name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppColors.textPrimary)),
-                      const SizedBox(height: 2),
-                      Text(_scannedItem!.room, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                      if (_scannedItem!.serialNumber.isNotEmpty)
-                        Text('Seriya №: ${_scannedItem!.serialNumber}', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                      const SizedBox(height: 4),
-                      Text('QR: $_scannedQrCode', style: TextStyle(fontSize: 10, color: AppColors.textMuted, fontFamily: 'monospace')),
-                    ],
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF1A1B2E), Color(0xFF1E293B), Color(0xFFD97706)],
                   ),
                 ),
-              ] else ...[
-                // Unknown QR — amber warning, still allowed to report
-                CustomCard(
-                  backgroundColor: AppColors.warning.withAlpha(25),
-                  border: Border.all(color: AppColors.warning.withAlpha(70)),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.help_outline_rounded, color: AppColors.warning, size: 20),
-                          const SizedBox(width: 8),
-                          const Expanded(
-                            child: Text(
-                              'Bu QR reyestrdə qeydiyyatda deyil',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF92400E)),
-                            ),
-                          ),
-                          StatusBadge(
-                            label: 'Bilinmir',
-                            color: AppColors.warning,
-                            fontSize: 9,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Bu avadanlıq admin tərəfindən qeydiyyata alınmayıb. Müraciəti yenə də göndərə bilərsiniz — İT şöbəsi QR koduna görə cihazı müəyyən edəcək.',
-                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.4),
-                      ),
-                      const SizedBox(height: 4),
-                      Text('QR: $_scannedQrCode', style: TextStyle(fontSize: 10, color: AppColors.textMuted, fontFamily: 'monospace')),
-                    ],
-                  ),
-                ),
-              ],
-
-              // Problem Form
-              CustomCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Stack(
                   children: [
-                    Text('Nasazlıq Şikayətini Rəhbərliyə Göndər', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _problemTitleCtrl,
-                      decoration: const InputDecoration(labelText: 'Problem Başlığı *', hintText: 'Məs: Proyektor lampası yanmır'),
+                    Positioned(
+                      right: -15,
+                      bottom: -15,
+                      child: Icon(Icons.qr_code_scanner_rounded, size: 130, color: Colors.white.withAlpha(10)),
                     ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _problemDescCtrl,
-                      maxLines: 3,
-                      decoration: const InputDecoration(labelText: 'Ətraflı İzah *', hintText: 'Problem haqqında ətraflı məlumatı qeyd edin...'),
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<TicketPriority>(
-                      initialValue: _priority,
-                      decoration: const InputDecoration(labelText: 'Təcililik Dərəcəsi'),
-                      items: TicketPriority.values.map((p) {
-                        return DropdownMenuItem(
-                          value: p,
-                          child: Text(p == TicketPriority.urgent ? '🚨 Təcili (Dərs Prosesinə Mane Olur)' : 'Normal Baxış'),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) setState(() => _priority = val);
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
-                        onPressed: () => _submitTicket(appState),
-                        icon: const Icon(Icons.report_problem_rounded),
-                        label: const Text('Rəhbərliyə və İT Şöbəsinə Göndər'),
+                    SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 44, 20, 16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withAlpha(20),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(Icons.build_circle_rounded, size: 22, color: Colors.white),
+                                ),
+                                const SizedBox(width: 12),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'İnventar & QR Texniki Ticket',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Avadanlıq nasazlıq müraciətləri',
+                                      style: TextStyle(
+                                        color: Colors.white.withAlpha(180),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
-
-            const SizedBox(height: 14),
-
-            // Previous Inventory Tickets List
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text('Məktəb Üzrə Texniki Müraciətlər', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
             ),
-            const SizedBox(height: 8),
+          ),
 
-            ...inventoryTickets.map((ticket) {
-              return CustomCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // ── Content ──
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Top Scanner Action Card
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.cardBorder),
+                      boxShadow: AppShadows.sm,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        StatusBadge(
-                          label: ticket.priority == TicketPriority.urgent ? 'TƏCİLİ' : 'NORMAL',
-                          color: ticket.priority == TicketPriority.urgent ? AppColors.danger : AppColors.warning,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.goldDark.withAlpha(15),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Icon(Icons.qr_code_scanner_rounded, color: AppColors.goldDark, size: 22),
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  'İnventar QR Skaneri',
+                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryAccent.withAlpha(12),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text('İT Dəstək', style: TextStyle(color: AppColors.primaryAccent, fontSize: 10.5, fontWeight: FontWeight.w700)),
+                            ),
+                          ],
                         ),
-                        Text(ticket.inventoryCode ?? ticket.id, style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Müəllim otağındakı proyektor, kompüter və ya elektron avadanlığın üzərindəki QR kodu skan edərək anında ticket göndərin.',
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 12, height: 1.4),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.goldDark,
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              elevation: 0,
+                            ),
+                            onPressed: _startRealScan,
+                            icon: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 18),
+                            label: const Text(
+                              'Avadanlıq QR Kodunu Skan Et',
+                              style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(ticket.title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-                    const SizedBox(height: 4),
-                    Text(ticket.description, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  ),
+
+                  // Scanned Equipment Details & Report Form
+                  if (_scannedQrCode != null) ...[
+                    const SizedBox(height: 16),
+                    if (_scannedItem != null) ...[
+                      // Known device
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0FDF4),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: AppColors.success.withAlpha(60)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.precision_manufacturing_rounded, color: AppColors.success, size: 20),
+                                const SizedBox(width: 8),
+                                const Expanded(
+                                  child: Text(
+                                    'Aşkar Edilmiş Avadanlıq:',
+                                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF15803D)),
+                                  ),
+                                ),
+                                StatusBadge(
+                                  label: 'QR Təsdiqləndi',
+                                  color: AppColors.success,
+                                  fontSize: 9,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(_scannedItem!.name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppColors.textPrimary)),
+                            const SizedBox(height: 2),
+                            Text(_scannedItem!.room, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                            if (_scannedItem!.serialNumber.isNotEmpty)
+                              Text('Seriya №: ${_scannedItem!.serialNumber}', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                            const SizedBox(height: 4),
+                            Text('QR: $_scannedQrCode', style: TextStyle(fontSize: 10, color: AppColors.textMuted, fontFamily: 'monospace')),
+                          ],
+                        ),
+                      ),
+                    ] else ...[
+                      // Unknown QR
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF9C3).withAlpha(100),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: AppColors.warning.withAlpha(80)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.help_outline_rounded, color: AppColors.warning, size: 20),
+                                const SizedBox(width: 8),
+                                const Expanded(
+                                  child: Text(
+                                    'Bu QR reyestrdə qeydiyyatda deyil',
+                                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF92400E)),
+                                  ),
+                                ),
+                                StatusBadge(
+                                  label: 'Bilinmir',
+                                  color: AppColors.warning,
+                                  fontSize: 9,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Bu avadanlıq admin tərəfindən qeydiyyata alınmayıb. Müraciəti yenə də göndərə bilərsiniz — İT şöbəsi QR koduna görə cihazı müəyyən edəcək.',
+                              style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.4),
+                            ),
+                            const SizedBox(height: 4),
+                            Text('QR: $_scannedQrCode', style: TextStyle(fontSize: 10, color: AppColors.textMuted, fontFamily: 'monospace')),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 16),
+
+                    // Problem Form
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.cardBorder),
+                        boxShadow: AppShadows.sm,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Nasazlıq Şikayətini Rəhbərliyə Göndər', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+                          const SizedBox(height: 14),
+                          TextField(
+                            controller: _problemTitleCtrl,
+                            decoration: InputDecoration(
+                              labelText: 'Problem Başlığı *',
+                              hintText: 'Məs: Proyektor lampası yanmır',
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(color: AppColors.cardBorder),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(color: AppColors.primaryAccent, width: 1.5),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: _problemDescCtrl,
+                            maxLines: 3,
+                            decoration: InputDecoration(
+                              labelText: 'Ətraflı İzah *',
+                              hintText: 'Problem haqqında ətraflı məlumatı qeyd edin...',
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(color: AppColors.cardBorder),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(color: AppColors.primaryAccent, width: 1.5),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          DropdownButtonFormField<TicketPriority>(
+                            initialValue: _priority,
+                            decoration: InputDecoration(
+                              labelText: 'Təcililik Dərəcəsi',
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                            ),
+                            items: TicketPriority.values.map((p) {
+                              return DropdownMenuItem(
+                                value: p,
+                                child: Text(p == TicketPriority.urgent ? '🚨 Təcili (Dərs Prosesinə Mane Olur)' : 'Normal Baxış'),
+                              );
+                            }).toList(),
+                            onChanged: (val) {
+                              if (val != null) setState(() => _priority = val);
+                            },
+                          ),
+                          const SizedBox(height: 18),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.danger,
+                                padding: const EdgeInsets.symmetric(vertical: 13),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                elevation: 0,
+                              ),
+                              onPressed: () => _submitTicket(appState),
+                              icon: const Icon(Icons.report_problem_rounded, color: Colors.white, size: 18),
+                              label: const Text('Rəhbərliyə və İT Şöbəsinə Göndər', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
-                ),
-              );
-            }),
-          ],
-        ),
+
+                  const SizedBox(height: 20),
+
+                  // Previous Inventory Tickets List Header
+                  Text('Məktəb Üzrə Texniki Müraciətlər', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                  const SizedBox(height: 10),
+
+                  if (inventoryTickets.isEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.cardBorder),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'Aktiv texniki müraciət yoxdur.',
+                          style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                        ),
+                      ),
+                    )
+                  else
+                    ...inventoryTickets.map((ticket) {
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.cardBorder),
+                          boxShadow: AppShadows.sm,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                StatusBadge(
+                                  label: ticket.priority == TicketPriority.urgent ? 'TƏCİLİ' : 'NORMAL',
+                                  color: ticket.priority == TicketPriority.urgent ? AppColors.danger : AppColors.warning,
+                                ),
+                                Text(ticket.inventoryCode ?? ticket.id, style: TextStyle(fontSize: 11, color: AppColors.textMuted, fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(ticket.title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                            const SizedBox(height: 4),
+                            Text(ticket.description, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                          ],
+                        ),
+                      );
+                    }),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

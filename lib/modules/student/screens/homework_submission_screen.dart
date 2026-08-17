@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/custom_card.dart';
+import '../../../core/theme/app_shadows.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../../providers/app_state.dart';
 import '../../../data/models/assignment_model.dart';
@@ -82,7 +82,6 @@ class _HomeworkSubmissionScreenState extends State<HomeworkSubmissionScreen> {
     final currentStudent = appState.student;
     final dateFormat = DateFormat('dd.MM.yyyy HH:mm');
 
-    // Fetch this specific student's submission
     final mySubmission = widget.assignment.getSubmissionForStudent(currentStudent.id);
     final isAlreadySubmitted = mySubmission != null;
     final isGraded = mySubmission?.score != null;
@@ -91,8 +90,10 @@ class _HomeworkSubmissionScreenState extends State<HomeworkSubmissionScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Tapşırıq & Kamera Təhvili'),
+        elevation: 0,
       ),
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.only(bottom: 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,17 +101,11 @@ class _HomeworkSubmissionScreenState extends State<HomeworkSubmissionScreen> {
             // Assignment Header Info Card
             Container(
               margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(18),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: AppColors.primaryGradient,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withAlpha(80),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: AppShadows.sm,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,22 +115,23 @@ class _HomeworkSubmissionScreenState extends State<HomeworkSubmissionScreen> {
                     children: [
                       StatusBadge(
                         label: widget.assignment.subject,
-                        color: AppColors.goldLight,
-                        backgroundColor: Colors.white24,
+                        color: AppColors.primaryAccent,
+                        backgroundColor: Colors.white12,
                       ),
                       Text(
-                        'Son Tarix: ${dateFormat.format(widget.assignment.dueDate)}',
+                        'Son: ${dateFormat.format(widget.assignment.dueDate)}',
                         style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   Text(
                     widget.assignment.title,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 18,
+                      fontSize: 16.5,
                       fontWeight: FontWeight.w900,
+                      letterSpacing: -0.2,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -144,17 +140,17 @@ class _HomeworkSubmissionScreenState extends State<HomeworkSubmissionScreen> {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.person_rounded, color: AppColors.goldLight, size: 16),
-                          const SizedBox(width: 6),
+                          const Icon(Icons.person_outline_rounded, color: AppColors.primaryAccent, size: 15),
+                          const SizedBox(width: 5),
                           Text(
                             'Müəllim: ${widget.assignment.teacherName}',
-                            style: const TextStyle(color: Colors.white70, fontSize: 13),
+                            style: const TextStyle(color: Colors.white70, fontSize: 12),
                           ),
                         ],
                       ),
                       Text(
                         'Şagird: ${currentStudent.fullName}',
-                        style: const TextStyle(color: AppColors.goldLight, fontSize: 11, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: AppColors.primaryAccent, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -162,48 +158,56 @@ class _HomeworkSubmissionScreenState extends State<HomeworkSubmissionScreen> {
               ),
             ),
 
-            // Teacher Instructions & PDF Doc
-            CustomCard(
+            // Teacher Instructions Card
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.cardBorder),
+                boxShadow: AppShadows.sm,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.assignment_outlined, color: AppColors.primary, size: 20),
-                      SizedBox(width: 8),
+                      const Icon(Icons.assignment_outlined, color: AppColors.primaryAccent, size: 18),
+                      const SizedBox(width: 8),
                       Text(
                         'Müəllimin Tapşırıq Təlimatı',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   Text(
                     widget.assignment.instructions,
-                    style: TextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.4),
+                    style: TextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.4),
                   ),
                   if (widget.assignment.attachmentDocUrl != null) ...[
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 12),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryAccent.withAlpha(15),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.primaryAccent.withAlpha(50)),
+                        color: AppColors.primaryAccent.withAlpha(12),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.primaryAccent.withAlpha(40)),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.picture_as_pdf_rounded, color: Colors.red, size: 28),
-                          const SizedBox(width: 12),
+                          const Icon(Icons.picture_as_pdf_rounded, color: Colors.red, size: 24),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   widget.assignment.attachmentDocUrl!,
-                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                                 ),
-                                Text('Dərs vəsaiti & PDF Təlimat', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                                Text('Dərs vəsaiti & PDF Təlimat', style: TextStyle(fontSize: 10.5, color: AppColors.textSecondary)),
                               ],
                             ),
                           ),
@@ -213,8 +217,8 @@ class _HomeworkSubmissionScreenState extends State<HomeworkSubmissionScreen> {
                                 SnackBar(content: Text('${widget.assignment.attachmentDocUrl} açıldı.')),
                               );
                             },
-                            icon: const Icon(Icons.visibility_rounded, size: 16),
-                            label: const Text('Bax'),
+                            icon: const Icon(Icons.visibility_outlined, size: 15),
+                            label: const Text('Bax', style: TextStyle(fontSize: 12)),
                           ),
                         ],
                       ),
@@ -228,9 +232,15 @@ class _HomeworkSubmissionScreenState extends State<HomeworkSubmissionScreen> {
 
             // Submission or Review Area (Personal to this Student)
             if (isAlreadySubmitted) ...[
-              CustomCard(
-                backgroundColor: const Color(0xFFF0FDF4),
-                border: Border.all(color: AppColors.success),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.success.withAlpha(80), width: 1.5),
+                  boxShadow: AppShadows.sm,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -239,33 +249,33 @@ class _HomeworkSubmissionScreenState extends State<HomeworkSubmissionScreen> {
                       children: [
                         Row(
                           children: const [
-                            Icon(Icons.check_circle_rounded, color: AppColors.success, size: 22),
+                            Icon(Icons.check_circle_rounded, color: AppColors.success, size: 20),
                             SizedBox(width: 8),
                             Text(
                               'Tapşırığınız Təhvil Verilib!',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.success),
+                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.success),
                             ),
                           ],
                         ),
                         if (isGraded && mySubmission.score != null)
                           StatusBadge(
                             label: '${mySubmission.score!.toInt()} Bal',
-                            color: AppColors.primary,
-                            fontSize: 12,
+                            color: AppColors.primaryAccent,
+                            fontSize: 11,
                           ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       'Təhvil tarixi: ${dateFormat.format(mySubmission.submittedAt)}',
-                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
                     ),
 
                     if (mySubmission.studentNote != null && mySubmission.studentNote!.isNotEmpty) ...[
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Text(
                         'Sizin qeydiniz: "${mySubmission.studentNote}"',
-                        style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: AppColors.textPrimary),
+                        style: TextStyle(fontSize: 11.5, fontStyle: FontStyle.italic, color: AppColors.textPrimary),
                       ),
                     ],
 
@@ -274,7 +284,7 @@ class _HomeworkSubmissionScreenState extends State<HomeworkSubmissionScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.surface,
+                          color: AppColors.background,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: AppColors.cardBorder),
                         ),
@@ -284,13 +294,13 @@ class _HomeworkSubmissionScreenState extends State<HomeworkSubmissionScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('Müəllim Qiymətləndirməsi:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                Text('${mySubmission.score} / 100 Bal', style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, fontSize: 15)),
+                                const Text('Müəllim Qiymətləndirməsi:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                                Text('${mySubmission.score} / 100 Bal', style: const TextStyle(color: AppColors.primaryAccent, fontWeight: FontWeight.w900, fontSize: 14)),
                               ],
                             ),
                             if (mySubmission.teacherComment != null && mySubmission.teacherComment!.isNotEmpty) ...[
-                              const SizedBox(height: 6),
-                              Text('Müəllim rəyi: "${mySubmission.teacherComment}"', style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: AppColors.textSecondary)),
+                              const SizedBox(height: 4),
+                              Text('Müəllim rəyi: "${mySubmission.teacherComment}"', style: TextStyle(fontSize: 11.5, fontStyle: FontStyle.italic, color: AppColors.textSecondary)),
                             ],
                           ],
                         ),
@@ -300,17 +310,18 @@ class _HomeworkSubmissionScreenState extends State<HomeworkSubmissionScreen> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: AppColors.warning.withAlpha(20),
+                          color: AppColors.warning.withAlpha(15),
                           borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppColors.warning.withAlpha(40)),
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.hourglass_empty_rounded, color: AppColors.warning, size: 18),
-                            SizedBox(width: 8),
+                            const Icon(Icons.hourglass_empty_rounded, color: AppColors.warning, size: 16),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Tapşırığınız müəllim tərəfindən yoxlanışdadır. Qiymətləndirilən kimi burada və valideyn panelində görünəcək.',
-                                style: TextStyle(fontSize: 12, color: AppColors.textPrimary),
+                                'Tapşırığınız müəllim tərəfindən yoxlanışdadır.',
+                                style: TextStyle(fontSize: 11.5, color: AppColors.textPrimary),
                               ),
                             ),
                           ],
@@ -322,31 +333,39 @@ class _HomeworkSubmissionScreenState extends State<HomeworkSubmissionScreen> {
               ),
             ] else ...[
               // Fast Camera Homework Submission Section
-              CustomCard(
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.cardBorder),
+                  boxShadow: AppShadows.sm,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.camera_alt_rounded, color: AppColors.primaryAccent, size: 22),
-                        SizedBox(width: 8),
+                        const Icon(Icons.photo_camera_outlined, color: AppColors.primaryAccent, size: 20),
+                        const SizedBox(width: 8),
                         Text(
                           'Kamera ilə Sürətli Tapşırıq Təhvili',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     Text(
                       'Fiziki dəftərinizdə həll etdiyiniz səhifələri kamera ilə çəkin və müəllimə göndərin.',
-                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
 
                     // Scanned Pages Gallery
                     if (_capturedPages.isNotEmpty) ...[
                       SizedBox(
-                        height: 110,
+                        height: 100,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
                           itemCount: _capturedPages.length,
@@ -354,14 +373,14 @@ class _HomeworkSubmissionScreenState extends State<HomeworkSubmissionScreen> {
                             return Stack(
                               children: [
                                 Container(
-                                  width: 85,
-                                  margin: const EdgeInsets.only(right: 12),
+                                  width: 80,
+                                  margin: const EdgeInsets.only(right: 10),
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: AppColors.primaryAccent, width: 2),
+                                    border: Border.all(color: AppColors.primaryAccent, width: 1.5),
                                   ),
                                   child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
+                                    borderRadius: BorderRadius.circular(10.5),
                                     child: Image.network(_capturedPages[index], fit: BoxFit.cover),
                                   ),
                                 ),
@@ -369,20 +388,20 @@ class _HomeworkSubmissionScreenState extends State<HomeworkSubmissionScreen> {
                                   top: 4,
                                   left: 4,
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                                     decoration: BoxDecoration(
                                       color: Colors.black87,
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
                                       'Səh ${index + 1}',
-                                      style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                                      style: const TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.bold),
                                     ),
                                   ),
                                 ),
                                 Positioned(
                                   top: 2,
-                                  right: 14,
+                                  right: 12,
                                   child: GestureDetector(
                                     onTap: () {
                                       setState(() {
@@ -404,19 +423,19 @@ class _HomeworkSubmissionScreenState extends State<HomeworkSubmissionScreen> {
                           },
                         ),
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 12),
                     ],
 
                     // Camera & Gallery Buttons
                     if (_isCapturing)
                       Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         child: Center(
                           child: Column(
                             children: [
-                              CircularProgressIndicator(color: AppColors.primary),
-                              SizedBox(height: 8),
-                              Text('Foto yüklənir...', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                              const CircularProgressIndicator(color: AppColors.primaryAccent, strokeWidth: 2),
+                              const SizedBox(height: 8),
+                              Text('Foto yüklənir...', style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
                             ],
                           ),
                         ),
@@ -426,23 +445,31 @@ class _HomeworkSubmissionScreenState extends State<HomeworkSubmissionScreen> {
                         children: [
                           Expanded(
                             child: OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                              ),
                               onPressed: _captureFromCamera,
-                              icon: const Icon(Icons.photo_camera_rounded, color: AppColors.primary),
-                              label: Text(_capturedPages.isEmpty ? 'Kameranı Aç və Çək' : '+ Növbəti Səhifəni Çək'),
+                              icon: const Icon(Icons.photo_camera_outlined, size: 16),
+                              label: Text(_capturedPages.isEmpty ? 'Kamera ilə Çək' : '+ Səhifə Çək', style: const TextStyle(fontSize: 11.5)),
                             ),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                              ),
                               onPressed: _pickFromGallery,
-                              icon: const Icon(Icons.photo_library_rounded, color: AppColors.goldDark),
-                              label: const Text('Qalereyadan Seç'),
+                              icon: const Icon(Icons.photo_library_outlined, size: 16),
+                              label: const Text('Qalereyadan Seç', style: TextStyle(fontSize: 11.5)),
                             ),
                           ),
                         ],
                       ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
 
                     // Student Note Input
                     TextField(
@@ -454,12 +481,17 @@ class _HomeworkSubmissionScreenState extends State<HomeworkSubmissionScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
 
                     // Submit Button
                     SizedBox(
                       width: double.infinity,
+                      height: 48,
                       child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryAccent,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
                         onPressed: _capturedPages.isEmpty || _isSubmitting
                             ? null
                             : () {
@@ -485,8 +517,8 @@ class _HomeworkSubmissionScreenState extends State<HomeworkSubmissionScreen> {
                                 height: 16,
                                 child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                               )
-                            : const Icon(Icons.send_rounded),
-                        label: const Text('Tapşırığı Müəllimə Təhvil Ver'),
+                            : const Icon(Icons.send_rounded, size: 16, color: Colors.white),
+                        label: const Text('Müəllimə Təhvil Ver', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
                       ),
                     ),
                   ],

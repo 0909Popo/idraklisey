@@ -58,8 +58,6 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
   }
 
   void _subscribeToAgoraEvents() {
-    // Subscribe before joining: Agora can report an existing remote user during
-    // the join handshake, before the Firestore presence write has completed.
     _userMuteSub ??= _agoraService.onUserMuteAudio.listen((_) {
       if (mounted) setState(() {});
     });
@@ -92,9 +90,6 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
       if (!joined) throw StateError('Agora bağlantısı kurulamadı.');
 
       _hasJoinedRoom = true;
-      // Presence is metadata, not the voice connection itself. A transient
-      // Firestore reconnect must never make a successfully joined Agora room
-      // appear empty or failed.
       unawaited(_registerMeetPresence(appState));
       _volumeSub = _agoraService.onVolumeIndication.listen((speakers) {
         if (!mounted) return;
@@ -230,7 +225,7 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
     bool isHost,
     String hostId,
   ) {
-    if (!isHost) return; // Only host can manage participants
+    if (!isHost) return;
     final appState = Provider.of<AppState>(context, listen: false);
     final isTargetHost = participant.userId == hostId;
 
@@ -238,7 +233,7 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
       context: context,
       backgroundColor: const Color(0xFF1E293B),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (ctx) {
         return Padding(
@@ -282,7 +277,6 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
               const SizedBox(height: 20),
 
               if (!isTargetHost) ...[
-                // Mute / Unmute Action
                 ListTile(
                   leading: Icon(
                     participant.isMuted
@@ -333,10 +327,7 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
                     }
                   },
                 ),
-
                 const Divider(color: Colors.white12),
-
-                // Kick participant
                 ListTile(
                   leading: const Icon(
                     Icons.person_remove_rounded,
@@ -395,7 +386,7 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
         return AlertDialog(
           backgroundColor: const Color(0xFF1E293B),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(22),
           ),
           title: const Row(
             children: [
@@ -403,7 +394,7 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
               SizedBox(width: 8),
               Text(
                 'Hamını Susdur?',
-                style: TextStyle(color: Colors.white, fontSize: 16),
+                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -414,14 +405,12 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text(
-                'Ləğv et',
-                style: TextStyle(color: Colors.white54),
-              ),
+              child: const Text('Ləğv et', style: TextStyle(color: Colors.white54)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.danger,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: () async {
                 Navigator.pop(ctx);
@@ -437,10 +426,7 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
                   );
                 }
               },
-              child: const Text(
-                'Hamısını Susdur',
-                style: TextStyle(color: Colors.white),
-              ),
+              child: const Text('Hamısını Susdur', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -455,7 +441,7 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
         return AlertDialog(
           backgroundColor: const Color(0xFF1E293B),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(22),
           ),
           title: const Row(
             children: [
@@ -463,7 +449,7 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
               SizedBox(width: 8),
               Text(
                 'Toplantını Bitir?',
-                style: TextStyle(color: Colors.white, fontSize: 16),
+                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -474,14 +460,12 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text(
-                'Ləğv et',
-                style: TextStyle(color: Colors.white54),
-              ),
+              child: const Text('Ləğv et', style: TextStyle(color: Colors.white54)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.danger,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: () async {
                 Navigator.pop(ctx);
@@ -490,10 +474,7 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
                 await _agoraService.leaveChannel();
                 if (mounted) Navigator.pop(context);
               },
-              child: const Text(
-                'Toplantını Bitir',
-                style: TextStyle(color: Colors.white),
-              ),
+              child: const Text('Toplantını Bitir', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -527,15 +508,12 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
       ),
     );
 
-    // Agora is the source of truth for who is connected right now. Firestore
-    // enriches these cards with names, class and moderation state after it
-    // reconnects.
     for (final remoteUid in _agoraService.remoteUids) {
       byAgoraUid.putIfAbsent(remoteUid, () {
         final isRemoteHost = remoteUid == agoraUidForUser(room.hostId);
         return MeetParticipant(
           userId: isRemoteHost ? room.hostId : 'agora-$remoteUid',
-          fullName: isRemoteHost ? room.hostName : 'Bağlı katılımcı',
+          fullName: isRemoteHost ? room.hostName : 'Bağlı iştirakçı',
           role: isRemoteHost ? 'host' : 'student',
           photoUrl: isRemoteHost ? room.hostPhotoUrl : null,
           agoraUid: remoteUid,
@@ -556,7 +534,6 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
     final appState = Provider.of<AppState>(context);
     final currentUserId = appState.currentUser?.id ?? appState.student.id;
 
-    // Find current room from AppState for dynamic participant list updates
     final currentRoom = appState.meetRooms.firstWhere(
       (r) => r.id == widget.room.id,
       orElse: () => widget.room,
@@ -570,13 +547,20 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: const Color(0xFF070B16),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFF0F172A),
         foregroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          icon: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: Colors.white),
+          ),
           onPressed: _leaveRoom,
         ),
         title: Column(
@@ -586,7 +570,7 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
               currentRoom.title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: -0.2),
             ),
             Row(
               children: [
@@ -601,7 +585,7 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
                 const SizedBox(width: 5),
                 Text(
                   '${currentRoom.subject} • ${_formatDuration(_secondsElapsed)} • ${participants.length} İştirakçı',
-                  style: const TextStyle(fontSize: 11, color: Colors.white70),
+                  style: const TextStyle(fontSize: 11, color: Colors.white70, fontWeight: FontWeight.w500),
                 ),
               ],
             ),
@@ -610,17 +594,25 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
         actions: [
           if (isHost) ...[
             IconButton(
-              icon: const Icon(
-                Icons.volume_off_rounded,
-                color: AppColors.goldLight,
+              icon: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withAlpha(15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.volume_off_rounded, color: AppColors.goldLight, size: 18),
               ),
               tooltip: 'Hamını Susdur',
               onPressed: _showMuteAllDialog,
             ),
             IconButton(
-              icon: const Icon(
-                Icons.power_settings_new_rounded,
-                color: AppColors.danger,
+              icon: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppColors.danger.withAlpha(25),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.power_settings_new_rounded, color: AppColors.danger, size: 18),
               ),
               tooltip: 'Toplantını Bitir',
               onPressed: _showEndMeetingDialog,
@@ -634,57 +626,51 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
           if (_isJoining || _connectionError != null)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               color: _connectionError == null
-                  ? Colors.blue.withAlpha(45)
+                  ? AppColors.primaryAccent.withAlpha(45)
                   : AppColors.danger.withAlpha(45),
               child: Row(
                 children: [
                   if (_connectionError == null)
                     const SizedBox(
-                      width: 16,
-                      height: 16,
+                      width: 14,
+                      height: 14,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
                         color: Colors.white,
                       ),
                     )
                   else
-                    const Icon(
-                      Icons.error_outline_rounded,
-                      color: Colors.white,
-                    ),
+                    const Icon(Icons.error_outline_rounded, color: Colors.white, size: 16),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       _connectionError ?? 'Səsli otağa qoşulursunuz…',
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
                     ),
                   ),
                 ],
               ),
             ),
-          // Host Alert Banner (if you are the host)
+
+          // Host Alert Banner
           if (isHost)
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.gold.withAlpha(25),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.gold.withAlpha(60)),
+                color: AppColors.gold.withAlpha(20),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.gold.withAlpha(50)),
               ),
               child: const Row(
                 children: [
-                  Icon(
-                    Icons.admin_panel_settings_rounded,
-                    color: AppColors.goldLight,
-                    size: 18,
-                  ),
+                  Icon(Icons.admin_panel_settings_rounded, color: AppColors.goldLight, size: 18),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Siz Hostsuz. İstənilən iştirakçının üzərinə toxunaraq səsini aça və ya bağlaya bilərsiniz.',
+                      'Siz Hostsuz. İştirakçının üzərinə toxunaraq səsini aça və ya bağlaya bilərsiniz.',
                       style: TextStyle(
                         color: AppColors.goldLight,
                         fontSize: 11,
@@ -702,11 +688,7 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.groups_rounded,
-                    color: Colors.white54,
-                    size: 14,
-                  ),
+                  const Icon(Icons.groups_rounded, color: Colors.white54, size: 14),
                   const SizedBox(width: 6),
                   Text(
                     'İcazəli Siniflər: ${currentRoom.targetClasses.join(', ')}',
@@ -716,11 +698,12 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
               ),
             ),
 
-          // Participants Grid / Sound Wave Stage
+          // Participants Grid
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: GridView.builder(
+                physics: const BouncingScrollPhysics(),
                 itemCount: participants.length,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
@@ -735,27 +718,20 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
                   final isParticipantSpeaking = p.isSpeaking;
 
                   return GestureDetector(
-                    onTap: () =>
-                        _showParticipantOptions(p, isHost, currentRoom.hostId),
+                    onTap: () => _showParticipantOptions(p, isHost, currentRoom.hostId),
                     child: AnimatedBuilder(
                       animation: _pulseController,
                       builder: (context, child) {
-                        final glow = isParticipantSpeaking
-                            ? (_pulseController.value * 8 + 4)
-                            : 0.0;
+                        final glow = isParticipantSpeaking ? (_pulseController.value * 8 + 4) : 0.0;
                         return Container(
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1E293B),
+                            color: const Color(0xFF1E293B).withAlpha(180),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: isParticipantSpeaking
                                   ? AppColors.success
-                                  : (isParticipantHost
-                                        ? AppColors.gold
-                                        : Colors.white12),
-                              width: isParticipantSpeaking
-                                  ? 2.5
-                                  : (isParticipantHost ? 1.5 : 1),
+                                  : (isParticipantHost ? AppColors.gold : Colors.white12),
+                              width: isParticipantSpeaking ? 2 : (isParticipantHost ? 1.5 : 1),
                             ),
                             boxShadow: isParticipantSpeaking
                                 ? [
@@ -770,36 +746,33 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
-                              // Main content
                               Padding(
                                 padding: const EdgeInsets.all(12),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    // Avatar with speaking indicator
+                                    // Avatar
                                     Stack(
                                       alignment: Alignment.center,
                                       children: [
                                         if (isParticipantSpeaking)
                                           Container(
-                                            width: 72,
-                                            height: 72,
+                                            width: 68,
+                                            height: 68,
                                             decoration: BoxDecoration(
                                               shape: BoxShape.circle,
                                               border: Border.all(
-                                                color: AppColors.success
-                                                    .withAlpha(120),
+                                                color: AppColors.success.withAlpha(120),
                                                 width: 3,
                                               ),
                                             ),
                                           ),
                                         CircleAvatar(
-                                          radius: 30,
+                                          radius: 28,
                                           backgroundImage: NetworkImage(
                                             p.photoUrl ??
                                                 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
                                           ),
-                                          child: null, // No overlay icon
                                         ),
                                       ],
                                     ),
@@ -813,42 +786,32 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         color: Colors.white,
-                                        fontSize: 13,
-                                        fontWeight: isMe
-                                            ? FontWeight.w900
-                                            : FontWeight.bold,
+                                        fontSize: 12.5,
+                                        fontWeight: isMe ? FontWeight.w900 : FontWeight.w700,
                                       ),
                                     ),
-                                    const SizedBox(height: 3),
+                                    const SizedBox(height: 4),
 
-                                    // Role / Class Badge
+                                    // Role Badge
                                     Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 2,
-                                      ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                       decoration: BoxDecoration(
                                         color: isParticipantHost
                                             ? AppColors.gold.withAlpha(30)
                                             : (p.role == 'teacher'
-                                                  ? Colors.blue.withAlpha(30)
-                                                  : Colors.white.withAlpha(15)),
-                                        borderRadius: BorderRadius.circular(10),
+                                                ? AppColors.primaryAccent.withAlpha(30)
+                                                : Colors.white.withAlpha(15)),
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(
                                         isParticipantHost
                                             ? '👑 Host'
-                                            : (p.role == 'teacher'
-                                                  ? '👨‍🏫 Müəllim'
-                                                  : (p.className ??
-                                                        '🎓 Şagird')),
+                                            : (p.role == 'teacher' ? '👨‍🏫 Müəllim' : (p.className ?? '🎓 Şagird')),
                                         style: TextStyle(
                                           color: isParticipantHost
                                               ? AppColors.goldLight
-                                              : (p.role == 'teacher'
-                                                    ? Colors.blueAccent
-                                                    : Colors.white70),
-                                          fontSize: 10,
+                                              : (p.role == 'teacher' ? AppColors.primaryAccent : Colors.white70),
+                                          fontSize: 9.5,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -857,34 +820,28 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
                                 ),
                               ),
 
-                              // Mic Status Icon (Top Right)
+                              // Mic Status Icon
                               Positioned(
                                 top: 10,
                                 right: 10,
                                 child: Container(
                                   padding: const EdgeInsets.all(5),
                                   decoration: BoxDecoration(
-                                    color: p.isMuted
-                                        ? AppColors.danger
-                                        : AppColors.success.withAlpha(40),
+                                    color: p.isMuted ? AppColors.danger : AppColors.success.withAlpha(40),
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: p.isMuted
-                                          ? AppColors.danger
-                                          : AppColors.success,
+                                      color: p.isMuted ? AppColors.danger : AppColors.success,
                                     ),
                                   ),
                                   child: Icon(
-                                    p.isMuted
-                                        ? Icons.mic_off_rounded
-                                        : Icons.mic_rounded,
+                                    p.isMuted ? Icons.mic_off_rounded : Icons.mic_rounded,
                                     color: Colors.white,
-                                    size: 13,
+                                    size: 12,
                                   ),
                                 ),
                               ),
 
-                              // Hand Raised indicator (Top Left)
+                              // Hand Raised indicator
                               if (isMe && _isHandRaised)
                                 Positioned(
                                   top: 10,
@@ -898,7 +855,7 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
                                     child: const Icon(
                                       Icons.front_hand_rounded,
                                       color: Color(0xFF0F172A),
-                                      size: 13,
+                                      size: 12,
                                     ),
                                   ),
                                 ),
@@ -913,15 +870,16 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
             ),
           ),
 
-          // Bottom Discord-Style Control Bar
+          // Bottom Control Dock
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            decoration: const BoxDecoration(
-              color: Color(0xFF1E293B),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-              boxShadow: [
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F172A),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              border: Border.all(color: Colors.white.withAlpha(15)),
+              boxShadow: const [
                 BoxShadow(
-                  color: Colors.black45,
+                  color: Colors.black54,
                   blurRadius: 20,
                   offset: Offset(0, -4),
                 ),
@@ -938,41 +896,32 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(
-                          width: 58,
-                          height: 58,
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: 56,
+                          height: 56,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: _isLocalMuted
-                                ? AppColors.danger
-                                : AppColors.success,
+                            color: _isLocalMuted ? AppColors.danger : AppColors.success,
                             boxShadow: [
                               BoxShadow(
-                                color:
-                                    (_isLocalMuted
-                                            ? AppColors.danger
-                                            : AppColors.success)
-                                        .withAlpha(100),
+                                color: (_isLocalMuted ? AppColors.danger : AppColors.success).withAlpha(100),
                                 blurRadius: 12,
                                 offset: const Offset(0, 4),
                               ),
                             ],
                           ),
                           child: Icon(
-                            _isLocalMuted
-                                ? Icons.mic_off_rounded
-                                : Icons.mic_rounded,
+                            _isLocalMuted ? Icons.mic_off_rounded : Icons.mic_rounded,
                             color: Colors.white,
-                            size: 28,
+                            size: 26,
                           ),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           _isLocalMuted ? 'Səssiz' : 'Danışırsınız',
                           style: TextStyle(
-                            color: _isLocalMuted
-                                ? Colors.white60
-                                : AppColors.success,
+                            color: _isLocalMuted ? Colors.white60 : AppColors.success,
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                           ),
@@ -988,28 +937,23 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          width: 50,
-                          height: 50,
+                          width: 48,
+                          height: 48,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.white.withAlpha(20),
+                            color: Colors.white.withAlpha(15),
                             border: Border.all(color: Colors.white24),
                           ),
                           child: Icon(
-                            _isSpeakerOn
-                                ? Icons.volume_up_rounded
-                                : Icons.phone_in_talk_rounded,
+                            _isSpeakerOn ? Icons.volume_up_rounded : Icons.phone_in_talk_rounded,
                             color: Colors.white,
-                            size: 24,
+                            size: 22,
                           ),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           _isSpeakerOn ? 'Dinamik' : 'Dəstək',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 11,
-                          ),
+                          style: const TextStyle(color: Colors.white70, fontSize: 11),
                         ),
                       ],
                     ),
@@ -1022,9 +966,7 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            _isHandRaised
-                                ? 'Əl qaldırdınız ✋'
-                                : 'Əlinizi endirdiniz',
+                            _isHandRaised ? 'Əl qaldırdınız ✋' : 'Əlinizi endirdiniz',
                           ),
                           duration: const Duration(seconds: 1),
                         ),
@@ -1033,35 +975,28 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(
-                          width: 50,
-                          height: 50,
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: 48,
+                          height: 48,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: _isHandRaised
-                                ? AppColors.gold.withAlpha(40)
-                                : Colors.white.withAlpha(20),
+                            color: _isHandRaised ? AppColors.gold.withAlpha(40) : Colors.white.withAlpha(15),
                             border: Border.all(
-                              color: _isHandRaised
-                                  ? AppColors.gold
-                                  : Colors.white24,
+                              color: _isHandRaised ? AppColors.gold : Colors.white24,
                             ),
                           ),
                           child: Icon(
                             Icons.front_hand_rounded,
-                            color: _isHandRaised
-                                ? AppColors.goldLight
-                                : Colors.white,
-                            size: 24,
+                            color: _isHandRaised ? AppColors.goldLight : Colors.white,
+                            size: 22,
                           ),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           _isHandRaised ? 'Əl aktiv' : 'Əl qaldır',
                           style: TextStyle(
-                            color: _isHandRaised
-                                ? AppColors.goldLight
-                                : Colors.white70,
+                            color: _isHandRaised ? AppColors.goldLight : Colors.white70,
                             fontSize: 11,
                           ),
                         ),
@@ -1076,17 +1011,17 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          width: 50,
-                          height: 50,
+                          width: 48,
+                          height: 48,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppColors.danger.withAlpha(30),
-                            border: Border.all(color: AppColors.danger),
+                            color: AppColors.danger.withAlpha(25),
+                            border: Border.all(color: AppColors.danger.withAlpha(60)),
                           ),
                           child: const Icon(
                             Icons.call_end_rounded,
                             color: AppColors.danger,
-                            size: 24,
+                            size: 22,
                           ),
                         ),
                         const SizedBox(height: 6),

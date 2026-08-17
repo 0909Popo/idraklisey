@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_shadows.dart';
 import '../../../providers/app_state.dart';
 import '../../../data/models/assignment_model.dart';
 import '../../../data/models/student_model.dart';
@@ -32,19 +33,223 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Tapşırıq Təhvili & Yoxlanış'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_task_rounded),
-            tooltip: 'Yeni Tapşırıq Əlavə Et',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const CreateAssignmentScreen()),
-              );
-            },
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // ── Gradient Header ──
+          SliverAppBar(
+            expandedHeight: 140,
+            pinned: true,
+            elevation: 0,
+            backgroundColor: AppColors.primary,
+            surfaceTintColor: Colors.transparent,
+            leading: IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withAlpha(20),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: Colors.white),
+              ),
+              onPressed: () => Navigator.pop(context),
+            ),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: IconButton(
+                  icon: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryAccent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.add_task_rounded, size: 18, color: Colors.white),
+                  ),
+                  tooltip: 'Yeni Tapşırıq Əlavə Et',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const CreateAssignmentScreen()),
+                    );
+                  },
+                ),
+              ),
+            ],
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF1A1B2E), Color(0xFF2D1B69), Color(0xFF6C5CE7)],
+                  ),
+                ),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      right: -15,
+                      bottom: -15,
+                      child: Icon(Icons.rate_review_rounded, size: 130, color: Colors.white.withAlpha(10)),
+                    ),
+                    SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 44, 20, 16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withAlpha(20),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(Icons.fact_check_rounded, size: 22, color: Colors.white),
+                                ),
+                                const SizedBox(width: 12),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Tapşırıq Yoxlanışı',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${allAssignments.length} aktiv tapşırıq monitorinqi',
+                                      style: TextStyle(
+                                        color: Colors.white.withAlpha(180),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
+
+          // ── Filter Chips ──
+          SliverToBoxAdapter(
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: [
+                    _buildFilterChip(0, 'Hamısı (${allAssignments.length})'),
+                    _buildFilterChip(1, '📥 Təhvil Var (${allAssignments.where((a) => a.submittedCount > 0).length})'),
+                    _buildFilterChip(2, '✅ Yoxlanılanlar (${allAssignments.where((a) => a.gradedCount > 0).length})'),
+                    _buildFilterChip(3, '⏳ Təhvil Yoxdur (${allAssignments.where((a) => a.totalSubmissionsCount == 0).length})'),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // ── Empty / List Content ──
+          if (allAssignments.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(36),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryAccent.withAlpha(10),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.assignment_add, size: 54, color: AppColors.primaryAccent),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Hələ heç bir dərs tapşırığı\nverilməyib',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Şagirdlərə fənniniz üzrə ev tapşırığı, məsələ və ya mövzu təyin etmək üçün düyməyə klikləyin.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.5),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryAccent,
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          elevation: 0,
+                        ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const CreateAssignmentScreen()),
+                          );
+                        },
+                        icon: const Icon(Icons.add_rounded, color: Colors.white, size: 18),
+                        label: const Text('İlk Tapşırığı Təyin Et', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          else if (filtered.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryAccent.withAlpha(8),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.filter_alt_off_rounded, size: 44, color: AppColors.textMuted),
+                    ),
+                    const SizedBox(height: 14),
+                    Text('Bu filtr üzrə tapşırıq tapılmadı.', style: TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 90),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final a = filtered[index];
+                    return _buildAssignmentReviewCard(context, appState, a, dateFormat);
+                  },
+                  childCount: filtered.length,
+                ),
+              ),
+            ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -54,98 +259,9 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
             MaterialPageRoute(builder: (_) => const CreateAssignmentScreen()),
           );
         },
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.primaryAccent,
         icon: const Icon(Icons.add_task_rounded, color: Colors.white),
-        label: const Text('Yeni Tapşırıq Ver', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-      ),
-      body: Column(
-        children: [
-          // Filter Chips
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildFilterChip(0, 'Bütün Tapşırıqlar (${allAssignments.length})'),
-                  _buildFilterChip(1, '📥 Təhvil Var (${allAssignments.where((a) => a.submittedCount > 0).length})'),
-                  _buildFilterChip(2, '✅ Yoxlanılanlar (${allAssignments.where((a) => a.gradedCount > 0).length})'),
-                  _buildFilterChip(3, '⏳ Təhvil Yoxdur (${allAssignments.where((a) => a.totalSubmissionsCount == 0).length})'),
-                ],
-              ),
-            ),
-          ),
-
-          // Main Content
-          Expanded(
-            child: allAssignments.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withAlpha(15),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.assignment_add, size: 64, color: AppColors.primary),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Hələ heç bir dərs tapşırığı verilməyib',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Şagirdlərə fənniniz üzrə ev tapşırığı, məsələ və ya mövzu təyin etmək üçün aşağıdakı düyməyə klikləyin.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                          ),
-                          const SizedBox(height: 24),
-                          ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            ),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => const CreateAssignmentScreen()),
-                              );
-                            },
-                            icon: const Icon(Icons.add_rounded, color: Colors.white),
-                            label: const Text('İlk Tapşırığı Təyin Et', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                : filtered.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.filter_alt_off_rounded, size: 48, color: AppColors.textMuted),
-                            SizedBox(height: 8),
-                            Text('Bu filtr üzrə tapşırıq tapılmadı.', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(0, 12, 0, 80),
-                        itemCount: filtered.length,
-                        itemBuilder: (context, index) {
-                          final a = filtered[index];
-                          return _buildAssignmentReviewCard(context, appState, a, dateFormat);
-                        },
-                      ),
-          ),
-        ],
+        label: const Text('Yeni Tapşırıq Ver', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
       ),
     );
   }
@@ -154,19 +270,31 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
     final isSelected = _filterIndex == index;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
-      child: FilterChip(
-        label: Text(label),
-        selected: isSelected,
-        onSelected: (_) => setState(() => _filterIndex = index),
-        selectedColor: AppColors.primary,
-        checkmarkColor: Colors.white,
-        labelStyle: TextStyle(
-          color: isSelected ? Colors.white : AppColors.textPrimary,
-          fontSize: 12,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      child: GestureDetector(
+        onTap: () => setState(() => _filterIndex = index),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primaryAccent : AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected ? AppColors.primaryAccent : AppColors.cardBorder,
+              width: isSelected ? 1.5 : 1,
+            ),
+            boxShadow: isSelected
+                ? [BoxShadow(color: AppColors.primaryAccent.withAlpha(30), blurRadius: 6, offset: const Offset(0, 2))]
+                : [],
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? Colors.white : AppColors.textPrimary,
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            ),
+          ),
         ),
-        backgroundColor: AppColors.background,
-        side: BorderSide(color: isSelected ? AppColors.primary : AppColors.cardBorder),
       ),
     );
   }
@@ -194,7 +322,6 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
   }
 
   Widget _buildAssignmentReviewCard(BuildContext context, AppState appState, HomeworkAssignment a, DateFormat dateFormat) {
-    // Determine target students for this assignment
     final List<StudentProfile> targetStudents;
     if (a.assignedStudentIds.isNotEmpty) {
       targetStudents = appState.students.where((s) => a.assignedStudentIds.contains(s.id)).toList();
@@ -212,214 +339,199 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
     final progress = totalTarget > 0 ? (totalSubmitted / totalTarget) : 0.0;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.cardBorder),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(6),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        boxShadow: AppShadows.sm,
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(15),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Left Accent Strip
-              Container(
-                width: 6,
-                color: color,
-              ),
-
-              // Card Content
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header: Subject, Class & Delete Action
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: color.withAlpha(20),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  a.subject,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    color: color,
-                                  ),
-                                ),
-                              ),
-                              if (a.assignedClass != null && a.assignedClass!.isNotEmpty) ...[
-                                const SizedBox(width: 6),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF1F5F9),
-                                    borderRadius: BorderRadius.circular(6),
-                                    border: Border.all(color: AppColors.cardBorder),
-                                  ),
-                                  child: Text(
-                                    a.assignedClass!,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Color accent top strip ──
+          Container(
+            height: 4,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [color, color.withAlpha(100)]),
+              borderRadius: const BorderRadius.only(topLeft: Radius.circular(18), topRight: Radius.circular(18)),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header: Subject, Class & Delete Action
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: color.withAlpha(15),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: color.withAlpha(40)),
                           ),
-                          PopupMenuButton<String>(
-                            icon: Icon(Icons.more_vert_rounded, size: 18, color: AppColors.textMuted),
-                            padding: EdgeInsets.zero,
-                            onSelected: (val) {
-                              if (val == 'delete') {
-                                _showDeleteConfirmDialog(context, appState, a);
-                              }
-                            },
-                            itemBuilder: (ctx) => [
-                              const PopupMenuItem(
-                                value: 'delete',
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.delete_outline_rounded, color: AppColors.danger, size: 18),
-                                    SizedBox(width: 8),
-                                    Text('Tapşırığı Sil', style: TextStyle(color: AppColors.danger, fontSize: 13)),
-                                  ],
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            a.subject,
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: color),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        a.title,
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        a.instructions,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.3),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Icon(Icons.access_time_rounded, size: 12, color: AppColors.textMuted),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Son təhvil: ${dateFormat.format(a.dueDate)}',
-                            style: TextStyle(fontSize: 11, color: AppColors.textMuted),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      // Progress Bar & Stats
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Təhvil: $totalSubmitted / $totalTarget şagird (${(progress * 100).toInt()}%)',
-                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-                              ),
-                              Row(
-                                children: [
-                                  if (pendingReviewCount > 0)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      margin: const EdgeInsets.only(right: 4),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.warning.withAlpha(25),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        '📥 $pendingReviewCount Gözləyir',
-                                        style: const TextStyle(color: AppColors.warning, fontSize: 10, fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
-                                  if (gradedCount > 0)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.success.withAlpha(25),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        '✅ $gradedCount Yoxlandı',
-                                        style: const TextStyle(color: AppColors.success, fontSize: 10, fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: LinearProgressIndicator(
-                              value: progress,
-                              minHeight: 6,
-                              backgroundColor: const Color(0xFFF1F5F9),
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                progress >= 1.0 ? AppColors.success : (progress > 0.5 ? color : AppColors.warning),
-                              ),
+                        ),
+                        if (a.assignedClass != null && a.assignedClass!.isNotEmpty) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppColors.background,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: AppColors.cardBorder),
+                            ),
+                            child: Text(
+                              a.assignedClass!,
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                             ),
                           ),
                         ],
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Action Button: View & Grade individual students
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: pendingReviewCount > 0 ? AppColors.primary : const Color(0xFF334155),
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                          onPressed: () => _showStudentSubmissionsSheet(context, appState, a, targetStudents, dateFormat),
-                          icon: Icon(pendingReviewCount > 0 ? Icons.rate_review_rounded : Icons.people_alt_rounded, size: 16),
-                          label: Text(
-                            pendingReviewCount > 0
-                                ? 'Şagirdlərin İşlərini Yoxla və Qiymətləndir ($pendingReviewCount)'
-                                : 'Bütün Şagirdlərin Təhvil Statusuna Bax ($totalTarget)',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                      ],
+                    ),
+                    PopupMenuButton<String>(
+                      icon: Icon(Icons.more_vert_rounded, size: 18, color: AppColors.textMuted),
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      onSelected: (val) {
+                        if (val == 'delete') {
+                          _showDeleteConfirmDialog(context, appState, a);
+                        }
+                      },
+                      itemBuilder: (ctx) => [
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete_outline_rounded, color: AppColors.danger, size: 18),
+                              SizedBox(width: 8),
+                              Text('Tapşırığı Sil', style: TextStyle(color: AppColors.danger, fontSize: 13, fontWeight: FontWeight.w600)),
+                            ],
                           ),
                         ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  a.title,
+                  style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w900, color: AppColors.textPrimary, letterSpacing: -0.2),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  a.instructions,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.4),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Icon(Icons.access_time_rounded, size: 13, color: AppColors.textMuted),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Son təhvil: ${dateFormat.format(a.dueDate)}',
+                      style: TextStyle(fontSize: 11, color: AppColors.textMuted, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+
+                // Progress Bar & Stats
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Təhvil: $totalSubmitted / $totalTarget şagird (${(progress * 100).toInt()}%)',
+                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                        ),
+                        Row(
+                          children: [
+                            if (pendingReviewCount > 0)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                margin: const EdgeInsets.only(right: 4),
+                                decoration: BoxDecoration(
+                                  color: AppColors.warning.withAlpha(15),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: AppColors.warning.withAlpha(40)),
+                                ),
+                                child: Text(
+                                  '📥 $pendingReviewCount Gözləyir',
+                                  style: const TextStyle(color: AppColors.warning, fontSize: 10, fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                            if (gradedCount > 0)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.success.withAlpha(15),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: AppColors.success.withAlpha(40)),
+                                ),
+                                child: Text(
+                                  '✅ $gradedCount Yoxlandı',
+                                  style: const TextStyle(color: AppColors.success, fontSize: 10, fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 6,
+                        backgroundColor: AppColors.cardBorder.withAlpha(80),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          progress >= 1.0 ? AppColors.success : (progress > 0.5 ? color : AppColors.warning),
+                        ),
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 14),
+
+                // Action Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: pendingReviewCount > 0 ? AppColors.primaryAccent : AppColors.primary,
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                    onPressed: () => _showStudentSubmissionsSheet(context, appState, a, targetStudents, dateFormat),
+                    icon: Icon(pendingReviewCount > 0 ? Icons.rate_review_rounded : Icons.people_alt_rounded, size: 16, color: Colors.white),
+                    label: Text(
+                      pendingReviewCount > 0
+                          ? 'Şagirdlərin İşlərini Yoxla və Qiymətləndir ($pendingReviewCount)'
+                          : 'Bütün Şagirdlərin Təhvil Statusuna Bax ($totalTarget)',
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: Colors.white),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -444,7 +556,7 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
               height: MediaQuery.of(context).size.height * 0.88,
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
               ),
               child: Column(
                 children: [
@@ -473,7 +585,7 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                                 assignment.title,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textPrimary, letterSpacing: -0.3),
                               ),
                               const SizedBox(height: 2),
                               Text(
@@ -485,12 +597,19 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                         ),
                         IconButton(
                           onPressed: () => Navigator.pop(ctx),
-                          icon: const Icon(Icons.close_rounded),
+                          icon: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: AppColors.cardBorder.withAlpha(80),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.close_rounded, size: 18),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const Divider(height: 1),
+                  Divider(height: 1, color: AppColors.cardBorder),
 
                   // Students Submissions List
                   Expanded(
@@ -500,6 +619,7 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                           )
                         : ListView.separated(
                             padding: const EdgeInsets.all(16),
+                            physics: const BouncingScrollPhysics(),
                             itemCount: targetStudents.length,
                             separatorBuilder: (_, _) => const SizedBox(height: 10),
                             itemBuilder: (context, index) {
@@ -513,14 +633,15 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                                 decoration: BoxDecoration(
                                   color: isGraded
                                       ? const Color(0xFFF0FDF4)
-                                      : (hasSubmitted ? const Color(0xFFFEF9C3).withAlpha(100) : Colors.white),
+                                      : (hasSubmitted ? const Color(0xFFFEF9C3).withAlpha(80) : AppColors.surface),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
                                     color: isGraded
-                                        ? AppColors.success.withAlpha(80)
-                                        : (hasSubmitted ? AppColors.warning : AppColors.cardBorder),
+                                        ? AppColors.success.withAlpha(60)
+                                        : (hasSubmitted ? AppColors.warning.withAlpha(60) : AppColors.cardBorder),
                                     width: hasSubmitted ? 1.5 : 1.0,
                                   ),
+                                  boxShadow: AppShadows.sm,
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -528,18 +649,24 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                                     // Student Profile Row
                                     Row(
                                       children: [
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: Container(
-                                            width: 44,
-                                            height: 44,
-                                            color: AppColors.primary.withAlpha(20),
-                                            child: Image.network(
-                                              student.photoUrl,
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(12),
+                                            border: Border.all(color: AppColors.primaryAccent.withAlpha(30)),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(11),
+                                            child: Container(
                                               width: 44,
                                               height: 44,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (ctx, err, stack) => const Icon(Icons.person_rounded, color: AppColors.primary, size: 24),
+                                              color: AppColors.primaryAccent.withAlpha(12),
+                                              child: Image.network(
+                                                student.photoUrl,
+                                                width: 44,
+                                                height: 44,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (ctx, err, stack) => const Icon(Icons.person_rounded, color: AppColors.primaryAccent, size: 24),
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -550,7 +677,7 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                                             children: [
                                               Text(
                                                 student.fullName,
-                                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                                               ),
                                               const SizedBox(height: 2),
                                               Text(
@@ -570,7 +697,7 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                                             ),
                                             child: Text(
                                               '${sub!.score!.toInt()} / 100 Bal',
-                                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 11),
                                             ),
                                           )
                                         else if (hasSubmitted)
@@ -582,7 +709,7 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                                             ),
                                             child: const Text(
                                               '📥 Təhvil Verilib',
-                                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 11),
                                             ),
                                           )
                                         else
@@ -601,10 +728,10 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                                       ],
                                     ),
 
-                                    // Submission Content Details (If submitted)
+                                    // Submission Content Details
                                     if (hasSubmitted) ...[
                                       const SizedBox(height: 10),
-                                      const Divider(height: 1),
+                                      Divider(height: 1, color: AppColors.cardBorder),
                                       const SizedBox(height: 8),
 
                                       if (sub.studentNote != null && sub.studentNote!.isNotEmpty)
@@ -618,7 +745,7 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
 
                                       // Scanned Images Gallery
                                       if (sub.scannedImages.isNotEmpty) ...[
-                                        Text('Yüklənmiş Dəftər Səhifələri:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+                                        Text('Yüklənmiş Dəftər Səhifələri:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
                                         const SizedBox(height: 6),
                                         SizedBox(
                                           height: 70,
@@ -629,7 +756,7 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                                               return Container(
                                                 margin: const EdgeInsets.only(right: 8),
                                                 child: ClipRRect(
-                                                  borderRadius: BorderRadius.circular(8),
+                                                  borderRadius: BorderRadius.circular(10),
                                                   child: Image.network(
                                                     sub.scannedImages[imgIdx],
                                                     width: 70,
@@ -638,8 +765,8 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                                                     errorBuilder: (ctx, err, stack) => Container(
                                                       width: 70,
                                                       height: 70,
-                                                      color: AppColors.primary.withAlpha(20),
-                                                      child: const Icon(Icons.photo_rounded, color: AppColors.primary),
+                                                      color: AppColors.primaryAccent.withAlpha(15),
+                                                      child: const Icon(Icons.photo_rounded, color: AppColors.primaryAccent),
                                                     ),
                                                   ),
                                                 ),
@@ -657,7 +784,7 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                                           margin: const EdgeInsets.only(bottom: 8),
                                           decoration: BoxDecoration(
                                             color: AppColors.surface,
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(10),
                                             border: Border.all(color: AppColors.cardBorder),
                                           ),
                                           child: Text(
@@ -672,18 +799,19 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                                         child: ElevatedButton.icon(
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: isGraded ? AppColors.primaryAccent : AppColors.primary,
-                                            padding: const EdgeInsets.symmetric(vertical: 9),
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                            padding: const EdgeInsets.symmetric(vertical: 10),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                            elevation: 0,
                                           ),
                                           onPressed: () {
                                             _showGradeStudentDialog(context, appState, assignment, student, sub, () {
                                               setSheetState(() {});
                                             });
                                           },
-                                          icon: Icon(isGraded ? Icons.edit_note_rounded : Icons.rate_review_rounded, size: 16),
+                                          icon: Icon(isGraded ? Icons.edit_note_rounded : Icons.rate_review_rounded, size: 16, color: Colors.white),
                                           label: Text(
                                             isGraded ? 'Balı / Rəyi Yenilə' : 'Şagirdin İşini Qiymətləndir',
-                                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white),
                                           ),
                                         ),
                                       ),
@@ -718,8 +846,8 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text('${student.fullName} • Qiymətləndirmə'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+          title: Text('${student.fullName} • Qiymətləndirmə', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -729,24 +857,26 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                   'Tapşırıq: ${assignment.title}',
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 TextField(
                   controller: scoreCtrl,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Bal (0 - 100) *',
                     hintText: '95',
-                    prefixIcon: Icon(Icons.grade_rounded, color: AppColors.primary),
+                    prefixIcon: const Icon(Icons.grade_rounded, color: AppColors.primaryAccent),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: commentCtrl,
                   maxLines: 3,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Pedaqoji Rəy & Qeyd *',
                     hintText: 'Şagird üçün tövsiyə və qeydləriniz...',
                     alignLabelWithHint: true,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                 ),
               ],
@@ -755,6 +885,10 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Ləğv et')),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryAccent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
               onPressed: () {
                 final score = double.tryParse(scoreCtrl.text.replaceAll(',', '.')) ?? 85.0;
                 final cleanScore = score.clamp(0.0, 100.0);
@@ -776,7 +910,7 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
                   ),
                 );
               },
-              child: const Text('Təsdiqlə və Göndər'),
+              child: const Text('Təsdiqlə və Göndər', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -788,13 +922,16 @@ class _ReviewSubmissionsScreenState extends State<ReviewSubmissionsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: const Text('Tapşırığı Sil'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        title: const Text('Tapşırığı Sil', style: TextStyle(fontWeight: FontWeight.w800)),
         content: Text('"${a.title}" tapşırığını silmək istədiyinizə əminsiniz? Bütün şagirdlərin təhvilləri silinəcək.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Ləğv et')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             onPressed: () {
               appState.deleteAssignment(a.id);
               Navigator.pop(ctx);

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/custom_card.dart';
+import '../../../core/theme/app_shadows.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../../providers/app_state.dart';
 import '../../../data/models/student_model.dart';
@@ -46,124 +46,266 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Şagirdlər Kataloqu & Profilləri'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_task_rounded),
-            tooltip: 'Tapşırıq Ver',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const CreateAssignmentScreen()),
-              );
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Search & Filter Bar
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                TextField(
-                  controller: _searchCtrl,
-                  onChanged: (_) => setState(() {}),
-                  decoration: InputDecoration(
-                    hintText: 'Şagird adı, İdrak kodu və ya sinif axtar...',
-                    prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary),
-                    suffixIcon: _searchCtrl.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear_rounded),
-                            onPressed: () {
-                              _searchCtrl.clear();
-                              setState(() {});
-                            },
-                          )
-                        : null,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // ── Gradient Header ──
+          SliverAppBar(
+            expandedHeight: 120,
+            pinned: true,
+            elevation: 0,
+            backgroundColor: AppColors.primary,
+            surfaceTintColor: Colors.transparent,
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: IconButton(
+                  icon: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(20),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.add_task_rounded, size: 18, color: Colors.white),
+                  ),
+                  tooltip: 'Tapşırıq Ver',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const CreateAssignmentScreen()),
+                    );
+                  },
+                ),
+              ),
+            ],
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF1A1B2E), Color(0xFF2D1B69), Color(0xFF6C5CE7)],
                   ),
                 ),
-                if (classes.length > 1) ...[
-                  const SizedBox(height: 12),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: classes.map((c) {
-                        final isSelected = _selectedClass == c;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: ChoiceChip(
-                            label: Text(c),
-                            selected: isSelected,
-                            onSelected: (val) {
-                              if (val) setState(() => _selectedClass = c);
-                            },
-                            selectedColor: AppColors.primary,
-                            labelStyle: TextStyle(
-                              color: isSelected ? Colors.white : AppColors.textPrimary,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 44, 20, 16),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withAlpha(20),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.groups_rounded, size: 22, color: Colors.white),
                             ),
-                            backgroundColor: AppColors.surface,
-                            side: BorderSide(color: isSelected ? AppColors.primary : AppColors.cardBorder),
-                          ),
-                        );
-                      }).toList(),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Şagirdlər Kataloqu',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${students.length} şagird qeydiyyatda',
+                                  style: TextStyle(
+                                    color: Colors.white.withAlpha(180),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ],
+                ),
+              ),
             ),
           ),
 
-          // Students List
-          Expanded(
-            child: students.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.person_search_rounded, size: 64, color: AppColors.textMuted),
-                          SizedBox(height: 14),
-                          Text(
-                            'Sistemdə hələ heç bir şagird qeydiyyatdan keçməyib.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
-                          SizedBox(height: 6),
-                          Text(
-                            'Yeni şagird və valideyn hesabları Məktəb İnzibatçısı (Admin) tərəfindən yaradılır.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-                          ),
-                        ],
+          // ── Search & Filter ──
+          SliverToBoxAdapter(
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Column(
+                children: [
+                  // Search Field
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.cardBorder),
+                      boxShadow: AppShadows.sm,
+                    ),
+                    child: TextField(
+                      controller: _searchCtrl,
+                      onChanged: (_) => setState(() {}),
+                      decoration: InputDecoration(
+                        hintText: 'Şagird adı, İdrak kodu və ya sinif axtar...',
+                        hintStyle: TextStyle(fontSize: 12.5, color: AppColors.textMuted),
+                        filled: true,
+                        fillColor: AppColors.surface,
+                        prefixIcon: Icon(Icons.search_rounded, color: AppColors.primaryAccent, size: 20),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(color: AppColors.primaryAccent, width: 1.5),
+                        ),
+                        suffixIcon: _searchCtrl.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear_rounded, size: 18),
+                                onPressed: () {
+                                  _searchCtrl.clear();
+                                  setState(() {});
+                                },
+                              )
+                            : null,
                       ),
                     ),
-                  )
-                : filtered.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.search_off_rounded, size: 48, color: AppColors.textMuted),
-                            SizedBox(height: 8),
-                            Text('Axtarışa uyğun şagird tapılmadı.', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        itemCount: filtered.length,
-                        itemBuilder: (context, index) {
-                          final student = filtered[index];
-                          return _buildStudentListItem(context, appState, student);
-                        },
+                  ),
+
+                  // Class Filter Chips
+                  if (classes.length > 1) ...[
+                    const SizedBox(height: 12),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      child: Row(
+                        children: classes.map((c) {
+                          final isSelected = _selectedClass == c;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: GestureDetector(
+                              onTap: () => setState(() => _selectedClass = c),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? AppColors.primaryAccent : AppColors.surface,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: isSelected ? AppColors.primaryAccent : AppColors.cardBorder,
+                                    width: isSelected ? 1.5 : 1,
+                                  ),
+                                  boxShadow: isSelected
+                                      ? [BoxShadow(color: AppColors.primaryAccent.withAlpha(35), blurRadius: 8, offset: const Offset(0, 2))]
+                                      : [],
+                                ),
+                                child: Text(
+                                  c,
+                                  style: TextStyle(
+                                    color: isSelected ? Colors.white : AppColors.textPrimary,
+                                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
                       ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ),
+
+          // ── Students List ──
+          if (students.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(40),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryAccent.withAlpha(10),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.person_search_rounded, size: 56, color: AppColors.textMuted),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Sistemdə hələ heç bir şagird\nqeydiyyatdan keçməyib.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w800),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Yeni şagird və valideyn hesabları\nMəktəb İnzibatçısı (Admin) tərəfindən yaradılır.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.5),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          else if (filtered.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryAccent.withAlpha(8),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.search_off_rounded, size: 44, color: AppColors.textMuted),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Axtarışa uyğun şagird tapılmadı.',
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final student = filtered[index];
+                    return _buildStudentListItem(context, appState, student);
+                  },
+                  childCount: filtered.length,
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -172,73 +314,118 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
   Widget _buildStudentListItem(BuildContext context, AppState appState, StudentProfile student) {
     final gpaText = student.gpa > 0 ? 'GPA: ${student.gpa}' : 'Yeni Şagird';
 
-    return CustomCard(
-      onTap: () => _showStudentDetailsModal(context, appState, student),
-      child: Row(
-        children: [
-          // Photo with fallback
-          ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: Container(
-              width: 56,
-              height: 56,
-              color: AppColors.primary.withAlpha(20),
-              child: Image.network(
-                student.photoUrl,
-                width: 56,
-                height: 56,
-                fit: BoxFit.cover,
-                errorBuilder: (ctx, err, stack) => const Icon(Icons.person_rounded, color: AppColors.primary, size: 28),
-              ),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.cardBorder),
+        boxShadow: AppShadows.sm,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _showStudentDetailsModal(context, appState, student),
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        student.fullName,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
-                        ),
+                // Photo with rounded square
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.primaryAccent.withAlpha(30), width: 1.5),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(13),
+                    child: Container(
+                      width: 56,
+                      height: 56,
+                      color: AppColors.primaryAccent.withAlpha(12),
+                      child: Image.network(
+                        student.photoUrl,
+                        width: 56,
+                        height: 56,
+                        fit: BoxFit.cover,
+                        errorBuilder: (ctx, err, stack) => Icon(Icons.person_rounded, color: AppColors.primaryAccent, size: 28),
                       ),
                     ),
-                    StatusBadge(
-                      label: student.className,
-                      color: AppColors.primaryAccent,
-                      fontSize: 10,
-                    ),
-                  ],
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'ID: ${student.studentNumber} • $gpaText',
-                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              student.fullName,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryAccent.withAlpha(15),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: AppColors.primaryAccent.withAlpha(40)),
+                            ),
+                            child: Text(
+                              student.className,
+                              style: const TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primaryAccent,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'ID: ${student.studentNumber} • $gpaText',
+                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(height: 5),
+                      Row(
+                        children: [
+                          Icon(Icons.family_restroom_rounded, size: 13, color: AppColors.goldDark.withAlpha(180)),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              'Valideyn: ${student.parentName}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Icons.family_restroom_rounded, size: 14, color: AppColors.goldDark),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Valideyn: ${student.parentName}',
-                      style: TextStyle(fontSize: 11, color: AppColors.textMuted),
-                    ),
-                  ],
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBorder.withAlpha(60),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppColors.textMuted),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textMuted),
-        ],
+        ),
       ),
     );
   }
@@ -250,10 +437,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (ctx) {
         return StatefulBuilder(
           builder: (sheetContext, setSheetState) {
@@ -263,63 +447,106 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
 
             return Container(
               height: MediaQuery.of(context).size.height * 0.90,
-              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              width: 50,
-                              height: 50,
-                              color: AppColors.primary.withAlpha(20),
-                              child: Image.network(
-                                student.photoUrl,
-                                width: 50,
-                                height: 50,
-                                fit: BoxFit.cover,
-                                errorBuilder: (c, err, stack) => const Icon(Icons.person, color: AppColors.primary),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                  // ── Sheet Handle ──
+                  Container(
+                    margin: const EdgeInsets.only(top: 12, bottom: 4),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.cardBorder,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+
+                  // ── Header ──
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 12, 0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Row(
                             children: [
-                              Text(
-                                student.fullName,
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: AppColors.primaryAccent.withAlpha(40)),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(13),
+                                  child: Container(
+                                    width: 50,
+                                    height: 50,
+                                    color: AppColors.primaryAccent.withAlpha(12),
+                                    child: Image.network(
+                                      student.photoUrl,
+                                      width: 50,
+                                      height: 50,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (c, err, stack) => const Icon(Icons.person, color: AppColors.primaryAccent),
+                                    ),
+                                  ),
+                                ),
                               ),
-                              Text(
-                                '${student.className} • ${student.studentNumber}',
-                                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      student.fullName,
+                                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: AppColors.textPrimary, letterSpacing: -0.3),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${student.className} • ${student.studentNumber}',
+                                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                      IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close_rounded)),
-                    ],
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          icon: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: AppColors.cardBorder.withAlpha(80),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.close_rounded, size: 18),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
 
-                  const SizedBox(height: 12),
-                  const Divider(),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Container(height: 1, color: AppColors.cardBorder),
+                  ),
 
+                  // ── Scrollable Content ──
                   Expanded(
                     child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                      physics: const BouncingScrollPhysics(),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Quick Stats Row
+                          // ── Quick Stats Row ──
                           Row(
                             children: [
-                              _buildDetailStat('GPA (Ortalama)', gpaDisplay, AppColors.primary),
+                              _buildDetailStat('GPA (Ortalama)', gpaDisplay, AppColors.primaryAccent),
                               const SizedBox(width: 8),
                               _buildDetailStat('Davamiyyət', attDisplay, AppColors.success),
                               const SizedBox(width: 8),
@@ -333,9 +560,9 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                             ],
                           ),
 
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 16),
 
-                          // 📊 Academic Performance Box: Teacher's Subject vs Overall Average
+                          // ── Academic Performance Box ──
                           Builder(
                             builder: (context) {
                               final teacherSub = appState.currentUser?.subject?.toLowerCase().trim() ?? '';
@@ -350,16 +577,16 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                               }
 
                               return Container(
-                                padding: const EdgeInsets.all(14),
+                                padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
                                   color: AppColors.surface,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: AppColors.primary.withAlpha(80), width: 1.5),
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(color: AppColors.primaryAccent.withAlpha(60)),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.primary.withAlpha(15),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 3),
+                                      color: AppColors.primaryAccent.withAlpha(10),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
                                     ),
                                   ],
                                 ),
@@ -369,34 +596,46 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Row(
-                                          children: [
-                                            const Icon(Icons.school_rounded, color: AppColors.primary, size: 20),
-                                            const SizedBox(width: 6),
-                                            Text(
-                                              teacherSub.isNotEmpty ? 'Sizin Fənniniz (${appState.currentUser?.subject})' : 'Akademik Göstəricilər',
-                                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppColors.primary),
-                                            ),
-                                          ],
+                                        Expanded(
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.all(6),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.primaryAccent.withAlpha(15),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: const Icon(Icons.school_rounded, color: AppColors.primaryAccent, size: 16),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  teacherSub.isNotEmpty ? 'Sizin Fənniniz (${appState.currentUser?.subject})' : 'Akademik Göstəricilər',
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppColors.primaryAccent),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                         StatusBadge(
                                           label: mySubjectGrades.isNotEmpty ? '${myAvg.toStringAsFixed(1)} / 100 Bal' : 'Qiymət yoxdur',
-                                          color: AppColors.primary,
+                                          color: AppColors.primaryAccent,
                                           fontSize: 10,
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 10),
                                     Text(
                                       'Məktəb üzrə ümumi ortalama: ${student.gpa.toStringAsFixed(2)} GPA (${studentGrades.length} qiymət)',
-                                      style: TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                                      style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
                                     ),
                                     if (mySubjectGrades.isNotEmpty) ...[
+                                      const SizedBox(height: 10),
+                                      Container(height: 1, color: AppColors.cardBorder),
                                       const SizedBox(height: 8),
-                                      const Divider(height: 1),
-                                      const SizedBox(height: 6),
                                       ...mySubjectGrades.take(3).map((g) => Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 2),
+                                        padding: const EdgeInsets.symmetric(vertical: 3),
                                         child: Row(
                                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
@@ -408,9 +647,16 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                                                 style: TextStyle(fontSize: 12, color: AppColors.textPrimary, fontWeight: FontWeight.w500),
                                               ),
                                             ),
-                                            Text(
-                                              '${g.displayScore.toInt()} / ${g.maxScore.toInt()}',
-                                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.primaryAccent.withAlpha(12),
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                              child: Text(
+                                                '${g.displayScore.toInt()} / ${g.maxScore.toInt()}',
+                                                style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppColors.primaryAccent),
+                                              ),
                                             ),
                                           ],
                                         ),
@@ -424,17 +670,17 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
 
                           const SizedBox(height: 16),
 
-                          // 📐 Physical Stats & Automatic BMI Box
+                          // ── Physical Stats & BMI ──
                           Container(
-                            padding: const EdgeInsets.all(14),
+                            padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
                               color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: currentMed.bmiColor.withAlpha(80), width: 1.5),
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(color: currentMed.bmiColor.withAlpha(60)),
                               boxShadow: [
                                 BoxShadow(
-                                  color: currentMed.bmiColor.withAlpha(20),
-                                  blurRadius: 10,
+                                  color: currentMed.bmiColor.withAlpha(12),
+                                  blurRadius: 12,
                                   offset: const Offset(0, 4),
                                 ),
                               ],
@@ -447,35 +693,53 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                                   children: [
                                     Row(
                                       children: [
-                                        Icon(Icons.accessibility_new_rounded, color: AppColors.primary, size: 20),
-                                        SizedBox(width: 6),
-                                        Text('Fiziki İnkişaf & BMI Göstəricisi', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppColors.textPrimary)),
+                                        Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: BoxDecoration(
+                                            color: currentMed.bmiColor.withAlpha(15),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Icon(Icons.accessibility_new_rounded, color: currentMed.bmiColor, size: 16),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text('Fiziki İnkişaf & BMI', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppColors.textPrimary)),
                                       ],
                                     ),
                                     if (canEditMedical)
                                       TextButton.icon(
-                                        style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                                        style: TextButton.styleFrom(
+                                          padding: EdgeInsets.zero,
+                                          minimumSize: const Size(0, 0),
+                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        ),
                                         onPressed: () {
                                           _showEditPhysicalStatsDialog(context, appState, student.id, currentMed, () {
                                             setSheetState(() {});
                                           });
                                         },
-                                        icon: const Icon(Icons.edit_note_rounded, size: 16),
-                                        label: const Text('Redaktə Et', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                        icon: const Icon(Icons.edit_note_rounded, size: 14),
+                                        label: const Text('Redaktə Et', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
                                       ),
                                   ],
                                 ),
-                                const SizedBox(height: 10),
-                                Row(
-                                  children: [
-                                    _buildBmiStatSub('Boy', currentMed.heightCm > 0 ? '${currentMed.heightCm.toInt()} sm' : 'Qeyd yoxdur'),
-                                    Container(height: 25, width: 1, color: AppColors.cardBorder),
-                                    _buildBmiStatSub('Çəki', currentMed.weightKg > 0 ? '${currentMed.weightKg.toInt()} kq' : 'Qeyd yoxdur'),
-                                    Container(height: 25, width: 1, color: AppColors.cardBorder),
-                                    _buildBmiStatSub('BMI İndeksi', currentMed.bmiDisplay),
-                                  ],
+                                const SizedBox(height: 12),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.background,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      _buildBmiStatSub('Boy', currentMed.heightCm > 0 ? '${currentMed.heightCm.toInt()} sm' : 'Qeyd yoxdur'),
+                                      Container(height: 28, width: 1, color: AppColors.cardBorder),
+                                      _buildBmiStatSub('Çəki', currentMed.weightKg > 0 ? '${currentMed.weightKg.toInt()} kq' : 'Qeyd yoxdur'),
+                                      Container(height: 28, width: 1, color: AppColors.cardBorder),
+                                      _buildBmiStatSub('BMI İndeksi', currentMed.bmiDisplay),
+                                    ],
+                                  ),
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 10),
                                 StatusBadge(
                                   label: currentMed.bmiCategory,
                                   color: currentMed.bmiColor,
@@ -485,14 +749,15 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                                   const SizedBox(height: 8),
                                   Container(
                                     width: double.infinity,
-                                    padding: const EdgeInsets.all(8),
+                                    padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color: currentMed.bmiColor.withAlpha(20),
-                                      borderRadius: BorderRadius.circular(8),
+                                      color: currentMed.bmiColor.withAlpha(12),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: currentMed.bmiColor.withAlpha(30)),
                                     ),
                                     child: Text(
                                       currentMed.bmiWarning!,
-                                      style: TextStyle(fontSize: 11, color: currentMed.bmiColor, fontWeight: FontWeight.bold),
+                                      style: TextStyle(fontSize: 11.5, color: currentMed.bmiColor, fontWeight: FontWeight.w700),
                                     ),
                                   ),
                                 ],
@@ -502,13 +767,13 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
 
                           const SizedBox(height: 16),
 
-                          // Parent Info Box with Direct Notification Action
+                          // ── Parent Info Box ──
                           Container(
-                            padding: const EdgeInsets.all(14),
+                            padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
                               color: AppColors.background,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AppColors.cardBorder),
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(color: AppColors.gold.withAlpha(40)),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -516,31 +781,44 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    const Text('👨‍👩‍👧 Valideyn Əlaqə Məlumatları', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.goldDark)),
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.goldDark.withAlpha(15),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: const Icon(Icons.family_restroom_rounded, color: AppColors.goldDark, size: 16),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        const Text('Valideyn Əlaqə Məlumatları', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppColors.goldDark)),
+                                      ],
+                                    ),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                       decoration: BoxDecoration(
-                                        color: AppColors.primary.withAlpha(15),
+                                        color: AppColors.primaryAccent.withAlpha(12),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
-                                      child: const Text('Rəsmi Qəyyum', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                                      child: const Text('Rəsmi Qəyyum', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.primaryAccent)),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 8),
-                                Text('Adı: ${student.parentName}', style: TextStyle(fontSize: 13, color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 2),
-                                Text('Telefon: ${student.parentPhone}', style: const TextStyle(fontSize: 13, color: AppColors.primaryAccent, fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 10),
+                                const SizedBox(height: 12),
+                                Text('Adı: ${student.parentName}', style: TextStyle(fontSize: 13, color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+                                const SizedBox(height: 3),
+                                Text('Telefon: ${student.parentPhone}', style: const TextStyle(fontSize: 13, color: AppColors.primaryAccent, fontWeight: FontWeight.w700)),
+                                const SizedBox(height: 12),
 
-                                // Direct Contact Button
                                 SizedBox(
                                   width: double.infinity,
                                   child: ElevatedButton.icon(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF0F172A),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                      padding: const EdgeInsets.symmetric(vertical: 10),
+                                      backgroundColor: AppColors.primary,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      elevation: 0,
                                     ),
                                     onPressed: () {
                                       showDialog(
@@ -551,7 +829,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                                     icon: const Icon(Icons.send_rounded, color: AppColors.goldLight, size: 16),
                                     label: const Text(
                                       'Valideynə Bildiriş / Qeyd Göndər',
-                                      style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                      style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
                                     ),
                                   ),
                                 ),
@@ -559,45 +837,66 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                             ),
                           ),
 
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 20),
 
-                          // Health & Medical Card Section
+                          // ── Health & Allergies ──
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('🩺 Sağlamlıq & Allergiya Qeydləri', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.danger)),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(5),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.danger.withAlpha(12),
+                                      borderRadius: BorderRadius.circular(7),
+                                    ),
+                                    child: const Icon(Icons.medical_services_rounded, size: 14, color: AppColors.danger),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text('Sağlamlıq & Allergiya', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.danger)),
+                                ],
+                              ),
                               TextButton.icon(
                                 onPressed: () {
                                   _showAddAllergyQuickDialog(context, appState, student.id, () {
                                     setSheetState(() {});
                                   });
                                 },
-                                icon: const Icon(Icons.add_circle_outline_rounded, size: 16, color: AppColors.danger),
-                                label: const Text('Qeyd Əlavə Et', style: TextStyle(fontSize: 12, color: AppColors.danger, fontWeight: FontWeight.bold)),
+                                icon: const Icon(Icons.add_circle_outline_rounded, size: 14, color: AppColors.danger),
+                                label: const Text('Əlavə Et', style: TextStyle(fontSize: 11, color: AppColors.danger, fontWeight: FontWeight.w700)),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 8),
 
                           if (currentMed.allergies.isNotEmpty)
                             ...currentMed.allergies.map((allergy) {
                               return Container(
-                                margin: const EdgeInsets.only(bottom: 6),
-                                padding: const EdgeInsets.all(10),
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFEF2F2),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: AppColors.danger.withAlpha(50)),
+                                  color: AppColors.danger.withAlpha(6),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: AppColors.danger.withAlpha(35)),
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.warning_amber_rounded, size: 18, color: AppColors.danger),
-                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.danger.withAlpha(15),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Icon(Icons.warning_amber_rounded, size: 16, color: AppColors.danger),
+                                    ),
+                                    const SizedBox(width: 10),
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(allergy.name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                                          Text(allergy.name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                                          const SizedBox(height: 2),
                                           Text('Reaksiya: ${allergy.reaction}', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                                         ],
                                       ),
@@ -609,21 +908,34 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                             })
                           else
                             Container(
-                              padding: const EdgeInsets.all(12),
+                              padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
                                 color: AppColors.background,
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text('Allergiya və ya xəstəlik qeydi yoxdur.', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
                             ),
 
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 20),
 
-                          // 💉 Vaccine / Immunization History
+                          // ── Vaccine History ──
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('💉 Peyvənd & Vaksina Təqvimi', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(5),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primaryAccent.withAlpha(12),
+                                      borderRadius: BorderRadius.circular(7),
+                                    ),
+                                    child: const Icon(Icons.vaccines_rounded, size: 14, color: AppColors.primaryAccent),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text('Peyvənd & Vaksina', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.primaryAccent)),
+                                ],
+                              ),
                               if (canEditMedical)
                                 TextButton.icon(
                                   onPressed: () {
@@ -631,22 +943,22 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                                       setSheetState(() {});
                                     });
                                   },
-                                  icon: const Icon(Icons.add_circle_outline_rounded, size: 16, color: AppColors.primary),
-                                  label: const Text('Peyvənd Əlavə Et', style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.bold)),
+                                  icon: const Icon(Icons.add_circle_outline_rounded, size: 14, color: AppColors.primaryAccent),
+                                  label: const Text('Əlavə Et', style: TextStyle(fontSize: 11, color: AppColors.primaryAccent, fontWeight: FontWeight.w700)),
                                 ),
                             ],
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 8),
 
                           if (currentMed.vaccineHistory.isNotEmpty)
                             ...currentMed.vaccineHistory.map((v) {
                               final isDone = v.status == 'Tamamlandı';
                               return Container(
-                                margin: const EdgeInsets.only(bottom: 6),
-                                padding: const EdgeInsets.all(10),
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
                                   color: AppColors.surface,
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: BorderRadius.circular(14),
                                   border: Border.all(color: AppColors.cardBorder),
                                 ),
                                 child: Row(
@@ -656,7 +968,8 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(v.name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                                          Text(v.name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                                          const SizedBox(height: 2),
                                           Text('${v.doctor} • ${v.date.day}.${v.date.month}.${v.date.year}', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
                                         ],
                                       ),
@@ -672,26 +985,39 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                             })
                           else
                             Container(
-                              padding: const EdgeInsets.all(12),
+                              padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
                                 color: AppColors.background,
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text('Peyvənd qeydi daxil edilməyib.', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
                             ),
 
-                          // 👨‍👩‍👧 Parent Notes for this student (if any)
+                          // ── Parent Notes ──
                           if (currentMed.parentNotes.isNotEmpty) ...[
-                            const SizedBox(height: 16),
-                            const Text('👨‍👩‍👧 Valideynin Xüsusi Qeydləri', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.goldDark)),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 20),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(5),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.goldDark.withAlpha(12),
+                                    borderRadius: BorderRadius.circular(7),
+                                  ),
+                                  child: const Icon(Icons.sticky_note_2_rounded, size: 14, color: AppColors.goldDark),
+                                ),
+                                const SizedBox(width: 8),
+                                const Text('Valideynin Xüsusi Qeydləri', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.goldDark)),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
                             ...currentMed.parentNotes.map((note) => Container(
-                              margin: const EdgeInsets.only(bottom: 6),
-                              padding: const EdgeInsets.all(10),
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFFFBEB),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: AppColors.goldLight),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: AppColors.gold.withAlpha(50)),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -699,28 +1025,29 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(note.parentName, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.goldDark)),
+                                      Text(note.parentName, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.goldDark)),
                                       Text('${note.date.day}.${note.date.month}.${note.date.year}', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
                                     ],
                                   ),
                                   const SizedBox(height: 4),
-                                  Text(note.note, style: TextStyle(fontSize: 12, color: AppColors.textPrimary)),
+                                  Text(note.note, style: TextStyle(fontSize: 12.5, color: AppColors.textPrimary, height: 1.4)),
                                 ],
                               ),
                             )),
                           ],
 
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 24),
 
-                          // Action Buttons: Assign Homework & Grade
+                          // ── Action Buttons ──
                           Row(
                             children: [
                               Expanded(
                                 child: ElevatedButton.icon(
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppColors.primaryAccent,
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    padding: const EdgeInsets.symmetric(vertical: 13),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                    elevation: 0,
                                   ),
                                   onPressed: () {
                                     Navigator.pop(ctx);
@@ -731,8 +1058,8 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                                       ),
                                     );
                                   },
-                                  icon: const Icon(Icons.add_task_rounded, size: 18),
-                                  label: const Text('Tapşırıq Ver', style: TextStyle(fontSize: 13, color: Colors.white)),
+                                  icon: const Icon(Icons.add_task_rounded, size: 18, color: Colors.white),
+                                  label: const Text('Tapşırıq Ver', style: TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w700)),
                                 ),
                               ),
                               const SizedBox(width: 10),
@@ -740,8 +1067,9 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                                 child: ElevatedButton.icon(
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppColors.primary,
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    padding: const EdgeInsets.symmetric(vertical: 13),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                    elevation: 0,
                                   ),
                                   onPressed: () {
                                     Navigator.pop(ctx);
@@ -750,8 +1078,8 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                                       MaterialPageRoute(builder: (_) => const QuickGradingScreen()),
                                     );
                                   },
-                                  icon: const Icon(Icons.grade_rounded, size: 18),
-                                  label: const Text('Qiymətləndir', style: TextStyle(fontSize: 13, color: Colors.white)),
+                                  icon: const Icon(Icons.grade_rounded, size: 18, color: Colors.white),
+                                  label: const Text('Qiymətləndir', style: TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w700)),
                                 ),
                               ),
                             ],
@@ -774,6 +1102,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
       child: Column(
         children: [
           Text(val, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppColors.textPrimary)),
+          const SizedBox(height: 2),
           Text(label, style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
         ],
       ),
@@ -783,11 +1112,11 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
   Widget _buildDetailStat(String label, String value, Color color) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
         decoration: BoxDecoration(
-          color: color.withAlpha(15),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withAlpha(40)),
+          color: color.withAlpha(10),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withAlpha(30)),
         ),
         child: Column(
           children: [
@@ -795,15 +1124,15 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
               fit: BoxFit.scaleDown,
               child: Text(
                 value,
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: color),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: color),
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 3),
             Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600),
+              style: TextStyle(fontSize: 10.5, color: color.withAlpha(180), fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -822,8 +1151,8 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Text('Fiziki və Tibbi Göstəricilər'),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+              title: const Text('Fiziki və Tibbi Göstəricilər', style: TextStyle(fontWeight: FontWeight.w800)),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -861,6 +1190,10 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
               actions: [
                 TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Ləğv et')),
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryAccent,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                   onPressed: () {
                     final h = double.tryParse(heightCtrl.text.trim()) ?? 0.0;
                     final w = double.tryParse(weightCtrl.text.trim()) ?? 0.0;
@@ -876,7 +1209,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                       const SnackBar(content: Text('Boy, çəki və qan qrupu yeniləndi!'), backgroundColor: AppColors.success),
                     );
                   },
-                  child: const Text('Yadda Saxla'),
+                  child: const Text('Yadda Saxla', style: TextStyle(color: Colors.white)),
                 ),
               ],
             );
@@ -897,8 +1230,8 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Text('Şagirdə Allergiya / Tibbi Qeyd Əlavə Et'),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+              title: const Text('Allergiya / Tibbi Qeyd Əlavə Et', style: TextStyle(fontWeight: FontWeight.w800)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -917,6 +1250,10 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
               actions: [
                 TextButton(onPressed: () => Navigator.pop(dCtx), child: const Text('Ləğv et')),
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.danger,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                   onPressed: () {
                     if (nameCtrl.text.isNotEmpty) {
                       appState.addAllergyToStudent(
@@ -935,7 +1272,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                       );
                     }
                   },
-                  child: const Text('Əlavə Et'),
+                  child: const Text('Əlavə Et', style: TextStyle(color: Colors.white)),
                 ),
               ],
             );
@@ -956,8 +1293,8 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Text('Peyvənd / Vaksina Qeydi Əlavə Et'),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+              title: const Text('Peyvənd / Vaksina Qeydi', style: TextStyle(fontWeight: FontWeight.w800)),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -984,6 +1321,10 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
               actions: [
                 TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Ləğv et')),
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryAccent,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                   onPressed: () {
                     if (nameCtrl.text.trim().isNotEmpty) {
                       final newVaccine = VaccineRecord(
@@ -1000,7 +1341,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                       );
                     }
                   },
-                  child: const Text('Yadda Saxla'),
+                  child: const Text('Yadda Saxla', style: TextStyle(color: Colors.white)),
                 ),
               ],
             );

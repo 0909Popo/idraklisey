@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/custom_card.dart';
+import '../../../core/theme/app_shadows.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../../providers/app_state.dart';
 import '../../../data/models/ticket_model.dart';
@@ -25,11 +25,12 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Elektron Müraciətlər (Helpdesk)'),
+        elevation: 0,
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showCreateTicketDialog(context),
-        backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.add_comment_rounded, color: Colors.white),
+        backgroundColor: AppColors.primaryAccent,
+        icon: const Icon(Icons.add_comment_outlined, color: Colors.white),
         label: const Text('Yeni Müraciət', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
       body: parentTickets.isEmpty
@@ -37,14 +38,15 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.inbox_rounded, size: 64, color: AppColors.textMuted),
-                  SizedBox(height: 12),
-                  Text('Hələ ki, heç bir müraciətiniz yoxdur.', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+                  Icon(Icons.inbox_outlined, size: 56, color: AppColors.textMuted),
+                  const SizedBox(height: 12),
+                  Text('Hələ ki, heç bir müraciətiniz yoxdur.', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
                 ],
               ),
             )
           : ListView.builder(
-              padding: const EdgeInsets.only(top: 12, bottom: 80),
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
               itemCount: parentTickets.length,
               itemBuilder: (context, index) {
                 final ticket = parentTickets[index];
@@ -76,83 +78,100 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
         break;
     }
 
-    return CustomCard(
-      onTap: () => _showTicketDetailsModal(context, ticket),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withAlpha(20),
-                      borderRadius: BorderRadius.circular(8),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.cardBorder),
+        boxShadow: AppShadows.sm,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _showTicketDetailsModal(context, ticket),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryAccent.withAlpha(15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            ticket.id,
+                            style: const TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.primaryAccent,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _getCategoryName(ticket.category),
+                          style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                        ),
+                      ],
                     ),
-                    child: Text(
-                      ticket.id,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.primary,
-                      ),
+                    StatusBadge(
+                      label: statusLabel,
+                      color: statusColor,
+                      fontSize: 10,
                     ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  ticket.title,
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _getCategoryName(ticket.category),
-                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
-                  ),
-                ],
-              ),
-              StatusBadge(
-                label: statusLabel,
-                color: statusColor,
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            ticket.title,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  ticket.description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 10),
+                Divider(color: AppColors.cardBorder, height: 1),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      dateFormat.format(ticket.createdAt),
+                      style: TextStyle(fontSize: 10.5, color: AppColors.textMuted),
+                    ),
+                    Row(
+                      children: [
+                        const Icon(Icons.forum_outlined, size: 14, color: AppColors.primaryAccent),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${ticket.messages.length} Cavab',
+                          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.primaryAccent),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
-            ticket.description,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: 12),
-          Divider(color: AppColors.cardBorder, height: 1),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                dateFormat.format(ticket.createdAt),
-                style: TextStyle(fontSize: 11, color: AppColors.textMuted),
-              ),
-              Row(
-                children: [
-                  const Icon(Icons.forum_rounded, size: 14, color: AppColors.primaryAccent),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${ticket.messages.length} Cavab',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primaryAccent),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -182,7 +201,7 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
       isScrollControlled: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
         return StatefulBuilder(
@@ -196,7 +215,7 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
               ),
               child: Container(
                 height: MediaQuery.of(context).size.height * 0.75,
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -208,11 +227,11 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
                           children: [
                             Text(
                               currentTicket.id,
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textMuted),
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textMuted),
                             ),
                             Text(
                               currentTicket.title,
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                             ),
                           ],
                         ),
@@ -222,10 +241,10 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     Divider(color: AppColors.cardBorder),
 
-                    // Resolved QR equipment info (inventory tickets)
+                    // Resolved QR equipment info
                     if (currentTicket.inventoryCode != null &&
                         currentTicket.inventoryCode!.isNotEmpty) ...[
                       Builder(
@@ -235,17 +254,17 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
                           );
                           return Container(
                             width: double.infinity,
-                            margin: const EdgeInsets.only(top: 8),
-                            padding: const EdgeInsets.all(12),
+                            margin: const EdgeInsets.only(top: 6),
+                            padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
                               color: item != null
-                                  ? AppColors.success.withAlpha(22)
-                                  : AppColors.warning.withAlpha(25),
-                              borderRadius: BorderRadius.circular(12),
+                                  ? AppColors.success.withAlpha(15)
+                                  : AppColors.warning.withAlpha(15),
+                              borderRadius: BorderRadius.circular(10),
                               border: Border.all(
                                 color: item != null
-                                    ? AppColors.success.withAlpha(60)
-                                    : AppColors.warning.withAlpha(70),
+                                    ? AppColors.success.withAlpha(50)
+                                    : AppColors.warning.withAlpha(50),
                               ),
                             ),
                             child: Column(
@@ -255,39 +274,33 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
                                   children: [
                                     Icon(
                                       item != null
-                                          ? Icons.precision_manufacturing_rounded
+                                          ? Icons.precision_manufacturing_outlined
                                           : Icons.help_outline_rounded,
                                       color: item != null ? AppColors.success : AppColors.warning,
-                                      size: 16,
+                                      size: 15,
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
                                       'QR ilə aşkarlanan avadanlıq',
                                       style: TextStyle(
-                                        fontSize: 11,
+                                        fontSize: 10.5,
                                         fontWeight: FontWeight.bold,
                                         color: item != null ? const Color(0xFF065F46) : const Color(0xFF92400E),
                                       ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 4),
                                 if (item != null) ...[
-                                  Text(item.name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-                                  const SizedBox(height: 2),
-                                  Text('${item.category} • ${item.room}', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                                  Text(item.name, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                                  Text('${item.category} • ${item.room}', style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
                                   if (item.serialNumber.isNotEmpty)
-                                    Text('Seriya №: ${item.serialNumber}', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                                    Text('Seriya №: ${item.serialNumber}', style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
                                 ] else
                                   Text(
-                                    'Bu QR reyestrdə qeydiyyatda deyil — cihaz QR koduna görə İT şöbəsi tərəfindən müəyyən edilməlidir.',
-                                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.4),
+                                    'Bu QR reyestrdə qeydiyyatda deyil.',
+                                    style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
                                   ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'QR: ${currentTicket.inventoryCode}',
-                                  style: TextStyle(fontSize: 10, color: AppColors.textMuted, fontFamily: 'monospace'),
-                                ),
                               ],
                             ),
                           );
@@ -296,17 +309,18 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
                     ],
                     Expanded(
                       child: ListView.builder(
+                        physics: const BouncingScrollPhysics(),
                         itemCount: currentTicket.messages.length,
                         itemBuilder: (context, index) {
                           final msg = currentTicket.messages[index];
                           return Container(
-                            margin: const EdgeInsets.symmetric(vertical: 6),
-                            padding: const EdgeInsets.all(12),
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: msg.isFromStaff ? const Color(0xFFEFF6FF) : const Color(0xFFF1F5F9),
+                              color: msg.isFromStaff ? AppColors.primaryAccent.withAlpha(12) : AppColors.background,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: msg.isFromStaff ? AppColors.primaryAccent.withAlpha(40) : AppColors.cardBorder,
+                                color: msg.isFromStaff ? AppColors.primaryAccent.withAlpha(30) : AppColors.cardBorder,
                               ),
                             ),
                             child: Column(
@@ -318,21 +332,21 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
                                     Text(
                                       msg.sender,
                                       style: TextStyle(
-                                        fontSize: 12,
+                                        fontSize: 11.5,
                                         fontWeight: FontWeight.bold,
                                         color: msg.isFromStaff ? AppColors.primaryAccent : AppColors.textPrimary,
                                       ),
                                     ),
                                     Text(
                                       DateFormat('HH:mm').format(msg.timestamp),
-                                      style: TextStyle(fontSize: 10, color: AppColors.textMuted),
+                                      style: TextStyle(fontSize: 9.5, color: AppColors.textMuted),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 3),
                                 Text(
                                   msg.message,
-                                  style: TextStyle(fontSize: 13, color: AppColors.textPrimary),
+                                  style: TextStyle(fontSize: 12.5, color: AppColors.textPrimary),
                                 ),
                               ],
                             ),
@@ -369,8 +383,8 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
                               setModalState(() {});
                             }
                           },
-                          icon: const Icon(Icons.send_rounded, color: Colors.white),
-                          style: IconButton.styleFrom(backgroundColor: AppColors.primary),
+                          icon: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
+                          style: IconButton.styleFrom(backgroundColor: AppColors.primaryAccent),
                         ),
                       ],
                     ),
@@ -394,7 +408,7 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
       isScrollControlled: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
         return StatefulBuilder(
@@ -412,9 +426,9 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
                 children: [
                   Text(
                     'Yeni Müraciət Yarat',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
                   DropdownButtonFormField<TicketCategory>(
                     initialValue: selectedCat,
                     decoration: const InputDecoration(labelText: 'Müraciət Şöbəsi / Kateqoriya'),
@@ -428,7 +442,7 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
                       if (val != null) setDialogState(() => selectedCat = val);
                     },
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   TextField(
                     controller: titleCtrl,
                     decoration: const InputDecoration(
@@ -436,7 +450,7 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
                       hintText: 'Məs: Dərslik və ya qiymətləndirmə haqqında',
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   TextField(
                     controller: descCtrl,
                     maxLines: 3,
@@ -445,10 +459,15 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
                       hintText: 'Müraciətinizi tam şəkildə qeyd edin...',
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
+                    height: 48,
                     child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryAccent,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
                       onPressed: () {
                         if (titleCtrl.text.isNotEmpty && descCtrl.text.isNotEmpty) {
                           final newTicket = HelpdeskTicket(
@@ -473,11 +492,11 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
                           Provider.of<AppState>(context, listen: false).addTicket(newTicket);
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Müraciətiniz uğurla göndərildi!')),
+                            const SnackBar(content: Text('Müraciətiniz uğurla göndərildi!'), backgroundColor: AppColors.success),
                           );
                         }
                       },
-                      child: const Text('Müraciəti Göndər'),
+                      child: const Text('Müraciəti Göndər', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
                     ),
                   ),
                 ],

@@ -1,16 +1,13 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/custom_card.dart';
-import '../../../core/widgets/status_badge.dart';
-import '../../../core/widgets/section_header.dart';
+import '../../../core/theme/app_shadows.dart';
 import '../../../core/widgets/idrak_logo.dart';
 import '../../../providers/app_state.dart';
 import 'create_account_dialog.dart';
 import 'admin_users_screen.dart';
 import 'class_management_screen.dart';
-import 'admin_timetable_management_screen.dart'; // ✅ YENİ
+import 'admin_timetable_management_screen.dart';
 import 'qr_inventory_management_screen.dart';
 import '../../parent/screens/parent_tickets_screen.dart';
 import '../../parent/screens/grades_analytics_screen.dart';
@@ -32,28 +29,40 @@ class AdminDashboardScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
         slivers: [
-          // Admin Hero Header
+          // ── Gradient Header ──
           SliverAppBar(
-            expandedHeight: 180.0,
-            floating: false,
+            expandedHeight: 140,
             pinned: true,
-            backgroundColor: const Color(0xFF0F172A),
+            elevation: 0,
+            backgroundColor: AppColors.primary,
+            surfaceTintColor: Colors.transparent,
             actions: [
-              IconButton(
-                icon: const Icon(Icons.cloud_sync_rounded, color: Colors.white),
-                tooltip: 'Firebase Bulud Sinxronizasiyası',
-                onPressed: () async {
-                  await appState.initFirebaseData();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Firebase Firestore ilə məlumatlar sinxronizasiya edildi!'),
-                        backgroundColor: AppColors.success,
-                      ),
-                    );
-                  }
-                },
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: IconButton(
+                  icon: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(20),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.cloud_sync_rounded, color: Colors.white, size: 18),
+                  ),
+                  tooltip: 'Firebase Bulud Sinxronizasiyası',
+                  onPressed: () async {
+                    await appState.initFirebaseData();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Firebase Firestore ilə məlumatlar sinxronizasiya edildi!'),
+                          backgroundColor: AppColors.success,
+                        ),
+                      );
+                    }
+                  },
+                ),
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
@@ -62,62 +71,86 @@ class AdminDashboardScreen extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF0F2552)],
+                    colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF1E3A8A)],
                   ),
                 ),
-                padding: const EdgeInsets.only(left: 20, right: 20, top: 45, bottom: 20),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                child: Stack(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.red.withAlpha(40),
-                        border: Border.all(color: Colors.red, width: 2),
-                      ),
-                      child: const Icon(Icons.admin_panel_settings_rounded, color: Colors.white, size: 36),
+                    Positioned(
+                      right: -20,
+                      bottom: -20,
+                      child: Icon(Icons.admin_panel_settings_rounded, size: 140, color: Colors.white.withAlpha(8)),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: const [
-                              IdrakLogo(size: 18),
-                              SizedBox(width: 6),
-                              Text(
-                                'MƏKTƏB İDARƏETMƏSİ',
-                                style: TextStyle(
-                                  color: AppColors.goldLight,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.0,
+                    SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 44, 20, 16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.red.withAlpha(25),
+                                    border: Border.all(color: Colors.red.withAlpha(60), width: 1.5),
+                                  ),
+                                  child: const Icon(Icons.admin_panel_settings_rounded, color: Colors.white, size: 26),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Baş İnzibatçı Paneli',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          const IdrakLogo(size: 16),
+                                          const SizedBox(width: 6),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.gold.withAlpha(30),
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            child: const Text(
+                                              'MƏKTƏB İDARƏETMƏSİ',
+                                              style: TextStyle(
+                                                color: AppColors.goldLight,
+                                                fontSize: 9.5,
+                                                fontWeight: FontWeight.w800,
+                                                letterSpacing: 0.8,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      const Text(
+                                        'Baş İnzibatçı Paneli',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: -0.4,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'İdrak Liseyi • Sistem Nəzarəti',
+                                        style: TextStyle(
+                                          color: Colors.white.withAlpha(180),
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(height: 2),
-                          const Text(
-                            'İdrak Liseyi • Bütün Sistemə Tam Nəzarət',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -126,30 +159,23 @@ class AdminDashboardScreen extends StatelessWidget {
             ),
           ),
 
-          // Main Admin Content
+          // ── Content Body ──
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Fast Account Creator Banner
                   Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [Color(0xFF1E3A8A), Color(0xFF2563EB), Color(0xFF3B82F6)],
+                        colors: [Color(0xFF1E3A8A), Color(0xFF3B82F6)],
                       ),
                       borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primaryAccent.withAlpha(70),
-                          blurRadius: 15,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
+                      boxShadow: AppShadows.md,
                     ),
                     child: Material(
                       color: Colors.transparent,
@@ -164,45 +190,47 @@ class AdminDashboardScreen extends StatelessWidget {
                         },
                         borderRadius: BorderRadius.circular(20),
                         child: Padding(
-                          padding: const EdgeInsets.all(18),
+                          padding: const EdgeInsets.all(16),
                           child: Row(
                             children: [
-                              ClipOval(
-                                child: BackdropFilter(
-                                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withAlpha(35),
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white.withAlpha(50)),
-                                    ),
-                                    child: const Icon(Icons.person_add_rounded, color: Colors.white, size: 28),
-                                  ),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withAlpha(25),
+                                  shape: BoxShape.circle,
                                 ),
+                                child: const Icon(Icons.person_add_rounded, color: Colors.white, size: 24),
                               ),
                               const SizedBox(width: 14),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: const [
-                                    Text(
-                                      'Yeni Müəllim / Şagird Hesabı Yarat',
+                                  children: [
+                                    const Text(
+                                      'Yeni Hesab Yarat',
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontSize: 15,
-                                        fontWeight: FontWeight.w900,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: -0.2,
                                       ),
                                     ),
-                                    SizedBox(height: 2),
+                                    const SizedBox(height: 2),
                                     Text(
-                                      'İdrak kodu təyini, şifrə verilməsi və əlaqəli valideyn yaratmaq',
-                                      style: TextStyle(color: Colors.white70, fontSize: 11),
+                                      'Müəllim, şagird və əlaqəli valideyn hesabı daxil et',
+                                      style: TextStyle(color: Colors.white.withAlpha(200), fontSize: 11),
                                     ),
                                   ],
                                 ),
                               ),
-                              const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 16),
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withAlpha(20),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 16),
+                              ),
                             ],
                           ),
                         ),
@@ -212,146 +240,145 @@ class AdminDashboardScreen extends StatelessWidget {
 
                   const SizedBox(height: 16),
 
-                  // School Stats Cards (Grid 2x2)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        _buildStatBox('Müəllimlər', '$teacherCount Nəfər', Icons.psychology_rounded, const Color(0xFF0D9488), isDark: appState.isDarkMode),
-                        const SizedBox(width: 8),
-                        _buildStatBox('Şagirdlər', '$studentCount Nəfər', Icons.school_rounded, AppColors.primaryAccent, isDark: appState.isDarkMode),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        _buildStatBox('Valideynlər', '$parentCount Nəfər', Icons.family_restroom_rounded, AppColors.goldDark, isDark: appState.isDarkMode),
-                        const SizedBox(width: 8),
-                        _buildStatBox('Müraciətlər', '$activeTickets Ticket', Icons.support_agent_rounded, Colors.purple, isDark: appState.isDarkMode),
-                      ],
-                    ),
+                  // Stats 4-Grid Matrix
+                  GridView.count(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 2.3,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      _buildAdminStatTile('Müəllimlər', '$teacherCount Nəfər', Icons.psychology_rounded, const Color(0xFF0D9488)),
+                      _buildAdminStatTile('Şagirdlər', '$studentCount Nəfər', Icons.school_rounded, AppColors.primaryAccent),
+                      _buildAdminStatTile('Valideynlər', '$parentCount Nəfər', Icons.family_restroom_rounded, AppColors.goldDark),
+                      _buildAdminStatTile('Helpdesk', '$activeTickets Ticket', Icons.support_agent_rounded, Colors.purple),
+                    ],
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
-                  const SectionHeader(
-                    title: 'İnzibati İdarəetmə Modulları',
-                    subtitle: 'Hesablar, icazələr və məktəb monitorinqi',
+                  // Section Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'İnzibati Modullar',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textPrimary, letterSpacing: -0.3),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'İcazələr, cədvəl və məktəb idarəetməsi',
+                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
 
-                  // 0. Smart Class Management
-                  _buildAdminToolCard(
-                    context: context,
-                    title: 'Ağıllı Sinif İdarəsi & Yüksəliş',
-                    subtitle: 'Bütün siniflər, şagird təyini, sinifi növbəti ilə yüksəltmə və orta GPA',
-                    icon: Icons.school_rounded,
-                    accentColor: const Color(0xFF0284C7),
-                    tag: '${appState.allDistinctClasses.length} Sinif',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ClassManagementScreen()),
-                    ),
-                  ),
+                  const SizedBox(height: 14),
 
-                  // ✅ YENİ: Dərs Cədvəli İdarəetməsi
-                  _buildAdminToolCard(
-                    context: context,
-                    title: 'Dərs Cədvəli İdarəetməsi',
-                    subtitle: 'Müəllim və sinif bazlı cədvəl yaratma, dərs təyini, konflikt yoxlama',
-                    icon: Icons.calendar_month_rounded,
-                    accentColor: const Color(0xFF7C3AED),
-                    tag: 'Cədvəl',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const AdminTimetableManagementScreen()),
-                    ),
-                  ),
-
-                  // 1. Users & Permissions Directory
-                  _buildAdminToolCard(
-                    context: context,
-                    title: 'İstifadəçi Hesabları & Yetkilər',
-                    subtitle: 'Bütün müəllim, şagird və valideyn logini, şifrələri və icazələri',
-                    icon: Icons.manage_accounts_rounded,
-                    accentColor: const Color(0xFF0D9488),
-                    tag: '${users.length} İstifadəçi',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const AdminUsersScreen()),
-                    ),
-                  ),
-
-                  // 2. School Wide Helpdesk & Tickets
-                  _buildAdminToolCard(
-                    context: context,
-                    title: 'Məktəb Helpdesk & Müraciətlər',
-                    subtitle: 'Valideynlərin və müəllimlərin göndərdiyi bütün rəsmi ticketlər',
-                    icon: Icons.support_agent_rounded,
-                    accentColor: Colors.purple,
-                    tag: '$activeTickets Müraciət',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ParentTicketsScreen()),
-                    ),
-                  ),
-
-                  // 3. School Academic Analytics
-                  _buildAdminToolCard(
-                    context: context,
-                    title: 'Ümumi Tədris & Qiymət Statistikası',
-                    subtitle: 'KSQ, BSQ və IB STR üzrə ümumi lisey tərəqqi qrafikləri',
-                    icon: Icons.analytics_rounded,
-                    accentColor: AppColors.primary,
-                    tag: 'Qrafiklər',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const GradesAnalyticsScreen()),
-                    ),
-                  ),
-
-                  // 4. Cafeteria & Daily Menu Management
-                  _buildAdminToolCard(
-                    context: context,
-                    title: 'Yeməkxana & Günlük Menyu İdarəsi',
-                    subtitle: 'Həftəlik menyunu təyin etmək, yemək əlavə etmək, kalori və allergenləri idarə etmək',
-                    icon: Icons.restaurant_menu_rounded,
-                    accentColor: AppColors.goldDark,
-                    tag: 'Kantin Menyu',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const CafeteriaMenuScreen()),
-                    ),
-                  ),
-
-                  // 5. School-wide Notifications & Broadcasts
-                  _buildAdminToolCard(
-                    context: context,
-                    title: 'Rəsmi Bildiriş & Elan Sistemi',
-                    subtitle: 'Müəllimlərə, şagirdlərə və ya valideynlərə toplu rəsmi bildiriş göndər',
-                    icon: Icons.campaign_rounded,
-                    accentColor: const Color(0xFFEF4444),
-                    tag: 'Toplu Elan',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-                    ),
-                  ),
-
-                  // 6. QR Inventory Registry
-                  _buildAdminToolCard(
-                    context: context,
-                    title: 'QR İnventar Reyestri',
-                    subtitle: 'Avadanlıqları QR ilə qeydiyyata al, kodu çap et — müəllim skan etdikdə cihaz avtomatik tanınar',
-                    icon: Icons.qr_code_rounded,
-                    accentColor: const Color(0xFF0D9488),
-                    tag: 'Texniki Xidmət',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const QrInventoryManagementScreen()),
-                    ),
+                  // 2-Column Admin Tools Grid
+                  GridView.count(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 1.2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      _buildAdminGridTile(
+                        context: context,
+                        title: 'Sinif İdarəsi',
+                        subtitle: '${appState.allDistinctClasses.length} Sinif yüksəlişi',
+                        icon: Icons.school_rounded,
+                        accentColor: const Color(0xFF0284C7),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const ClassManagementScreen()),
+                        ),
+                      ),
+                      _buildAdminGridTile(
+                        context: context,
+                        title: 'Dərs Cədvəli',
+                        subtitle: 'Cədvəl təyini',
+                        icon: Icons.calendar_month_rounded,
+                        accentColor: const Color(0xFF7C3AED),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const AdminTimetableManagementScreen()),
+                        ),
+                      ),
+                      _buildAdminGridTile(
+                        context: context,
+                        title: 'İstifadəçilər',
+                        subtitle: '${users.length} Hesab & Yetki',
+                        icon: Icons.manage_accounts_rounded,
+                        accentColor: const Color(0xFF0D9488),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const AdminUsersScreen()),
+                        ),
+                      ),
+                      _buildAdminGridTile(
+                        context: context,
+                        title: 'Helpdesk',
+                        subtitle: '$activeTickets Müraciət',
+                        icon: Icons.support_agent_rounded,
+                        accentColor: Colors.purple,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const ParentTicketsScreen()),
+                        ),
+                      ),
+                      _buildAdminGridTile(
+                        context: context,
+                        title: 'Statistika',
+                        subtitle: 'KSQ / BSQ / IB',
+                        icon: Icons.analytics_rounded,
+                        accentColor: AppColors.primary,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const GradesAnalyticsScreen()),
+                        ),
+                      ),
+                      _buildAdminGridTile(
+                        context: context,
+                        title: 'Yeməkxana',
+                        subtitle: 'Menyu təyini',
+                        icon: Icons.restaurant_menu_rounded,
+                        accentColor: AppColors.goldDark,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const CafeteriaMenuScreen()),
+                        ),
+                      ),
+                      _buildAdminGridTile(
+                        context: context,
+                        title: 'Toplu Elan',
+                        subtitle: 'Rəsmi bildirişlər',
+                        icon: Icons.campaign_rounded,
+                        accentColor: const Color(0xFFEF4444),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                        ),
+                      ),
+                      _buildAdminGridTile(
+                        context: context,
+                        title: 'QR İnventar',
+                        subtitle: 'Texniki xidmət',
+                        icon: Icons.qr_code_rounded,
+                        accentColor: const Color(0xFF0D9488),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const QrInventoryManagementScreen()),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -362,126 +389,124 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatBox(String label, String value, IconData icon, Color color, {bool isDark = false}) {
-    return Expanded(
-      child: ClipRRect(
+  Widget _buildAdminStatTile(String label, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: Container(
-            padding: const EdgeInsets.all(14),
+        border: Border.all(color: AppColors.cardBorder),
+        boxShadow: AppShadows.sm,
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.darkSurface.withAlpha(190)
-                  : Colors.white.withAlpha(190),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isDark ? Colors.white.withAlpha(28) : Colors.white.withAlpha(50),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(10),
-                  blurRadius: 12,
-                  offset: const Offset(0, 3),
-                ),
-              ],
+              color: color.withAlpha(15),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Row(
+            child: Icon(icon, color: color, size: 18),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: color.withAlpha(30),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: color.withAlpha(40)),
-                  ),
-                  child: Icon(icon, color: color, size: 22),
+                Text(
+                  value,
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        value,
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
-                      ),
-                      Text(
-                        label,
-                        style: TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 10, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
                 ),
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildAdminToolCard({
+  Widget _buildAdminGridTile({
     required BuildContext context,
     required String title,
     required String subtitle,
     required IconData icon,
     required Color accentColor,
-    required String tag,
     required VoidCallback onTap,
   }) {
-    return CustomCard(
-      onTap: onTap,
-      child: Row(
-        children: [
-          Container(
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.cardBorder),
+        boxShadow: AppShadows.sm,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
             padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: accentColor.withAlpha(22),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: accentColor, size: 26),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
-                        ),
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: accentColor.withAlpha(15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: accentColor.withAlpha(30)),
                       ),
+                      child: Icon(icon, color: accentColor, size: 20),
                     ),
-                    StatusBadge(
-                      label: tag,
-                      color: accentColor,
-                      fontSize: 10,
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: AppColors.cardBorder.withAlpha(60),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Icon(Icons.arrow_outward_rounded, size: 12, color: AppColors.textMuted),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                    height: 1.3,
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textMuted),
-        ],
+        ),
       ),
     );
   }
