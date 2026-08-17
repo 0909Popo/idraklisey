@@ -4,8 +4,6 @@
 <dict>
 	<key>method</key>
 	<string>app-store</string>
-	<key>teamID</key>
-	<string>YOUR_TEAM_ID</string>
 	<key>uploadBitcode</key>
 	<false/>
 	<key>uploadSymbols</key>
@@ -13,12 +11,7 @@
 	<key>compileBitcode</key>
 	<false/>
 	<key>signingStyle</key>
-	<string>manual</string>
-	<key>provisioningProfiles</key>
-	<dict>
-		<key>az.idrak.liseyi</key>
-		<string>YOUR_PROVISIONING_PROFILE_NAME</string>
-	</dict>
+	<string>automatic</string>
 	<key>signingCertificate</key>
 	<string>Apple Distribution</string>
 	<key>iCloudContainerEnvironment</key>
