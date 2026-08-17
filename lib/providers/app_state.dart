@@ -604,6 +604,154 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  // ✅ YENİ: Müəllimə görə cədvəl
+  List<DayTimetable> getTeacherTimetable(String teacherId) {
+    final allDays = <DayTimetable>[];
+
+    for (final className in _classTimetablesMap.keys) {
+      final classDays = _classTimetablesMap[className]!;
+      for (final day in classDays) {
+        final teacherLessons = day.lessons.where((l) => l.teacherId == teacherId).toList();
+        if (teacherLessons.isNotEmpty) {
+          final existingDayIndex = allDays.indexWhere((d) => d.dayName == day.dayName);
+          if (existingDayIndex != -1) {
+            allDays[existingDayIndex].lessons.addAll(teacherLessons);
+          } else {
+            allDays.add(DayTimetable(
+              dayName: day.dayName,
+              shortDay: day.shortDay,
+              lessons: teacherLessons,
+            ));
+          }
+        }
+      }
+    }
+
+    return allDays;
+  }
+
+  // ✅ YENİ: Konflikt yoxlama (KƏSIŞƏN SAAT ARALIĞI)
+  String? checkTimetableConflict({
+    required String className,
+    required String day,
+    required String time,
+    required String teacherId,
+  }) {
+    // Saatları parse et
+    final timeParts = time.split(' - ');
+    if (timeParts.length != 2) return 'Saat formatı yanlışdır! (məs: 09:45 - 10:55)';
+    
+    final newStartParts = timeParts[0].trim().split(':');
+    final newEndParts = timeParts[1].trim().split(':');
+    
+    if (newStartParts.length != 2 || newEndParts.length != 2) {
+      return 'Saat formatı yanlışdır! (məs: 09:45 - 10:55)';
+    }
+    
+    final newStartHour = int.tryParse(newStartParts[0]);
+    final newStartMin = int.tryParse(newStartParts[1]);
+    final newEndHour = int.tryParse(newEndParts[0]);
+    final newEndMin = int.tryParse(newEndParts[1]);
+    
+    if (newStartHour == null || newStartMin == null || newEndHour == null || newEndMin == null) {
+      return 'Saat formatı yanlışdır!';
+    }
+    
+    final newStart = newStartHour * 60 + newStartMin; // dəqiqə olaraq
+    final newEnd = newEndHour * 60 + newEndMin;
+    
+    if (newStart >= newEnd) {
+      return 'Başlama saatı bitmə saatından böyük və ya bərabər ola bilməz!';
+    }
+    
+    // Helper: Saat aralığı kəsişir?
+    bool isOverlapping(String existingTime) {
+      final parts = existingTime.split(' - ');
+      if (parts.length != 2) return false;
+      
+      final startParts = parts[0].trim().split(':');
+      final endParts = parts[1].trim().split(':');
+      
+      if (startParts.length != 2 || endParts.length != 2) return false;
+      
+      final startHour = int.tryParse(startParts[0]);
+      final startMin = int.tryParse(startParts[1]);
+      final endHour = int.tryParse(endParts[0]);
+      final endMin = int.tryParse(endParts[1]);
+      
+      if (startHour == null || startMin == null || endHour == null || endMin == null) {
+        return false;
+      }
+      
+      final existingStart = startHour * 60 + startMin;
+      final existingEnd = endHour * 60 + endMin;
+      
+      // Kəsişmə yoxlaması: A.start < B.end VƏ B.start < A.end
+      return newStart < existingEnd && existingStart < newEnd;
+    }
+    
+    // 1. Eyni sinif + gün + kəsişən saat
+    final classDays = getClassTimetable(className);
+    final targetDay = classDays.firstWhere(
+      (d) => d.dayName == day, 
+      orElse: () => DayTimetable(dayName: day, shortDay: '', lessons: []),
+    );
+    
+    for (final lesson in targetDay.lessons) {
+      if (isOverlapping(lesson.time)) {
+        return '❌ Bu saat aralığı $className sinfində artıq mövcud dərs ilə kəsişir:\n\n'
+            '📚 ${lesson.subject} (${lesson.teacher})\n'
+            '🕐 ${lesson.time}\n\n'
+            'Zəhmət olmasa fərqli saat seçin!';
+      }
+    }
+    
+    // 2. Eyni müəllim + gün + kəsişən saat
+    for (final cls in _classTimetablesMap.keys) {
+      final days = _classTimetablesMap[cls]!;
+      final matchDay = days.firstWhere(
+        (d) => d.dayName == day, 
+        orElse: () => DayTimetable(dayName: day, shortDay: '', lessons: []),
+      );
+      
+      for (final lesson in matchDay.lessons) {
+        if (lesson.teacherId == teacherId && isOverlapping(lesson.time)) {
+          return '❌ Bu müəllim eyni gün və saatda başqa sinifdə dərs tədris edir:\n\n'
+              '📚 $cls sinfi - ${lesson.subject}\n'
+              '🕐 ${lesson.time}\n'
+              '👤 ${lesson.teacher}\n\n'
+              'Eyni anda iki sinifdə dərs mümkün deyil!';
+        }
+      }
+    }
+    
+    return null; // Konflikt yoxdur ✅
+  }
+
+  // ✅ YENİ: Admin dərs əlavə edir
+  void addLessonToClassTimetable({
+    required String className,
+    required String day,
+    required LessonSlot lesson,
+  }) {
+    final days = getClassTimetable(className);
+    final dayIndex = days.indexWhere((d) => d.dayName == day);
+
+    if (dayIndex != -1) {
+      days[dayIndex].lessons.add(lesson);
+    } else {
+      days.add(DayTimetable(
+        dayName: day,
+        shortDay: day.substring(0, 2),
+        lessons: [lesson],
+      ));
+    }
+
+    _classTimetablesMap[className] = days;
+    _firestoreService.saveClassTimetable(className, days);
+    notifyListeners();
+  }
+
   // --- ADMIN: CREATE TEACHER ACCOUNT ---
   AppUser createTeacherAccount({
     required String fullName,

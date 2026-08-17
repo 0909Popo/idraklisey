@@ -10,6 +10,7 @@ import '../../../providers/app_state.dart';
 import 'create_account_dialog.dart';
 import 'admin_users_screen.dart';
 import 'class_management_screen.dart';
+import 'admin_timetable_management_screen.dart'; // ✅ YENİ
 import 'qr_inventory_management_screen.dart';
 import '../../parent/screens/parent_tickets_screen.dart';
 import '../../parent/screens/grades_analytics_screen.dart';
@@ -252,6 +253,20 @@ class AdminDashboardScreen extends StatelessWidget {
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const ClassManagementScreen()),
+                    ),
+                  ),
+
+                  // ✅ YENİ: Dərs Cədvəli İdarəetməsi
+                  _buildAdminToolCard(
+                    context: context,
+                    title: 'Dərs Cədvəli İdarəetməsi',
+                    subtitle: 'Müəllim və sinif bazlı cədvəl yaratma, dərs təyini, konflikt yoxlama',
+                    icon: Icons.calendar_month_rounded,
+                    accentColor: const Color(0xFF7C3AED),
+                    tag: 'Cədvəl',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AdminTimetableManagementScreen()),
                     ),
                   ),
 

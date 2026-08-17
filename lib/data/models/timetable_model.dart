@@ -8,6 +8,8 @@ class LessonSlot {
   final String room;
   final String colorHex;
   final bool isCurrent;
+  final String? teacherId;      // ✅ YENİ: Admin tərəfindən təyin edilən müəllimin ID-si
+  final String? teacherPhotoUrl; // ✅ YENİ: Müəllimin profil fotosu
 
   LessonSlot({
     required this.period,
@@ -17,6 +19,8 @@ class LessonSlot {
     required this.room,
     this.colorHex = '0xFF2563EB',
     this.isCurrent = false,
+    this.teacherId,
+    this.teacherPhotoUrl,
   });
 
   Color get subjectColor {

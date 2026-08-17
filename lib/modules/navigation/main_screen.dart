@@ -28,7 +28,7 @@ import '../student/screens/library_screen.dart';
 
 import '../teacher/screens/teacher_dashboard_screen.dart';
 import '../teacher/screens/teacher_students_screen.dart';
-import '../teacher/screens/manage_timetable_screen.dart';
+import '../teacher/screens/teacher_timetable_view_screen.dart'; // ✅ YENİ
 import '../teacher/screens/quick_grading_screen.dart';
 import '../teacher/screens/qr_inventory_ticket_screen.dart';
 
@@ -111,7 +111,7 @@ class _MainScreenState extends State<MainScreen> {
         screens = const [
           TeacherDashboardScreen(),
           TeacherStudentsScreen(),
-          ManageTimetableScreen(),
+          TeacherTimetableViewScreen(), // ✅ YENİ: View-only
           QuickGradingScreen(),
           QrInventoryTicketScreen(),
         ];

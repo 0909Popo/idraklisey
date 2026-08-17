@@ -25,6 +25,24 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
   Offset _dragOffset = Offset.zero;
   double _dragRotation = 0.0;
 
+  // Helper: Gün adından weekday tap
+  int? _getDayOfWeekFromName(String dayName) {
+    switch (dayName) {
+      case 'Bazar ertəsi':
+        return 1; // Monday
+      case 'Çərşənbə axşamı':
+        return 2; // Tuesday
+      case 'Çərşənbə':
+        return 3; // Wednesday
+      case 'Cümə axşamı':
+        return 4; // Thursday
+      case 'Cümə':
+        return 5; // Friday
+      default:
+        return null;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -50,6 +68,98 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
     final className = appState.currentSessionClass.isNotEmpty ? appState.currentSessionClass : (widget.targetClass ?? '9B Sinfi');
     final subject = appState.currentSessionSubject.isNotEmpty ? appState.currentSessionSubject : (widget.targetSubject ?? 'Dərs');
     final timeStr = widget.targetTime ?? 'Dərs Saatı';
+
+    // ✅ YENİ: 10 Dəqiqə Əvvəl Yoxlaması (GÜN DƏSTƏYİ)
+    bool canAccessAttendance = true;
+    String? blockMessage;
+    
+    // Dərsin hansı gündə olduğunu tap (cədvəldən)
+    int? lessonDayOfWeek;
+    
+    // Cədvəldən dərsin hansı gündə olduğunu tapırıq
+    final allClasses = appState.allDistinctClasses;
+    for (final cls in allClasses) {
+      final timetable = appState.getClassTimetable(cls);
+      for (final day in timetable) {
+        for (final lesson in day.lessons) {
+          if (lesson.time == widget.targetTime && lesson.subject == subject) {
+            // Günü tap
+            lessonDayOfWeek = _getDayOfWeekFromName(day.dayName);
+            break;
+          }
+        }
+        if (lessonDayOfWeek != null) break;
+      }
+      if (lessonDayOfWeek != null) break;
+    }
+    
+    if (widget.targetTime != null && widget.targetTime!.contains(' - ')) {
+      final timeParts = widget.targetTime!.split(' - ');
+      final startTimeParts = timeParts[0].trim().split(':');
+      
+      if (startTimeParts.length == 2) {
+        final now = DateTime.now();
+        final startHour = int.tryParse(startTimeParts[0]);
+        final startMin = int.tryParse(startTimeParts[1]);
+        
+        if (startHour != null && startMin != null) {
+          // Dərsin tam tarixini hesabla
+          DateTime lessonStartTime;
+          
+          if (lessonDayOfWeek != null) {
+            // Bu həftə və ya növbəti həftə
+            final currentDayOfWeek = now.weekday; // 1=Bazar ertəsi, 7=Bazar
+            int daysUntilLesson = lessonDayOfWeek - currentDayOfWeek;
+            
+            if (daysUntilLesson < 0) {
+              daysUntilLesson += 7; // Növbəti həftə
+            } else if (daysUntilLesson == 0) {
+              // Bu gün - saata bax
+              lessonStartTime = DateTime(now.year, now.month, now.day, startHour, startMin);
+              if (now.isAfter(lessonStartTime)) {
+                daysUntilLesson = 7; // Növbəti həftə eyni gün
+              }
+            }
+            
+            lessonStartTime = DateTime(
+              now.year,
+              now.month,
+              now.day + daysUntilLesson,
+              startHour,
+              startMin,
+            );
+          } else {
+            // Gün məlumatı yoxdursa, bu günə görə hesabla (köhnə metod)
+            lessonStartTime = DateTime(now.year, now.month, now.day, startHour, startMin);
+          }
+          
+          final tenMinBefore = lessonStartTime.subtract(const Duration(minutes: 10));
+          
+          if (now.isBefore(tenMinBefore)) {
+            canAccessAttendance = false;
+            final diffMinutes = tenMinBefore.difference(now).inMinutes;
+            final diffHours = diffMinutes ~/ 60;
+            final diffDays = diffHours ~/ 24;
+            final remainingHours = diffHours % 24;
+            final remainingMinutes = diffMinutes % 60;
+            
+            if (diffDays > 0) {
+              blockMessage = 'Davamiyyət qeydiyyatına daha $diffDays gün $remainingHours saat var.\n\n'
+                  'Dərs ${lessonStartTime.day}.${lessonStartTime.month} - ${lessonStartTime.hour.toString().padLeft(2, '0')}:${lessonStartTime.minute.toString().padLeft(2, '0')}-da başlayacaq.\n\n'
+                  '10 dəqiqə əvvəl (${tenMinBefore.hour.toString().padLeft(2, '0')}:${tenMinBefore.minute.toString().padLeft(2, '0')}) giriş açılacaq.';
+            } else if (remainingHours > 0) {
+              blockMessage = 'Davamiyyət qeydiyyatına daha $remainingHours saat $remainingMinutes dəqiqə var.\n\n'
+                  'Dərs saatından 10 dəqiqə əvvəl (${tenMinBefore.hour.toString().padLeft(2, '0')}:${tenMinBefore.minute.toString().padLeft(2, '0')}) '
+                  'giriş açılacaq.';
+            } else {
+              blockMessage = 'Davamiyyət qeydiyyatına daha $diffMinutes dəqiqə var.\n\n'
+                  'Dərs saatından 10 dəqiqə əvvəl (${tenMinBefore.hour.toString().padLeft(2, '0')}:${tenMinBefore.minute.toString().padLeft(2, '0')}) '
+                  'giriş açılacaq.';
+            }
+          }
+        }
+      }
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFF0C1322),
@@ -134,26 +244,28 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
           // Main Swipe Area
           Expanded(
             child: Center(
-              child: pendingStudents.isEmpty
-                  ? (sessionAttendance.isEmpty
-                      ? _buildEmptyClassState(context, className)
-                      : _buildCompletedState(context, appState, presentCount, lateCount, absentCount))
-                  : Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Background Card Placeholder
-                        if (pendingStudents.length > 1)
-                          _buildBackgroundCard(pendingStudents[1]),
+              child: !canAccessAttendance
+                  ? _buildBlockedAccessState(context, blockMessage ?? 'Dərs saatına hələ vaxt var.')
+                  : (pendingStudents.isEmpty
+                      ? (sessionAttendance.isEmpty
+                          ? _buildEmptyClassState(context, className)
+                          : _buildCompletedState(context, appState, presentCount, lateCount, absentCount))
+                      : Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Background Card Placeholder
+                            if (pendingStudents.length > 1)
+                              _buildBackgroundCard(pendingStudents[1]),
 
-                        // Top Active Swipable Card
-                        _buildActiveSwipableCard(context, appState, pendingStudents.first),
-                      ],
-                    ),
+                            // Top Active Swipable Card
+                            _buildActiveSwipableCard(context, appState, pendingStudents.first),
+                          ],
+                        )),
             ),
           ),
 
           // Bottom Action Bar
-          if (pendingStudents.isNotEmpty)
+          if (pendingStudents.isNotEmpty && canAccessAttendance)
             _buildBottomControls(appState, pendingStudents.first),
         ],
       ),
@@ -196,6 +308,70 @@ class _SmartAttendanceScreenState extends State<SmartAttendanceScreen> with Sing
             onPressed: () => Navigator.pop(context),
             icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
             label: const Text('Geri Qayıt', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBlockedAccessState(BuildContext context, String message) {
+    return Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppColors.warning.withAlpha(30),
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.warning, width: 2),
+            ),
+            child: const Icon(Icons.timer_rounded, size: 64, color: AppColors.warning),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            '⏰ Dərs Saatı Hələ Başlamayıb',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.info.withAlpha(25),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.info.withAlpha(60)),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.info_outline_rounded, color: AppColors.info, size: 20),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Davamiyyət qeydiyyatı yalnız dərs saatından 10 dəqiqə əvvəl aktivləşir.',
+                    style: TextStyle(color: AppColors.info, fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 32),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+            label: const Text('Geri Qayıt', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
           ),
         ],
       ),

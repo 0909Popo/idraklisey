@@ -12,7 +12,7 @@ import 'qr_inventory_ticket_screen.dart';
 import 'teacher_students_screen.dart';
 import 'create_assignment_screen.dart';
 import 'review_submissions_screen.dart';
-import 'manage_timetable_screen.dart';
+import 'teacher_timetable_view_screen.dart'; // ✅ YENİ: View-only
 import '../../student/screens/library_screen.dart';
 import 'teacher_id_card_screen.dart';
 import '../../student/screens/meet_idrak_screen.dart';
@@ -289,17 +289,17 @@ class TeacherDashboardScreen extends StatelessWidget {
                     subtitle: 'Tədris və şagird idarəetmə modulları',
                   ),
 
-                  // 0. Dərs Cədvəli İdarəsi & Sinif Sahiplənmə
+                  // 0. Dərs Cədvəli (Yalnız Baxış)
                   _buildTeacherToolCard(
                     context: context,
-                    title: 'Dərs Cədvəli İdarəsi & Siniflər',
-                    subtitle: 'Tədris etdiyiniz sinifləri seçin, dərs saatlarını və otaqları qurun',
+                    title: 'Mənim Dərs Cədvəlim',
+                    subtitle: 'Admin tərəfindən təyin edilmiş dərs cədvəlinizi görün (yalnız baxış)',
                     icon: Icons.calendar_month_rounded,
-                    accentColor: const Color(0xFF0284C7),
-                    tag: 'Cədvəl & Siniflər',
+                    accentColor: const Color(0xFF7C3AED),
+                    tag: 'Baxış Rejimi',
                     onTap: () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const ManageTimetableScreen()),
+                      MaterialPageRoute(builder: (_) => const TeacherTimetableViewScreen()),
                     ),
                   ),
 

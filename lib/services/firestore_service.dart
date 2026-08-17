@@ -166,6 +166,8 @@ class FirestoreService {
                       'room': l.room,
                       'colorHex': l.colorHex,
                       'isCurrent': l.isCurrent,
+                      'teacherId': l.teacherId,           // ✅ YENİ
+                      'teacherPhotoUrl': l.teacherPhotoUrl, // ✅ YENİ
                     },
                   )
                   .toList(),
@@ -206,6 +208,8 @@ class FirestoreService {
               room: l['room'] ?? '',
               colorHex: l['colorHex'] ?? '0xFF2563EB',
               isCurrent: l['isCurrent'] ?? false,
+              teacherId: l['teacherId'],           // ✅ YENİ
+              teacherPhotoUrl: l['teacherPhotoUrl'], // ✅ YENİ
             );
           }).toList();
 
