@@ -9,6 +9,7 @@ import 'admin_users_screen.dart';
 import 'class_management_screen.dart';
 import 'admin_timetable_management_screen.dart';
 import 'qr_inventory_management_screen.dart';
+import 'role_management_screen.dart';
 import '../../parent/screens/parent_tickets_screen.dart';
 import '../../parent/screens/grades_analytics_screen.dart';
 import '../../student/screens/cafeteria_menu_screen.dart';
@@ -321,6 +322,17 @@ class AdminDashboardScreen extends StatelessWidget {
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(builder: (_) => const AdminUsersScreen()),
+                        ),
+                      ),
+                      _buildAdminGridTile(
+                        context: context,
+                        title: 'Rol İdarəetməsi',
+                        subtitle: 'Səlahiyyət təyini',
+                        icon: Icons.admin_panel_settings_rounded,
+                        accentColor: const Color(0xFFD97706),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const RoleManagementScreen()),
                         ),
                       ),
                       _buildAdminGridTile(

@@ -21,6 +21,7 @@ class AuthStorageService {
   static const _keyPassword = 'saved_password';
   static const _keyBiometricEnabled = 'biometric_enabled';
   static const _keyThemeMode = 'theme_mode';
+  static const _keySessionToken = 'session_token'; // API session token (cookie)
 
   /// Check if device supports biometric authentication
   Future<bool> isBiometricAvailable() async {
@@ -187,5 +188,39 @@ class AuthStorageService {
     final authenticated = await authenticateWithBiometrics();
     debugPrint('[AuthStorage] Biometric result: $authenticated');
     return authenticated;
+  }
+
+  // ========================================
+  // 🌐 API SESSION TOKEN MANAGEMENT
+  // ========================================
+  
+  /// Save API session token (cookie from web login)
+  Future<void> saveSessionToken(String token) async {
+    try {
+      await _storage.write(key: _keySessionToken, value: token);
+      debugPrint('[AuthStorage] ✓ Session token saved');
+    } catch (e) {
+      debugPrint('[AuthStorage] Save session token error: $e');
+    }
+  }
+
+  /// Get saved session token
+  Future<String?> getSessionToken() async {
+    try {
+      return await _storage.read(key: _keySessionToken);
+    } catch (e) {
+      debugPrint('[AuthStorage] Read session token error: $e');
+      return null;
+    }
+  }
+
+  /// Clear session token (logout from API)
+  Future<void> clearSessionToken() async {
+    try {
+      await _storage.delete(key: _keySessionToken);
+      debugPrint('[AuthStorage] ✓ Session token cleared');
+    } catch (e) {
+      debugPrint('[AuthStorage] Clear session token error: $e');
+    }
   }
 }

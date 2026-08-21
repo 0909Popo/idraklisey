@@ -46,6 +46,7 @@ class AppUser {
   final String? roomNumber;// for teacher
   final String? linkedStudentId; // For parent to link to their child
   final TeacherPermissions? teacherPermissions; // For teacher
+  final String? assignedRoleId; // 🆕 Atanan özel rol ID'si (opsiyonel - varsayılan rol yerine)
   final bool isActive;
   final DateTime createdAt;
 
@@ -65,6 +66,7 @@ class AppUser {
     this.roomNumber,
     this.linkedStudentId,
     this.teacherPermissions,
+    this.assignedRoleId, // 🆕 Opsiyonel rol ID
     this.isActive = true,
     required this.createdAt,
   });
@@ -84,6 +86,7 @@ class AppUser {
     String? roomNumber,
     String? linkedStudentId,
     TeacherPermissions? teacherPermissions,
+    String? assignedRoleId, // 🆕
     bool? isActive,
   }) {
     return AppUser(
@@ -102,6 +105,7 @@ class AppUser {
       roomNumber: roomNumber ?? this.roomNumber,
       linkedStudentId: linkedStudentId ?? this.linkedStudentId,
       teacherPermissions: teacherPermissions ?? this.teacherPermissions,
+      assignedRoleId: assignedRoleId ?? this.assignedRoleId, // 🆕
       isActive: isActive ?? this.isActive,
       createdAt: createdAt,
     );

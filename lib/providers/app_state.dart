@@ -59,6 +59,9 @@ class AppState extends ChangeNotifier {
   final AuthStorageService _authStorage = AuthStorageService();
   StreamSubscription<List<MeetRoom>>? _meetRoomsSubscription;
 
+  // Public getter for FirestoreService
+  FirestoreService get firestoreService => _firestoreService;
+
   // --- APPEARANCE (Light / Dark) ---
   bool _isDarkMode = false;
   bool get isDarkMode => _isDarkMode;

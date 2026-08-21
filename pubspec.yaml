@@ -51,6 +51,8 @@ dependencies:
   crypto: ^3.0.6
   flutter_secure_storage: ^8.1.0
   local_auth: ^2.3.0
+  dio: ^5.11.0
+  pretty_dio_logger: ^1.4.0
 
 dev_dependencies:
   flutter_test:

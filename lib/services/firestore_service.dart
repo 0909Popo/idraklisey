@@ -14,6 +14,7 @@ import '../data/models/attendance_model.dart';
 import '../data/models/meet_model.dart';
 import '../data/models/notification_model.dart';
 import '../data/models/inventory_model.dart';
+import '../data/models/role_model.dart';
 
 class FirestoreService {
   static final FirestoreService _instance = FirestoreService._internal();
@@ -1178,6 +1179,127 @@ class FirestoreService {
       await db.collection('notifications').doc(notificationId).delete();
     } catch (e) {
       debugPrint('Firestore deleteNotification error: $e');
+    }
+  }
+
+  // --- ROLES & PERMISSIONS ---
+  
+  /// Rol kaydetme
+  Future<void> saveRole(Role role) async {
+    try {
+      await db.collection('roles').doc(role.id).set(role.toJson());
+    } catch (e) {
+      debugPrint('Firestore saveRole error: $e');
+    }
+  }
+
+  /// Tüm rolleri getir
+  Future<List<Role>> fetchRoles() async {
+    try {
+      final snapshot = await db.collection('roles').get();
+      if (snapshot.docs.isEmpty) {
+        // İlk kez çalışıyorsa default rolleri oluştur
+        final defaultRoles = DefaultRoles.createAll();
+        for (final role in defaultRoles) {
+          await saveRole(role);
+        }
+        return defaultRoles;
+      }
+      return snapshot.docs.map((doc) => Role.fromJson(doc.data())).toList();
+    } catch (e) {
+      debugPrint('Firestore fetchRoles error: $e');
+      // Hata durumunda default rolleri döndür
+      return DefaultRoles.createAll();
+    }
+  }
+
+  /// Tek bir rolü getir
+  Future<Role?> fetchRole(String roleId) async {
+    try {
+      final doc = await db.collection('roles').doc(roleId).get();
+      if (!doc.exists || doc.data() == null) return null;
+      return Role.fromJson(doc.data()!);
+    } catch (e) {
+      debugPrint('Firestore fetchRole error: $e');
+      return null;
+    }
+  }
+
+  /// Rol güncelleme
+  Future<void> updateRole(Role role) async {
+    try {
+      await db.collection('roles').doc(role.id).update(role.toJson());
+    } catch (e) {
+      debugPrint('Firestore updateRole error: $e');
+    }
+  }
+
+  /// Rol silme
+  Future<void> deleteRole(String roleId) async {
+    try {
+      await db.collection('roles').doc(roleId).delete();
+    } catch (e) {
+      debugPrint('Firestore deleteRole error: $e');
+    }
+  }
+
+  /// Kullanıcıya rol atama (yeni sistem)
+  Future<void> assignRoleToUser(String userId, String roleId) async {
+    try {
+      await db.collection('users').doc(userId).update({
+        'roleId': roleId,
+      });
+    } catch (e) {
+      debugPrint('Firestore assignRoleToUser error: $e');
+    }
+  }
+
+  /// Sınıfa öğretmen atama (yeni sistem)
+  Future<void> assignTeacherToClass({
+    required String className,
+    required String teacherId,
+    bool isClassTeacher = false,
+    String? subject,
+  }) async {
+    try {
+      final docId = '${className}_$teacherId';
+      await db.collection('class_teachers').doc(docId).set({
+        'className': className,
+        'teacherId': teacherId,
+        'isClassTeacher': isClassTeacher,
+        'subject': subject,
+        'assignedAt': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('Firestore assignTeacherToClass error: $e');
+    }
+  }
+
+  /// Sınıftan öğretmen kaldırma
+  Future<void> removeTeacherFromClass({
+    required String className,
+    required String teacherId,
+  }) async {
+    try {
+      final docId = '${className}_$teacherId';
+      await db.collection('class_teachers').doc(docId).delete();
+    } catch (e) {
+      debugPrint('Firestore removeTeacherFromClass error: $e');
+    }
+  }
+
+  /// Sınıfın öğretmenlerini getir
+  Future<List<Map<String, dynamic>>> fetchClassTeachers(String className) async {
+    try {
+      final snapshot = await db
+          .collection('class_teachers')
+          .where('className', isEqualTo: className)
+          .get();
+      
+      return snapshot.docs.map((doc) => doc.data()).toList();
+    } catch (e) {
+      debugPrint('Firestore fetchClassTeachers error: $e');
+      return [];
     }
   }
 }
