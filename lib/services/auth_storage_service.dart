@@ -16,6 +16,7 @@ class AuthStorageService {
 
   final LocalAuthentication _localAuth = LocalAuthentication();
 
+
   // Storage Keys
   static const _keyUsername = 'saved_username';
   static const _keyPassword = 'saved_password';
@@ -23,8 +24,9 @@ class AuthStorageService {
   static const _keyThemeMode = 'theme_mode';
   static const _keySessionToken = 'session_token'; // API session token (cookie)
 
-  /// Check if device supports biometric authentication
+  /// Check if device supports biometric authentication (Android & iOS)
   Future<bool> isBiometricAvailable() async {
+    if (kIsWeb) return false;
     try {
       final canCheck = await _localAuth.canCheckBiometrics;
       final isDeviceSupported = await _localAuth.isDeviceSupported();
@@ -35,8 +37,9 @@ class AuthStorageService {
     }
   }
 
-  /// Get list of available biometric types
+  /// Get list of available biometric types (Face ID, Touch ID, Fingerprint)
   Future<List<BiometricType>> getAvailableBiometrics() async {
+    if (kIsWeb) return [];
     try {
       return await _localAuth.getAvailableBiometrics();
     } catch (e) {
@@ -49,7 +52,7 @@ class AuthStorageService {
   String getBiometricName(List<BiometricType> types) {
     if (types.isEmpty) return 'Biometrik';
     if (types.contains(BiometricType.face)) return 'Face ID';
-    if (types.contains(BiometricType.fingerprint)) return 'Parmaq izi';
+    if (types.contains(BiometricType.fingerprint)) return 'Touch ID / Barmaq izi';
     if (types.contains(BiometricType.iris)) return 'İris tanıma';
     if (types.contains(BiometricType.strong) || 
         types.contains(BiometricType.weak)) {
@@ -58,8 +61,9 @@ class AuthStorageService {
     return 'Biometrik';
   }
 
-  /// Authenticate using biometrics
+  /// Authenticate using biometrics (Face ID, Touch ID, Fingerprint)
   Future<bool> authenticateWithBiometrics() async {
+    if (kIsWeb) return false;
     try {
       final types = await getAvailableBiometrics();
       final biometricName = getBiometricName(types);
@@ -68,7 +72,7 @@ class AuthStorageService {
         localizedReason: 'İDRAK Liseyi tətbiqinə daxil olmaq üçün $biometricName istifadə edin',
         options: const AuthenticationOptions(
           stickyAuth: true,
-          biometricOnly: false, // Allow device PIN/Pattern as fallback
+          biometricOnly: false, // Allow device passcode as fallback
         ),
       );
     } catch (e) {

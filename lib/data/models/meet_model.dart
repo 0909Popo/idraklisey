@@ -1,20 +1,9 @@
-/// Creates the same positive 32-bit Agora UID on every device for a user.
-int agoraUidForUser(String userId) {
-  var hash = 2166136261;
-  for (final codeUnit in userId.codeUnits) {
-    hash ^= codeUnit;
-    hash = (hash * 16777619) & 0x7fffffff;
-  }
-  return hash == 0 ? 1 : hash;
-}
-
 class MeetParticipant {
   final String userId;
   final String fullName;
   final String role; // 'host', 'teacher', 'student'
   final String? photoUrl;
   final String? className;
-  final int agoraUid;
   final bool isMuted;
   final bool isMutedByHost;
   final bool isSpeaking;
@@ -26,7 +15,6 @@ class MeetParticipant {
     required this.role,
     this.photoUrl,
     this.className,
-    required this.agoraUid,
     this.isMuted = false,
     this.isMutedByHost = false,
     this.isSpeaking = false,
@@ -39,7 +27,6 @@ class MeetParticipant {
     String? role,
     String? photoUrl,
     String? className,
-    int? agoraUid,
     bool? isMuted,
     bool? isMutedByHost,
     bool? isSpeaking,
@@ -51,7 +38,6 @@ class MeetParticipant {
       role: role ?? this.role,
       photoUrl: photoUrl ?? this.photoUrl,
       className: className ?? this.className,
-      agoraUid: agoraUid ?? this.agoraUid,
       isMuted: isMuted ?? this.isMuted,
       isMutedByHost: isMutedByHost ?? this.isMutedByHost,
       isSpeaking: isSpeaking ?? this.isSpeaking,
@@ -65,7 +51,6 @@ class MeetParticipant {
     'role': role,
     'photoUrl': photoUrl,
     'className': className,
-    'agoraUid': agoraUid,
     'isMuted': isMuted,
     'isMutedByHost': isMutedByHost,
     'isSpeaking': isSpeaking,
@@ -79,7 +64,6 @@ class MeetParticipant {
       role: json['role'] ?? 'student',
       photoUrl: json['photoUrl'],
       className: json['className'],
-      agoraUid: json['agoraUid'] ?? 0,
       isMuted: json['isMuted'] ?? false,
       isMutedByHost: json['isMutedByHost'] ?? false,
       isSpeaking: json['isSpeaking'] ?? false,
@@ -97,7 +81,6 @@ class MeetRoom {
   final String hostName;
   final String? hostPhotoUrl;
   final String subject;
-  final String channelName; // Agora channel name
   final List<String> targetClasses; // e.g. ['9A', '9B'] or [] for all
   final bool allowTeachers; // Can other teachers join?
   final bool allowStudents; // Can students join?
@@ -115,7 +98,6 @@ class MeetRoom {
     required this.hostName,
     this.hostPhotoUrl,
     required this.subject,
-    required this.channelName,
     this.targetClasses = const [],
     this.allowTeachers = true,
     this.allowStudents = true,
@@ -135,7 +117,6 @@ class MeetRoom {
     String? hostName,
     String? hostPhotoUrl,
     String? subject,
-    String? channelName,
     List<String>? targetClasses,
     bool? allowTeachers,
     bool? allowStudents,
@@ -152,7 +133,6 @@ class MeetRoom {
       hostName: hostName ?? this.hostName,
       hostPhotoUrl: hostPhotoUrl ?? this.hostPhotoUrl,
       subject: subject ?? this.subject,
-      channelName: channelName ?? this.channelName,
       targetClasses: targetClasses ?? this.targetClasses,
       allowTeachers: allowTeachers ?? this.allowTeachers,
       allowStudents: allowStudents ?? this.allowStudents,
@@ -171,7 +151,6 @@ class MeetRoom {
     'hostName': hostName,
     'hostPhotoUrl': hostPhotoUrl,
     'subject': subject,
-    'channelName': channelName,
     'targetClasses': targetClasses,
     'allowTeachers': allowTeachers,
     'allowStudents': allowStudents,
@@ -190,7 +169,6 @@ class MeetRoom {
       hostName: json['hostName'] ?? '',
       hostPhotoUrl: json['hostPhotoUrl'],
       subject: json['subject'] ?? '',
-      channelName: json['channelName'] ?? '',
       targetClasses:
           (json['targetClasses'] as List<dynamic>?)
               ?.map((e) => e.toString())

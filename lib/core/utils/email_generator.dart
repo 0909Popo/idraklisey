@@ -33,20 +33,44 @@ class EmailGenerator {
     return cleanName;
   }
 
-  /// Çalışan (Staff) için email oluşturur
+  /// Çalışan (Staff) için email oluşturur (unikallıq yoxlamalı)
   /// Format: firstname.lastname@idrak.edu.az
+  /// Dublikat varsa: firstname.lastname2@idrak.edu.az
   /// Örnek: "Ali Vəliyev" → "ali.veliyev@idrak.edu.az"
-  static String generateStaffEmail(String fullName) {
+  static String generateStaffEmail(String fullName, {List<String> existingEmails = const []}) {
     final username = _generateUsername(fullName);
-    return '$username@idrak.edu.az';
+    String email = '$username@idrak.edu.az';
+    
+    // Dublikat yoxlaması
+    if (existingEmails.contains(email)) {
+      int counter = 2;
+      while (existingEmails.contains('${username}$counter@idrak.edu.az')) {
+        counter++;
+      }
+      email = '${username}$counter@idrak.edu.az';
+    }
+    
+    return email;
   }
 
-  /// Öğrenci için email oluşturur
+  /// Öğrenci için email oluşturur (unikallıq yoxlamalı)
   /// Format: firstname.lastname.sYYYY@idrak.edu.az
+  /// Dublikat varsa: firstname.lastname2.sYYYY@idrak.edu.az
   /// Örnek: "Ayşə Məmmədova", 2024 → "ayse.memmedova.s2024@idrak.edu.az"
-  static String generateStudentEmail(String fullName, int year) {
+  static String generateStudentEmail(String fullName, int year, {List<String> existingEmails = const []}) {
     final username = _generateUsername(fullName);
-    return '$username.s$year@idrak.edu.az';
+    String email = '$username.s$year@idrak.edu.az';
+    
+    // Dublikat yoxlaması
+    if (existingEmails.contains(email)) {
+      int counter = 2;
+      while (existingEmails.contains('$username$counter.s$year@idrak.edu.az')) {
+        counter++;
+      }
+      email = '$username$counter.s$year@idrak.edu.az';
+    }
+    
+    return email;
   }
 
   /// FIN kodundan yılı çıkartır (son 4 karakter)
@@ -107,12 +131,24 @@ class EmailGenerator {
     }
   }
 
-  /// Veli için email oluşturur
+  /// Veli için email oluşturur (unikallıq yoxlamalı)
   /// Format: firstname.lastname.parent@idrak.edu.az
+  /// Dublikat varsa: firstname.lastname2.parent@idrak.edu.az
   /// Örnek: "Vəli Əliyev" → "veli.eliyev.parent@idrak.edu.az"
-  static String generateParentEmail(String fullName) {
+  static String generateParentEmail(String fullName, {List<String> existingEmails = const []}) {
     final username = _generateUsername(fullName);
-    return '$username.parent@idrak.edu.az';
+    String email = '$username.parent@idrak.edu.az';
+    
+    // Dublikat yoxlaması
+    if (existingEmails.contains(email)) {
+      int counter = 2;
+      while (existingEmails.contains('$username$counter.parent@idrak.edu.az')) {
+        counter++;
+      }
+      email = '$username$counter.parent@idrak.edu.az';
+    }
+    
+    return email;
   }
 
   /// Email'den ad soyad çıkartır (ters işlem)

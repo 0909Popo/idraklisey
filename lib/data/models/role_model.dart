@@ -306,6 +306,12 @@ class DefaultPermissions {
       category: 'Dəstək',
     ),
     Permission(
+      id: 'view_all_tickets',
+      name: 'Bütün Biletləri Görmə',
+      description: 'Yalnız öz biletlərini deyil, hamının biletlərini görə bilər',
+      category: 'Dəstək',
+    ),
+    Permission(
       id: 'manage_tickets',
       name: 'Dəstək Tələbləri İdarəetməsi',
       description: 'Dəstək tələblərini cavablandıra və bağlaya bilər',
@@ -592,7 +598,7 @@ class DefaultRoles {
           'view_timetable', 'manage_timetable',
           'view_reports', 'export_reports',
           'view_medical', 'view_library', 'view_cafeteria',
-          'view_inventory', 'view_tickets', 'manage_tickets',
+          'view_inventory', 'view_tickets', 'manage_tickets', 'view_all_tickets',
         ],
         isDefault: true,
         isDeletable: false,
@@ -629,7 +635,7 @@ class DefaultRoles {
           'view_users', 'add_users', 'edit_users',
           'view_students', 'view_classes',
           'view_inventory', 'manage_inventory',
-          'view_tickets', 'manage_tickets',
+          'view_tickets', 'manage_tickets', 'view_all_tickets',
           'view_settings', 'manage_settings',
           'view_timetable',
         ],
@@ -638,16 +644,14 @@ class DefaultRoles {
         createdAt: now,
       ),
 
-      // 6. Helpdesk - Dəstək tələbi idarəetməsi
+      // 6. Helpdesk - Dəstək tələbi və inventar idarəetməsi
       Role(
         id: 'role-helpdesk',
         name: 'Helpdesk',
-        description: 'Yardım masası - Dəstək tələbləri',
+        description: 'Yardım masası - Dəstək tələbləri və avadanlıq',
         permissionIds: [
-          'view_students',
-          'view_users',
-          'view_tickets', 'manage_tickets',
-          'view_inventory',
+          'view_tickets', 'manage_tickets', 'view_all_tickets',
+          'view_inventory', 'manage_inventory',
         ],
         isDefault: true,
         isDeletable: false,

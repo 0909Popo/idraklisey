@@ -15,7 +15,10 @@ import '../data/models/meet_model.dart';
 import '../data/models/notification_model.dart';
 import '../data/models/inventory_model.dart';
 import '../data/models/user_model.dart';
+import '../data/models/role_model.dart';
+import '../data/models/class_details_model.dart';
 import '../data/mock_data.dart';
+import '../core/utils/email_generator.dart';
 import '../services/firestore_service.dart';
 import '../services/auth_storage_service.dart';
 
@@ -112,6 +115,49 @@ class AppState extends ChangeNotifier {
   // Explicit distinct classes created by Admin
   final Set<String> _customClasses = {'9B', '10A', '11A'};
 
+  // Sinif detalları (otaq, rəhbər, təhsil ili, qeyd) — Firestore-da saxlanır
+  Map<String, ClassDetails> _classDetailsMap = {};
+  ClassDetails? classDetails(String name) => _classDetailsMap[name];
+
+  // --- ROLES & PERMISSIONS (Rol İdarəetməsi) ---
+  List<Role> _roles = [];
+  List<Role> get roles => _roles;
+
+  /// Rolları Firestore-dan yükləyir (ilk açılışda default rollar yaradılır)
+  Future<void> loadRoles() async {
+    try {
+      _roles = await _firestoreService.fetchRoles();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Roles load error: $e');
+    }
+  }
+
+  Role? getRoleById(String? roleId) {
+    if (roleId == null || roleId.isEmpty) return null;
+    for (final r in _roles) {
+      if (r.id == roleId) return r;
+    }
+    return null;
+  }
+
+  /// Səlahiyyət yoxlaması.
+  /// assignedRoleId olan istifadəçi YALNIZ rolunun icazə verdiyi
+  /// səlahiyyətlərə çatır. Rol təyin olunmayan köhnə istifadəçilərdən
+  /// yalnız admin tam giriş alır (müəllim öz panelində ayrıca işləyir).
+  bool hasPermission(String permissionId) {
+    final user = _currentUser;
+    if (user == null) return false;
+    final roleId = user.assignedRoleId;
+    if (roleId == null || roleId.isEmpty) {
+      return user.role == UserRole.admin;
+    }
+    final role = getRoleById(roleId);
+    if (role == null) return false;
+    return role.permissionIds.contains(permissionId);
+  }
+
+
   // Per-student medical cards map: studentId -> StudentMedicalCard
   final Map<String, StudentMedicalCard> _medicalCardsMap = {};
 
@@ -135,13 +181,46 @@ class AppState extends ChangeNotifier {
   }
 
   // Selected Student for Parent / Active view
+  String? _activeChildId;
+
+  /// Valideynin bütün övladları (Övladlar modeli)
+  List<StudentProfile> get children {
+    final user = _currentUser;
+    if (user == null || user.role != UserRole.parent) return const [];
+    final ids = <String>{
+      if (user.linkedStudentId != null) user.linkedStudentId!,
+      ...user.linkedStudentIds,
+    };
+    return _students.where((s) => ids.contains(s.id)).toList();
+  }
+
+  /// Valideyn panelində aktiv övladı dəyişir
+  void setActiveChild(String studentId) {
+    if (children.any((c) => c.id == studentId) && _activeChildId != studentId) {
+      _activeChildId = studentId;
+      notifyListeners();
+    }
+  }
+
   StudentProfile get student {
-    if (_currentUser?.role == UserRole.parent &&
-        _currentUser?.linkedStudentId != null) {
-      return _students.firstWhere(
-        (s) => s.id == _currentUser!.linkedStudentId,
-        orElse: () => MockData.currentStudent,
-      );
+    final user = _currentUser;
+    if (user?.role == UserRole.parent) {
+      final kids = children;
+      if (kids.isEmpty) return MockData.currentStudent;
+      // Aktiv seçilmiş övlad (keçid düyməsi ilə)
+      if (_activeChildId != null) {
+        for (final s in kids) {
+          if (s.id == _activeChildId) return s;
+        }
+      }
+      // Əsas övlad (linkedStudentId), yoxsa siyahıdakı ilk
+      final primaryId = user!.linkedStudentId;
+      if (primaryId != null) {
+        for (final s in kids) {
+          if (s.id == primaryId) return s;
+        }
+      }
+      return kids.first;
     }
     if (_currentUser?.role == UserRole.student) {
       return _students.firstWhere(
@@ -286,6 +365,16 @@ class AppState extends ChangeNotifier {
         _inventoryItems.addAll(cloudInventory);
       }
 
+      // 14. Fetch Roles (ilk dəfədə default rollar yaradılır)
+      _roles = await _firestoreService.fetchRoles();
+
+      // 15. Fetch Class Details (siniflər restartdan sonra itmir)
+      final cloudClassDetails = await _firestoreService.fetchClassDetails();
+      if (cloudClassDetails.isNotEmpty) {
+        _classDetailsMap.addAll(cloudClassDetails);
+        _customClasses.addAll(cloudClassDetails.keys);
+      }
+
       notifyListeners();
     } catch (e) {
       debugPrint('Firestore initialization sync notice: $e');
@@ -320,7 +409,9 @@ class AppState extends ChangeNotifier {
     final user = _users.firstWhere(
       (u) =>
           (u.username.toLowerCase() == cleanUsername ||
-              u.idrakCode.toLowerCase() == cleanUsername) &&
+              u.idrakCode.toLowerCase() == cleanUsername ||
+              (u.email ?? '').toLowerCase() == cleanUsername ||
+              (u.finCode ?? '').toLowerCase() == cleanUsername) &&
           u.password == cleanPass,
       orElse: () => AppUser(
         id: '',
@@ -335,7 +426,7 @@ class AppState extends ChangeNotifier {
 
     if (user.id.isEmpty) {
       debugPrint('[AppState] Login failed - user not found');
-      return 'İstifadəçi adı / İdrak kodu və ya şifrə yanlışdır!';
+      return 'E-poçt / FIN / istifadəçi adı və ya şifrə yanlışdır!';
     }
 
     if (!user.isActive) {
@@ -344,7 +435,13 @@ class AppState extends ChangeNotifier {
 
     debugPrint('[AppState] ✓ Login successful - user: ${user.fullName}');
     _currentUser = user;
-    
+
+    // Səlahiyyət qapısı üçün rollar mütləq yüklənməlidir —
+    // manual loginda auto-login yolu işləmir, buradan yükləyirik.
+    if (_roles.isEmpty) {
+      loadRoles();
+    }
+
     // Save credentials for auto-login if requested
     if (saveCredentials) {
       debugPrint('[AppState] Saving credentials for auto-login...');
@@ -431,15 +528,66 @@ class AppState extends ChangeNotifier {
   }
 
   // --- SMART CLASS MANAGEMENT & PROMOTION ---
-  void addNewClass(String className) {
-    _customClasses.add(className.trim());
+  /// Yeni sinif yaradır — detallarla birlikdə Firestore-da saxlanır
+  void addNewClass(
+    String className, {
+    String? room,
+    String? curatorTeacherId,
+    String academicYear = '2025 - 2026',
+    String? note,
+  }) {
+    final name = className.trim();
+    _customClasses.add(name);
+    final details = ClassDetails(
+      name: name,
+      room: room,
+      curatorTeacherId: curatorTeacherId,
+      academicYear: academicYear,
+      note: note,
+    );
+    _classDetailsMap[name] = details;
+    _firestoreService.saveClassDetails(details);
     notifyListeners();
   }
 
   void deleteClass(String className) {
     _customClasses.remove(className);
     _classTimetablesMap.remove(className);
+    _classDetailsMap.remove(className);
+    _firestoreService.deleteClassDetails(className);
     notifyListeners();
+  }
+
+  /// Sinifə müəllim təyin edir (müəllimin assignedClasses siyahısına əlavə
+  /// olunur və class_teachers kolleksiyasında qeydə alınır)
+  void assignTeacherToClass({
+    required String teacherId,
+    required String className,
+    String? subject,
+    bool isClassTeacher = false,
+  }) {
+    final index = _users.indexWhere((u) => u.id == teacherId);
+    if (index != -1) {
+      final t = _users[index];
+      final classes = [...t.assignedClasses];
+      if (!classes.contains(className)) classes.add(className);
+      _users[index] = t.copyWith(assignedClasses: classes);
+      _firestoreService.saveUser(_users[index]);
+      notifyListeners();
+    }
+    _firestoreService.assignTeacherToClass(
+      className: className,
+      teacherId: teacherId,
+      isClassTeacher: isClassTeacher,
+      subject: subject,
+    );
+  }
+
+  /// Sinfə təyin olunan müəllimlər
+  List<AppUser> getTeachersForClass(String className) {
+    return _users
+        .where((u) => u.role == UserRole.teacher && u.assignedClasses.contains(className))
+        .toList();
   }
 
   List<StudentProfile> getStudentsForClass(String className) {
@@ -755,84 +903,144 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- ADMIN: CREATE TEACHER ACCOUNT ---
-  AppUser createTeacherAccount({
-    required String fullName,
-    required String subject,
-    required String roomNumber,
+  // --- ADMIN: CREATE EMPLOYEE ACCOUNT (Detallı HR məlumatları ilə) ---
+  /// İşçi yaradır: tam şəxsi məlumatlar + avtomatik @idrak.edu.az mail +
+  /// (müəllim deyilsə) rol təyinatı. İstifadəçi adı = e-poçtun lokal hissəsi.
+  AppUser createEmployeeAccount({
+    required String firstName,
+    required String lastName,
+    String? fatherName,
+    required String gender,
+    DateTime? birthDate,
+    required String finCode,
+    String? address,
+    String? citizenship,
+    String? idCardSerial,
+    String? educationLevel,
+    String? bankName,
     required String phone,
     required String password,
-    required TeacherPermissions permissions,
     String? photoUrl,
+    bool isTeacher = false,
+    String? position,
+    DateTime? hireDate,
+    double? salary,
+    DateTime? contractStart,
+    DateTime? contractEnd,
+    String? subject,
+    String? roomNumber,
     List<String> assignedClasses = const [],
+    TeacherPermissions? teacherPermissions,
+    String? assignedRoleId,
   }) {
-    final codeNum =
-        100 + _users.where((u) => u.role == UserRole.teacher).length + 1;
-    final idrakCode = 'IDR-TCH-$codeNum';
-    final rawUsername = fullName
-        .toLowerCase()
-        .replaceAll(' ', '.')
-        .replaceAll('ə', 'e')
-        .replaceAll('ı', 'i')
-        .replaceAll('ö', 'o')
-        .replaceAll('ü', 'u')
-        .replaceAll('ç', 'c')
-        .replaceAll('ş', 's')
-        .replaceAll('ğ', 'g');
-    final username = '$rawUsername$codeNum';
+    final fullName = '$firstName $lastName'.trim();
+    final existingEmails = _collectEmails();
+    final email = EmailGenerator.generateStaffEmail(
+      fullName,
+      existingEmails: existingEmails,
+    );
 
-    final newTeacher = AppUser(
-      id: 'usr-tch-${DateTime.now().millisecondsSinceEpoch}',
-      username: username,
+    final role = isTeacher ? UserRole.teacher : UserRole.admin;
+    final codePrefix = isTeacher ? 'IDR-TCH' : 'IDR-STF';
+    final codeNum =
+        100 + _users.where((u) => u.role == role).length + 1;
+    final idrakCode = '$codePrefix-$codeNum';
+
+    final newEmployee = AppUser(
+      id: 'usr-stf-${DateTime.now().millisecondsSinceEpoch}',
+      username: email.split('@').first,
       password: password.isEmpty ? '123456' : password,
       fullName: fullName,
-      role: UserRole.teacher,
+      firstName: firstName,
+      lastName: lastName,
+      fatherName: (fatherName ?? '').isEmpty ? null : fatherName,
+      finCode: finCode,
+      gender: gender,
+      birthDate: birthDate,
+      address: (address ?? '').isEmpty ? null : address,
+      citizenship: (citizenship ?? '').isEmpty ? null : citizenship,
+      idCardSerial: (idCardSerial ?? '').isEmpty ? null : idCardSerial,
+      educationLevel: (educationLevel ?? '').isEmpty ? null : educationLevel,
+      bankName: (bankName ?? '').isEmpty ? null : bankName,
+      role: role,
       idrakCode: idrakCode,
       phone: phone,
+      email: email,
       photoUrl: photoUrl,
-      subject: subject,
-      roomNumber: roomNumber,
+      position: (position ?? '').isEmpty ? null : position,
+      hireDate: hireDate,
+      salary: salary,
+      contractStart: contractStart,
+      contractEnd: contractEnd,
+      subject: (subject ?? '').isEmpty ? null : subject,
+      roomNumber: (roomNumber ?? '').isEmpty ? null : roomNumber,
       assignedClasses: assignedClasses,
-      teacherPermissions: permissions,
+      teacherPermissions:
+          isTeacher ? (teacherPermissions ?? const TeacherPermissions()) : null,
+      assignedRoleId: (assignedRoleId ?? '').isEmpty ? null : assignedRoleId,
       createdAt: DateTime.now(),
     );
 
-    _users.insert(0, newTeacher);
-    _firestoreService.saveUser(newTeacher);
+    _users.insert(0, newEmployee);
+    _firestoreService.saveUser(newEmployee);
     notifyListeners();
-    return newTeacher;
+    return newEmployee;
   }
 
-  // --- ADMIN: CREATE STUDENT & LINKED PARENT ACCOUNT ---
-  Map<String, AppUser> createStudentAndParentAccount({
-    required String studentName,
+  /// Mövcud istifadəçilərin e-poçtları (unikallıq yoxlaması üçün)
+  List<String> _collectEmails() {
+    return _users
+        .map((u) => (u.email ?? '').toLowerCase().trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+  }
+
+  // --- ADMIN: REGISTER STUDENT WITH PARENT (tam məlumatlarla) ---
+  /// Şagird + veli yaradır: tam şəxsi məlumatlar, avtomatik maillər
+  /// (@idrak.edu.az), veli avtomatik şagirdə bağlanır.
+  Map<String, AppUser> registerStudentWithParent({
+    required String firstName,
+    required String lastName,
+    String? fatherName,
+    required String gender,
+    DateTime? birthDate,
+    required String finCode,
+    String? address,
     required String className,
-    required String bloodGroup,
-    required List<String> allergies,
+    String bloodGroup = '',
+    List<String> allergies = const [],
     required String studentPassword,
+    AppUser? existingParent, // Mövcud valideyn: yeni övlad ona bağlanır
     required String parentName,
+    required String parentFinCode,
+    DateTime? parentBirthDate,
     required String parentPhone,
+    String? parentAddress,
     required String parentPassword,
     String? studentPhotoUrl,
   }) {
+    final studentName = '$firstName $lastName'.trim();
     final stdIndex = _students.length + 1;
     final stdId = 'std-${100 + stdIndex}';
     final studentIdrakCode = 'IDR-2025-0${490 + stdIndex}';
     final barcodeData = '994019${283740 + stdIndex}';
 
-    final cleanStdName = studentName
-        .toLowerCase()
-        .replaceAll(' ', '.')
-        .replaceAll('ə', 'e')
-        .replaceAll('ı', 'i')
-        .replaceAll('ö', 'o')
-        .replaceAll('ü', 'u')
-        .replaceAll('ç', 'c')
-        .replaceAll('ş', 's')
-        .replaceAll('ğ', 'g');
-    final studentUsername = '$cleanStdName$stdIndex';
+    final existingEmails = _collectEmails();
+    // Şagird mailindəki il FIN-dən hesablanır (məktəbə başlama ili)
+    final schoolYear = EmailGenerator.getYearFromFIN(finCode);
+    final studentEmail = EmailGenerator.generateStudentEmail(
+      studentName,
+      schoolYear,
+      existingEmails: existingEmails,
+    );
+    // Mövcud valideyn seçilibsə onun maili istifadə olunur, yenisi yaradılmır
+    final parentEmail = existingParent?.email ??
+        EmailGenerator.generateParentEmail(
+          existingParent?.fullName ?? parentName,
+          existingEmails: [...existingEmails, studentEmail],
+        );
 
-    // 1. Create Student Profile
+    // 1. Create Student Profile (tam məlumatlarla)
     final newStudentProfile = StudentProfile(
       id: stdId,
       fullName: studentName,
@@ -843,8 +1051,19 @@ class AppState extends ChangeNotifier {
           'https://ui-avatars.com/api/?name=${Uri.encodeComponent(studentName)}&background=0D47A1&color=fff&size=400',
       qrData: 'IDRAK-STUDENT-2025-$studentName-$className',
       barcodeData: barcodeData,
-      parentName: parentName,
-      parentPhone: parentPhone,
+      firstName: firstName,
+      lastName: lastName,
+      fatherName: (fatherName ?? '').isEmpty ? null : fatherName,
+      finCode: finCode,
+      gender: gender,
+      birthDate: birthDate,
+      address: (address ?? '').isEmpty ? null : address,
+      email: studentEmail,
+      bloodGroup: bloodGroup.isEmpty ? null : bloodGroup,
+      parentName: existingParent?.fullName ?? parentName,
+      parentPhone: existingParent?.phone ?? parentPhone,
+      parentEmail: parentEmail,
+      parentAddress: existingParent?.address ?? ((parentAddress ?? '').isEmpty ? null : parentAddress),
       gpa: 0.0,
       attendanceRate: 0,
       academicYear: '2024 - 2025',
@@ -857,46 +1076,65 @@ class AppState extends ChangeNotifier {
     // 2. Create Student AppUser
     final studentUser = AppUser(
       id: 'usr-$stdId',
-      username: studentUsername,
+      username: studentEmail.split('@').first,
       password: studentPassword.isEmpty ? '123456' : studentPassword,
       fullName: studentName,
+      firstName: firstName,
+      lastName: lastName,
+      fatherName: (fatherName ?? '').isEmpty ? null : fatherName,
+      finCode: finCode,
+      gender: gender,
+      birthDate: birthDate,
+      address: (address ?? '').isEmpty ? null : address,
       role: UserRole.student,
       idrakCode: studentIdrakCode,
       className: className,
-      phone: parentPhone,
+      phone: existingParent?.phone ?? parentPhone,
+      email: studentEmail,
       photoUrl: studentPhotoUrl,
       createdAt: DateTime.now(),
     );
     _users.insert(0, studentUser);
     _firestoreService.saveUser(studentUser);
 
-    // 3. Create Linked Parent AppUser
-    final parentIdrakCode = 'IDR-PAR-0${490 + stdIndex}';
-    final cleanParName = parentName
-        .toLowerCase()
-        .replaceAll(' ', '.')
-        .replaceAll('ə', 'e')
-        .replaceAll('ı', 'i')
-        .replaceAll('ö', 'o')
-        .replaceAll('ü', 'u')
-        .replaceAll('ç', 'c')
-        .replaceAll('ş', 's')
-        .replaceAll('ğ', 'g');
-    final parentUsername = 'valideyn.$cleanParName$stdIndex';
-
-    final parentUser = AppUser(
-      id: 'usr-par-$stdId',
-      username: parentUsername,
-      password: parentPassword.isEmpty ? '123456' : parentPassword,
-      fullName: parentName,
-      role: UserRole.parent,
-      idrakCode: parentIdrakCode,
-      phone: parentPhone,
-      linkedStudentId: stdId,
-      createdAt: DateTime.now(),
-    );
-    _users.insert(0, parentUser);
-    _firestoreService.saveUser(parentUser);
+    // 3. Valideyn: mövcuddursa bağla, yoxdursa yeni yarad (Övladlar modeli)
+    AppUser parentUser;
+    if (existingParent != null) {
+      // Yeni övlad mövcud valideynə əlavə olunur
+      final childIds = [...existingParent.linkedStudentIds];
+      if (!childIds.contains(stdId)) childIds.add(stdId);
+      final parentIndex = _users.indexWhere((u) => u.id == existingParent.id);
+      parentUser = existingParent.copyWith(
+        linkedStudentIds: childIds,
+        linkedStudentId: existingParent.linkedStudentId ?? stdId,
+      );
+      if (parentIndex != -1) {
+        _users[parentIndex] = parentUser;
+      } else {
+        _users.insert(0, parentUser);
+      }
+      _firestoreService.saveUser(parentUser);
+    } else {
+      final parentIdrakCode = 'IDR-PAR-0${490 + stdIndex}';
+      parentUser = AppUser(
+        id: 'usr-par-$stdId',
+        username: parentEmail.split('@').first,
+        password: parentPassword.isEmpty ? '123456' : parentPassword,
+        fullName: parentName,
+        finCode: parentFinCode,
+        birthDate: parentBirthDate,
+        role: UserRole.parent,
+        idrakCode: parentIdrakCode,
+        phone: parentPhone,
+        email: parentEmail,
+        address: (parentAddress ?? '').isEmpty ? null : parentAddress,
+        linkedStudentId: stdId,
+        linkedStudentIds: [stdId],
+        createdAt: DateTime.now(),
+      );
+      _users.insert(0, parentUser);
+      _firestoreService.saveUser(parentUser);
+    }
 
     // 4. Create Student's Clean Medical Card
     final allergyItems = allergies
@@ -943,6 +1181,31 @@ class AppState extends ChangeNotifier {
       final updatedStatus = !_users[index].isActive;
       _users[index] = _users[index].copyWith(isActive: updatedStatus);
       _firestoreService.updateUserStatus(userId, updatedStatus);
+      notifyListeners();
+    }
+  }
+
+  /// İstənilən istifadəçinin (işçi/müəllim/şagird/valideyn) məlumatlarını
+  /// yeniləşdirir — admin və edit_users səlahiyyəti olanlar üçün.
+  void updateUserAccount(AppUser updated) {
+    final index = _users.indexWhere((u) => u.id == updated.id);
+    if (index != -1) {
+      _users[index] = updated;
+      _firestoreService.saveUser(updated);
+      // Cari istifadəçinin öz məlumatı yenilənibsə panel də yenilənsin
+      if (_currentUser?.id == updated.id) {
+        _currentUser = updated;
+      }
+      notifyListeners();
+    }
+  }
+
+  /// Şagird profilini (students kolleksiyası) yeniləşdirir
+  void updateStudentRecord(StudentProfile updated) {
+    final index = _students.indexWhere((s) => s.id == updated.id);
+    if (index != -1) {
+      _students[index] = updated;
+      _firestoreService.saveStudent(updated);
       notifyListeners();
     }
   }
@@ -1248,6 +1511,7 @@ class AppState extends ChangeNotifier {
         priority: ticket.priority,
         senderName: ticket.senderName,
         senderRole: ticket.senderRole,
+        senderId: ticket.senderId,
         description: ticket.description,
         createdAt: ticket.createdAt,
         roomNumber: ticket.roomNumber,
@@ -1257,6 +1521,16 @@ class AppState extends ChangeNotifier {
       );
       _tickets[index] = updatedTicket;
       _firestoreService.saveTicket(updatedTicket);
+      notifyListeners();
+    }
+  }
+
+  /// Biletin statusunu dəyişir (helpdesk / admin — manage_tickets)
+  void updateTicketStatus(String ticketId, TicketStatus status) {
+    final index = _tickets.indexWhere((t) => t.id == ticketId);
+    if (index != -1) {
+      _tickets[index] = _tickets[index].copyWith(status: status);
+      _firestoreService.updateTicketStatus(ticketId, status);
       notifyListeners();
     }
   }
@@ -1490,7 +1764,6 @@ class AppState extends ChangeNotifier {
       role: 'host',
       photoUrl: hostPhoto,
       className: host?.className,
-      agoraUid: agoraUidForUser(hostId),
       isMuted: false,
       isMutedByHost: false,
       isSpeaking: false,
@@ -1503,7 +1776,6 @@ class AppState extends ChangeNotifier {
       hostName: hostName,
       hostPhotoUrl: hostPhoto,
       subject: subject,
-      channelName: channelName,
       targetClasses: targetClasses,
       allowTeachers: allowTeachers,
       allowStudents: allowStudents,
@@ -1546,7 +1818,6 @@ class AppState extends ChangeNotifier {
         : (user?.role == UserRole.admin ? 'admin' : 'student');
     final userPhoto = user?.photoUrl ?? student.photoUrl;
     final userClass = user?.className ?? student.className;
-    final agoraUid = agoraUidForUser(userId);
 
     final newParticipant = MeetParticipant(
       userId: userId,
@@ -1554,7 +1825,6 @@ class AppState extends ChangeNotifier {
       role: room.hostId == userId ? 'host' : userRole,
       photoUrl: userPhoto,
       className: userClass,
-      agoraUid: agoraUid,
       isMuted: false,
       isMutedByHost: false,
     );
@@ -2018,12 +2288,13 @@ class AppState extends ChangeNotifier {
         return true;
       }
 
-      // 4. Parent filtering
+      // 4. Parent filtering — Övladlar modelinə görə bütün uşaqlar
       if (userRole == UserRole.parent) {
-        final childId = user.linkedStudentId ?? student.id;
-        final childClass = student.className;
+        final kids = children;
+        final childIds = kids.map((c) => c.id).toSet();
+        final childClasses = kids.map((c) => c.className).toSet();
 
-        if (n.targetStudentId != null && n.targetStudentId != childId) {
+        if (n.targetStudentId != null && !childIds.contains(n.targetStudentId)) {
           return false;
         }
         if (n.targetParentId != null && n.targetParentId != userId) {
@@ -2033,7 +2304,7 @@ class AppState extends ChangeNotifier {
           return false;
         }
         if (n.targetClasses.isNotEmpty &&
-            !n.targetClasses.contains(childClass)) {
+            !n.targetClasses.any((c) => childClasses.contains(c))) {
           return false;
         }
         return true;

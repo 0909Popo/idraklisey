@@ -15,6 +15,7 @@ import '../data/models/meet_model.dart';
 import '../data/models/notification_model.dart';
 import '../data/models/inventory_model.dart';
 import '../data/models/role_model.dart';
+import '../data/models/class_details_model.dart';
 
 class FirestoreService {
   static final FirestoreService _instance = FirestoreService._internal();
@@ -36,6 +37,25 @@ class FirestoreService {
         'username': user.username,
         'password': user.password,
         'fullName': user.fullName,
+        // 🆕 HR məlumatları
+        'firstName': user.firstName,
+        'lastName': user.lastName,
+        'fatherName': user.fatherName,
+        'finCode': user.finCode,
+        'gender': user.gender,
+        'birthDate': user.birthDate?.toIso8601String(),
+        'address': user.address,
+        'citizenship': user.citizenship,
+        'idCardSerial': user.idCardSerial,
+        'educationLevel': user.educationLevel,
+        'bankName': user.bankName,
+        // 🆕 İş məlumatları (HR)
+        'position': user.position,
+        'hireDate': user.hireDate?.toIso8601String(),
+        'salary': user.salary,
+        'contractStart': user.contractStart?.toIso8601String(),
+        'contractEnd': user.contractEnd?.toIso8601String(),
+        // mövcud sahələr
         'role': user.role.name,
         'idrakCode': user.idrakCode,
         'phone': user.phone,
@@ -46,6 +66,8 @@ class FirestoreService {
         'subject': user.subject,
         'roomNumber': user.roomNumber,
         'linkedStudentId': user.linkedStudentId,
+        'linkedStudentIds': user.linkedStudentIds,
+        'assignedRoleId': user.assignedRoleId, // 🆕 rol təyinatı
         'isActive': user.isActive,
         'createdAt': user.createdAt.toIso8601String(),
         'teacherPermissions': user.teacherPermissions != null
@@ -82,6 +104,33 @@ class FirestoreService {
           username: data['username'] ?? '',
           password: data['password'] ?? '123',
           fullName: data['fullName'] ?? '',
+          // 🆕 HR məlumatları
+          firstName: data['firstName'],
+          lastName: data['lastName'],
+          fatherName: data['fatherName'],
+          finCode: data['finCode'],
+          gender: data['gender'],
+          birthDate: data['birthDate'] != null
+              ? DateTime.tryParse(data['birthDate'])
+              : null,
+          address: data['address'],
+          citizenship: data['citizenship'],
+          idCardSerial: data['idCardSerial'],
+          educationLevel: data['educationLevel'],
+          bankName: data['bankName'],
+          // 🆕 İş məlumatları (HR)
+          position: data['position'],
+          hireDate: data['hireDate'] != null
+              ? DateTime.tryParse(data['hireDate'])
+              : null,
+          salary: (data['salary'] as num?)?.toDouble(),
+          contractStart: data['contractStart'] != null
+              ? DateTime.tryParse(data['contractStart'])
+              : null,
+          contractEnd: data['contractEnd'] != null
+              ? DateTime.tryParse(data['contractEnd'])
+              : null,
+          // mövcud sahələr
           role: UserRole.values.firstWhere(
             (r) => r.name == data['role'],
             orElse: () => UserRole.student,
@@ -95,6 +144,8 @@ class FirestoreService {
           subject: data['subject'],
           roomNumber: data['roomNumber'],
           linkedStudentId: data['linkedStudentId'],
+          linkedStudentIds: List<String>.from(data['linkedStudentIds'] ?? []),
+          assignedRoleId: data['assignedRoleId'], // 🆕
           isActive: data['isActive'] ?? true,
           createdAt: data['createdAt'] != null
               ? DateTime.tryParse(data['createdAt']) ?? DateTime.now()
@@ -241,8 +292,23 @@ class FirestoreService {
         'photoUrl': student.photoUrl,
         'qrData': student.qrData,
         'barcodeData': student.barcodeData,
+        // 🆕 Genişləndirilmiş şagird məlumatları
+        'firstName': student.firstName,
+        'lastName': student.lastName,
+        'fatherName': student.fatherName,
+        'finCode': student.finCode,
+        'gender': student.gender,
+        'birthDate': student.birthDate?.toIso8601String(),
+        'address': student.address,
+        'email': student.email,
+        'bloodGroup': student.bloodGroup,
+        'allergies': student.allergies,
+        // Veli məlumatları
         'parentName': student.parentName,
         'parentPhone': student.parentPhone,
+        'parentEmail': student.parentEmail, // 🆕
+        'parentAddress': student.parentAddress, // 🆕
+        // Akademik
         'gpa': student.gpa,
         'attendanceRate': student.attendanceRate,
         'academicYear': student.academicYear,
@@ -293,8 +359,27 @@ class FirestoreService {
           photoUrl: data['photoUrl'] ?? '',
           qrData: data['qrData'] ?? '',
           barcodeData: data['barcodeData'] ?? '',
+          // 🆕 Yeni sahələr
+          firstName: data['firstName'],
+          lastName: data['lastName'],
+          fatherName: data['fatherName'],
+          finCode: data['finCode'],
+          gender: data['gender'],
+          birthDate: data['birthDate'] != null 
+              ? DateTime.tryParse(data['birthDate']) 
+              : null,
+          address: data['address'],
+          email: data['email'],
+          bloodGroup: data['bloodGroup'],
+          allergies: data['allergies'] != null 
+              ? List<String>.from(data['allergies']) 
+              : null,
+          // Veli
           parentName: data['parentName'] ?? '',
           parentPhone: data['parentPhone'] ?? '',
+          parentEmail: data['parentEmail'],
+          parentAddress: data['parentAddress'],
+          // Akademik
           gpa: (data['gpa'] as num?)?.toDouble() ?? 0.0,
           attendanceRate: (data['attendanceRate'] as num?)?.toInt() ?? 0,
           academicYear: data['academicYear'] ?? '2024 - 2025',
@@ -900,8 +985,16 @@ class FirestoreService {
   }
 
   // --- TICKETS ---
-  Future<void> saveTicket(HelpdeskTicket ticket) async {
+  /// Biletin statusunu yeniləyir (helpdesk / admin)
+  Future<void> updateTicketStatus(String ticketId, TicketStatus status) async {
     try {
+      await db.collection('tickets').doc(ticketId).update({'status': status.name});
+    } catch (e) {
+      debugPrint('Firestore updateTicketStatus error: $e');
+    }
+  }
+
+  Future<void> saveTicket(HelpdeskTicket ticket) async {    try {
       await db.collection('tickets').doc(ticket.id).set({
         'id': ticket.id,
         'title': ticket.title,
@@ -910,6 +1003,7 @@ class FirestoreService {
         'priority': ticket.priority.name,
         'senderName': ticket.senderName,
         'senderRole': ticket.senderRole,
+        'senderId': ticket.senderId,
         'description': ticket.description,
         'createdAt': ticket.createdAt.toIso8601String(),
         'roomNumber': ticket.roomNumber,
@@ -966,6 +1060,7 @@ class FirestoreService {
           ),
           senderName: data['senderName'] ?? '',
           senderRole: data['senderRole'] ?? '',
+          senderId: data['senderId'],
           description: data['description'] ?? '',
           createdAt:
               DateTime.tryParse(data['createdAt'] ?? '') ?? DateTime.now(),
@@ -1182,8 +1277,39 @@ class FirestoreService {
     }
   }
 
-  // --- ROLES & PERMISSIONS ---
-  
+  // --- CLASS DETAILS (sinif detalları: otaq, rəhbər, il, qeyd) ---
+  Future<void> saveClassDetails(ClassDetails details) async {
+    try {
+      await db.collection('classes').doc(details.name).set(details.toJson());
+    } catch (e) {
+      debugPrint('Firestore saveClassDetails error: $e');
+    }
+  }
+
+  Future<Map<String, ClassDetails>> fetchClassDetails() async {
+    try {
+      final snapshot = await db.collection('classes').get();
+      final map = <String, ClassDetails>{};
+      for (final doc in snapshot.docs) {
+        final d = ClassDetails.fromJson(doc.data());
+        if (d.name.isNotEmpty) map[d.name] = d;
+      }
+      return map;
+    } catch (e) {
+      debugPrint('Firestore fetchClassDetails error: $e');
+      return {};
+    }
+  }
+
+  Future<void> deleteClassDetails(String name) async {
+    try {
+      await db.collection('classes').doc(name).delete();
+    } catch (e) {
+      debugPrint('Firestore deleteClassDetails error: $e');
+    }
+  }
+
+  // --- ROLES & PERMISSIONS ---  
   /// Rol kaydetme
   Future<void> saveRole(Role role) async {
     try {
@@ -1205,7 +1331,25 @@ class FirestoreService {
         }
         return defaultRoles;
       }
-      return snapshot.docs.map((doc) => Role.fromJson(doc.data())).toList();
+      final roles = snapshot.docs.map((doc) => Role.fromJson(doc.data())).toList();
+      // Sistem (default) rolları kod ilə sinxronlaşdır — icazə yeniləmələri
+      // tətbiq yenilənəndə mövcud qeydlərə də tətbiq olunsun. Xüsusi
+      // (isDefault olmayan) rollara toxunulmur.
+      final defaults = DefaultRoles.createAll();
+      for (var i = 0; i < roles.length; i++) {
+        if (!roles[i].isDefault) continue;
+        for (final def in defaults) {
+          if (def.id != roles[i].id) continue;
+          final old = roles[i].permissionIds.toSet();
+          final neu = def.permissionIds.toSet();
+          if (old.length != neu.length || !old.containsAll(neu)) {
+            roles[i] = roles[i].copyWith(permissionIds: def.permissionIds);
+            await saveRole(roles[i]);
+          }
+          break;
+        }
+      }
+      return roles;
     } catch (e) {
       debugPrint('Firestore fetchRoles error: $e');
       // Hata durumunda default rolleri döndür

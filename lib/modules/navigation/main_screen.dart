@@ -58,17 +58,21 @@ class _MainScreenState extends State<MainScreen> {
 
     switch (currentRole) {
       case UserRole.admin:
-        screens = const [
-          AdminDashboardScreen(),
-          AdminUsersScreen(),
-          ParentTicketsScreen(),
-          GradesAnalyticsScreen(),
+        // Səlahiyyətə görə: rolu olan işçi yalnız icazə verdiyi tabları görür
+        screens = [
+          const AdminDashboardScreen(),
+          if (appState.hasPermission('view_users')) const AdminUsersScreen(),
+          if (appState.hasPermission('view_tickets')) const ParentTicketsScreen(),
+          if (appState.hasPermission('view_reports')) const GradesAnalyticsScreen(),
         ];
-        navItems = const [
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), activeIcon: Icon(Icons.dashboard_rounded), label: 'İnzibatçı'),
-          BottomNavigationBarItem(icon: Icon(Icons.manage_accounts_outlined), activeIcon: Icon(Icons.manage_accounts_rounded), label: 'Hesablar'),
-          BottomNavigationBarItem(icon: Icon(Icons.support_agent_outlined), activeIcon: Icon(Icons.support_agent_rounded), label: 'Müraciətlər'),
-          BottomNavigationBarItem(icon: Icon(Icons.analytics_outlined), activeIcon: Icon(Icons.analytics_rounded), label: 'Analitika'),
+        navItems = [
+          const BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), activeIcon: Icon(Icons.dashboard_rounded), label: 'İnzibatçı'),
+          if (appState.hasPermission('view_users'))
+            const BottomNavigationBarItem(icon: Icon(Icons.manage_accounts_outlined), activeIcon: Icon(Icons.manage_accounts_rounded), label: 'Hesablar'),
+          if (appState.hasPermission('view_tickets'))
+            const BottomNavigationBarItem(icon: Icon(Icons.support_agent_outlined), activeIcon: Icon(Icons.support_agent_rounded), label: 'Müraciətlər'),
+          if (appState.hasPermission('view_reports'))
+            const BottomNavigationBarItem(icon: Icon(Icons.analytics_outlined), activeIcon: Icon(Icons.analytics_rounded), label: 'Analitika'),
         ];
         break;
 

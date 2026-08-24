@@ -171,6 +171,33 @@ class TeacherDashboardScreen extends StatelessWidget {
                                           ),
                                         ],
                                       ),
+                                      // Admin təyin etdiyi siniflər
+                                      if (currentUser?.assignedClasses.isNotEmpty == true) ...[
+                                        const SizedBox(height: 7),
+                                        Wrap(
+                                          spacing: 5,
+                                          runSpacing: 4,
+                                          children: [
+                                            for (final cls in currentUser!.assignedClasses)
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white.withAlpha(22),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  border: Border.all(color: Colors.white.withAlpha(50)),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(Icons.school_rounded, size: 11, color: AppColors.goldLight),
+                                                    const SizedBox(width: 4),
+                                                    Text(cls, style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w800)),
+                                                  ],
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ],
                                     ],
                                   ),
                                 ),

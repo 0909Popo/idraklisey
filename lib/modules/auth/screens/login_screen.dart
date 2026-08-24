@@ -73,6 +73,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final rootContext = Navigator.of(context, rootNavigator: true).context;
     final appState = Provider.of<AppState>(context, listen: false);
+
+    // Bulud istifadəçilərinin giriş üçün siyahının sinxronlaşmasını gözlə
+    // (təzə başlanmış app-da əks halda yalnız yerli admin mövcuddur)
+    try {
+      await appState.ensureDataReady().timeout(const Duration(seconds: 10));
+    } catch (_) {
+      // Oflayn və ya yavaş şəbəkə — yerli məlumatlarla davam et
+    }
+    if (!mounted) return;
+
     final error = appState.login(
       userToLogin,
       passToLogin,
@@ -85,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (biometricAvailable && !biometricEnabled && rootContext.mounted) {
         final types = await _authStorage.getAvailableBiometrics();
-        if (rootContext.mounted) {
+        if (rootContext.mounted && types.isNotEmpty) {
           await _showBiometricSetupDialog(
             rootContext,
             userToLogin,
@@ -289,9 +299,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(height: 16),
                         ],
 
-                        // Username / Idrak Code Input
+                        // Email / FIN / Username / Idrak Code Input
                         Text(
-                          'İstifadəçi Adı və ya İdrak Kodu',
+                          'E-poçt, FIN, İstifadəçi Adı və ya İdrak Kodu',
                           style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                         ),
                         const SizedBox(height: 6),
@@ -299,7 +309,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           controller: _usernameCtrl,
                           textInputAction: TextInputAction.next,
                           decoration: InputDecoration(
-                            hintText: 'Məs: 10A-04 və ya teacher.ali',
+                            hintText: 'Məs: ayse.memmedova@idrak.edu.az və ya 1234567',
                             hintStyle: TextStyle(fontSize: 12.5, color: AppColors.textMuted),
                             prefixIcon: const Icon(Icons.person_outline_rounded, color: AppColors.primaryAccent, size: 20),
                             filled: true,

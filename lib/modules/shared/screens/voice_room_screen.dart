@@ -4,8 +4,6 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../providers/app_state.dart';
 import '../../../data/models/meet_model.dart';
-import '../../../services/agora_service.dart';
-import '../../../services/agora_token_service.dart';
 
 class VoiceRoomScreen extends StatefulWidget {
   final MeetRoom room;
@@ -18,23 +16,11 @@ class VoiceRoomScreen extends StatefulWidget {
 
 class _VoiceRoomScreenState extends State<VoiceRoomScreen>
     with SingleTickerProviderStateMixin {
-  final AgoraService _agoraService = AgoraService();
-  final AgoraTokenService _agoraTokenService = AgoraTokenService();
-
   late Timer _durationTimer;
   int _secondsElapsed = 0;
   bool _isLocalMuted = false;
-  bool _isSpeakerOn = true;
   bool _isHandRaised = false;
-  bool _isJoining = true;
-  bool _hasJoinedRoom = false;
-  String? _connectionError;
   late AppState _appState;
-
-  StreamSubscription? _userJoinedSub;
-  StreamSubscription? _userLeftSub;
-  StreamSubscription? _userMuteSub;
-  StreamSubscription? _volumeSub;
 
   late AnimationController _pulseController;
 
@@ -53,69 +39,7 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
 
     _appState = Provider.of<AppState>(context, listen: false);
     _appState.addListener(_syncForcedMuteState);
-    _subscribeToAgoraEvents();
-    _initAndJoinVoice();
-  }
-
-  void _subscribeToAgoraEvents() {
-    _userMuteSub ??= _agoraService.onUserMuteAudio.listen((_) {
-      if (mounted) setState(() {});
-    });
-    _userJoinedSub ??= _agoraService.onUserJoined.listen((remoteUid) {
-      debugPrint('✓ Agora user joined: $remoteUid');
-      if (mounted) setState(() {});
-    });
-    _userLeftSub ??= _agoraService.onUserOffline.listen((remoteUid) {
-      debugPrint('✓ Agora user left: $remoteUid');
-      if (mounted) setState(() {});
-    });
-  }
-
-  Future<void> _initAndJoinVoice() async {
-    final appState = _appState;
-    final currentUserId = appState.currentUser?.id ?? appState.student.id;
-    final myUid = agoraUidForUser(currentUserId);
-
-    try {
-      final token = await _agoraTokenService.getToken(
-        roomId: widget.room.id,
-        channelName: widget.room.channelName,
-        uid: myUid,
-      );
-      final joined = await _agoraService.joinChannel(
-        channelName: widget.room.channelName,
-        uid: myUid,
-        token: token,
-      );
-      if (!joined) throw StateError('Agora bağlantısı kurulamadı.');
-
-      _hasJoinedRoom = true;
-      unawaited(_registerMeetPresence(appState));
-      _volumeSub = _agoraService.onVolumeIndication.listen((speakers) {
-        if (!mounted) return;
-        final room = appState.meetRooms.firstWhere(
-          (item) => item.id == widget.room.id,
-          orElse: () => widget.room,
-        );
-        for (final speaker in speakers) {
-          final participant = room.participants
-              .where((item) => item.agoraUid == speaker.uid)
-              .firstOrNull;
-          if (participant != null) {
-            appState.updateParticipantSpeaking(
-              widget.room.id,
-              participant.userId,
-              (speaker.volume ?? 0) > 10,
-            );
-          }
-        }
-      });
-    } catch (error) {
-      _connectionError = error.toString().replaceFirst('Bad state: ', '');
-      debugPrint('Meet connection error: $error');
-    } finally {
-      if (mounted) setState(() => _isJoining = false);
-    }
+    unawaited(_registerMeetPresence(_appState));
   }
 
   Future<void> _registerMeetPresence(AppState appState) async {
@@ -138,8 +62,7 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
     debugPrint('⚠️ Meet presence registration failed after 5 attempts');
   }
 
-  Future<void> _syncForcedMuteState() async {
-    if (!_hasJoinedRoom) return;
+  void _syncForcedMuteState() {
     final userId = _appState.currentUser?.id ?? _appState.student.id;
     final room = _appState.meetRooms.firstWhere(
       (item) => item.id == widget.room.id,
@@ -151,25 +74,15 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
     if (participant == null || participant.isMutedByHost == _isLocalMuted) {
       return;
     }
-
-    final muted = await _agoraService.setLocalMute(participant.isMutedByHost);
-    if (mounted) setState(() => _isLocalMuted = muted);
+    if (mounted) setState(() => _isLocalMuted = participant.isMutedByHost);
   }
 
   @override
   void dispose() {
     _durationTimer.cancel();
     _pulseController.dispose();
-    _userJoinedSub?.cancel();
-    _userLeftSub?.cancel();
-    _userMuteSub?.cancel();
-    _volumeSub?.cancel();
     _appState.removeListener(_syncForcedMuteState);
-
-    if (_hasJoinedRoom) {
-      _appState.leaveMeetRoom(widget.room.id);
-    }
-    _agoraService.leaveChannel();
+    _appState.leaveMeetRoom(widget.room.id);
     super.dispose();
   }
 
@@ -197,26 +110,14 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
       );
       return;
     }
-    final newMuteState = await _agoraService.toggleLocalMute();
     await appState.toggleMyMuteInRoom(widget.room.id);
     setState(() {
-      _isLocalMuted = newMuteState;
-    });
-  }
-
-  Future<void> _toggleSpeaker() async {
-    final newState = await _agoraService.toggleSpeaker();
-    setState(() {
-      _isSpeakerOn = newState;
+      _isLocalMuted = !_isLocalMuted;
     });
   }
 
   void _leaveRoom() async {
-    if (_hasJoinedRoom) {
-      await _appState.leaveMeetRoom(widget.room.id);
-      _hasJoinedRoom = false;
-    }
-    await _agoraService.leaveChannel();
+    await _appState.leaveMeetRoom(widget.room.id);
     if (mounted) Navigator.pop(context);
   }
 
@@ -304,10 +205,6 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
                   onTap: () async {
                     Navigator.pop(ctx);
                     final newMute = !participant.isMuted;
-                    await _agoraService.muteRemoteParticipant(
-                      participant.agoraUid,
-                      newMute,
-                    );
                     await appState.setParticipantMuteByHost(
                       widget.room.id,
                       participant.userId,
@@ -415,7 +312,6 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
               onPressed: () async {
                 Navigator.pop(ctx);
                 final appState = Provider.of<AppState>(context, listen: false);
-                await _agoraService.muteAllRemoteParticipants(true);
                 await appState.muteAllInRoom(widget.room.id, true);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -471,7 +367,6 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
                 Navigator.pop(ctx);
                 final appState = Provider.of<AppState>(context, listen: false);
                 await appState.endMeetRoom(widget.room.id);
-                await _agoraService.leaveChannel();
                 if (mounted) Navigator.pop(context);
               },
               child: const Text('Toplantını Bitir', style: TextStyle(color: Colors.white)),
@@ -487,41 +382,24 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
     AppState appState,
     String currentUserId,
   ) {
-    final byAgoraUid = <int, MeetParticipant>{
-      for (final participant in room.participants)
-        participant.agoraUid: participant,
-    };
-
-    final currentUser = appState.currentUser;
-    final localUid = agoraUidForUser(currentUserId);
-    byAgoraUid.putIfAbsent(
-      localUid,
-      () => MeetParticipant(
-        userId: currentUserId,
-        fullName: currentUser?.fullName ?? appState.student.fullName,
-        role: room.hostId == currentUserId
-            ? 'host'
-            : (currentUser?.role == UserRole.teacher ? 'teacher' : 'student'),
-        photoUrl: currentUser?.photoUrl ?? appState.student.photoUrl,
-        className: currentUser?.className ?? appState.student.className,
-        agoraUid: localUid,
-      ),
-    );
-
-    for (final remoteUid in _agoraService.remoteUids) {
-      byAgoraUid.putIfAbsent(remoteUid, () {
-        final isRemoteHost = remoteUid == agoraUidForUser(room.hostId);
-        return MeetParticipant(
-          userId: isRemoteHost ? room.hostId : 'agora-$remoteUid',
-          fullName: isRemoteHost ? room.hostName : 'Bağlı iştirakçı',
-          role: isRemoteHost ? 'host' : 'student',
-          photoUrl: isRemoteHost ? room.hostPhotoUrl : null,
-          agoraUid: remoteUid,
-        );
-      });
+    final participants = List<MeetParticipant>.from(room.participants);
+    final includesMe = participants.any((p) => p.userId == currentUserId);
+    if (!includesMe) {
+      final currentUser = appState.currentUser;
+      participants.add(
+        MeetParticipant(
+          userId: currentUserId,
+          fullName: currentUser?.fullName ?? appState.student.fullName,
+          role: room.hostId == currentUserId
+              ? 'host'
+              : (currentUser?.role == UserRole.teacher ? 'teacher' : 'student'),
+          photoUrl: currentUser?.photoUrl ?? appState.student.photoUrl,
+          className: currentUser?.className ?? appState.student.className,
+        ),
+      );
     }
 
-    return byAgoraUid.values.toList()..sort((a, b) {
+    return participants..sort((a, b) {
       final aIsHost = a.userId == room.hostId;
       final bIsHost = b.userId == room.hostId;
       if (aIsHost != bIsHost) return aIsHost ? -1 : 1;
@@ -623,37 +501,6 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
       ),
       body: Column(
         children: [
-          if (_isJoining || _connectionError != null)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              color: _connectionError == null
-                  ? AppColors.primaryAccent.withAlpha(45)
-                  : AppColors.danger.withAlpha(45),
-              child: Row(
-                children: [
-                  if (_connectionError == null)
-                    const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  else
-                    const Icon(Icons.error_outline_rounded, color: Colors.white, size: 16),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      _connectionError ?? 'Səsli otağa qoşulursunuz…',
-                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
           // Host Alert Banner
           if (isHost)
             Container(
@@ -930,36 +777,7 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
                     ),
                   ),
 
-                  // 2. Speakerphone Toggle
-                  GestureDetector(
-                    onTap: _toggleSpeaker,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withAlpha(15),
-                            border: Border.all(color: Colors.white24),
-                          ),
-                          child: Icon(
-                            _isSpeakerOn ? Icons.volume_up_rounded : Icons.phone_in_talk_rounded,
-                            color: Colors.white,
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          _isSpeakerOn ? 'Dinamik' : 'Dəstək',
-                          style: const TextStyle(color: Colors.white70, fontSize: 11),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // 3. Raise Hand Button
+                  // 2. Raise Hand Button
                   GestureDetector(
                     onTap: () {
                       setState(() => _isHandRaised = !_isHandRaised);
@@ -1004,7 +822,7 @@ class _VoiceRoomScreenState extends State<VoiceRoomScreen>
                     ),
                   ),
 
-                  // 4. Leave Meeting (Red Button)
+                  // 3. Leave Meeting (Red Button)
                   GestureDetector(
                     onTap: _leaveRoom,
                     child: Column(

@@ -43,6 +43,7 @@ class HelpdeskTicket {
   final TicketPriority priority;
   final String senderName;
   final String senderRole; // "Valideyn", "Müəllim"
+  final String? senderId;  // Göndərən hesabın ID-si (öz ticketlərini filtrləmək üçün)
   final String description;
   final DateTime createdAt;
   final String? roomNumber;     // e.g. "Otaq 304"
@@ -58,6 +59,7 @@ class HelpdeskTicket {
     required this.priority,
     required this.senderName,
     required this.senderRole,
+    this.senderId,
     required this.description,
     required this.createdAt,
     this.roomNumber,
@@ -65,4 +67,21 @@ class HelpdeskTicket {
     this.attachedImage,
     this.messages = const [],
   });
+
+  HelpdeskTicket copyWith({TicketStatus? status}) => HelpdeskTicket(
+        id: id,
+        title: title,
+        category: category,
+        status: status ?? this.status,
+        priority: priority,
+        senderName: senderName,
+        senderRole: senderRole,
+        senderId: senderId,
+        description: description,
+        createdAt: createdAt,
+        roomNumber: roomNumber,
+        inventoryCode: inventoryCode,
+        attachedImage: attachedImage,
+        messages: messages,
+      );
 }

@@ -263,6 +263,103 @@ class MedicalCardScreen extends StatelessWidget {
 
             const SizedBox(height: 10),
 
+            // 🆕 PARENT MEDICAL NOTES SECTION
+            const SectionHeader(
+              title: 'Valideyn Tibbi Qeydləri',
+              subtitle: 'Valideyn tərəfindən bildiriş və xəbərdarlıqlar',
+            ),
+
+            if (med.parentNotes.isNotEmpty)
+              ...med.parentNotes.map((note) => Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.primaryAccent.withAlpha(50)),
+                  boxShadow: AppShadows.sm,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryAccent.withAlpha(15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.message_outlined, color: AppColors.primaryAccent, size: 14),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            note.parentName,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: AppColors.primaryAccent),
+                          ),
+                        ),
+                        Text(
+                          dateFormat.format(note.date),
+                          style: TextStyle(fontSize: 10.5, color: AppColors.textMuted),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      note.note,
+                      style: TextStyle(fontSize: 12.5, color: AppColors.textPrimary, height: 1.4),
+                    ),
+                  ],
+                ),
+              ))
+            else
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.cardBorder),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline_rounded, color: AppColors.primaryAccent, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Valideyn tərəfindən tibbi qeyd və ya xəbərdarlıq daxil edilməyib.',
+                        style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            // Veli nota ekleme butonu
+            if (appState.currentUser?.role == UserRole.parent)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showAddParentNoteDialog(context, appState),
+                    icon: const Icon(Icons.add_comment_outlined, size: 18),
+                    label: const Text('Yeni Tibbi Qeyd Əlavə Et'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryAccent,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+            const SizedBox(height: 10),
+
             // Vaccine History Table
             const SectionHeader(
               title: 'Peyvənd Tarixçəsi Cədvəli',
@@ -306,7 +403,7 @@ class MedicalCardScreen extends StatelessWidget {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: med.vaccineHistory.length,
-                      separatorBuilder: (_, __) => Divider(color: AppColors.cardBorder, height: 1),
+                      separatorBuilder: (_, _) => Divider(color: AppColors.cardBorder, height: 1),
                       itemBuilder: (context, index) {
                         final item = med.vaccineHistory[index];
                         final isDone = item.status == 'Tamamlandı';
@@ -483,6 +580,79 @@ class MedicalCardScreen extends StatelessWidget {
               ],
             );
           },
+        );
+      },
+    );
+  }
+
+  void _showAddParentNoteDialog(BuildContext context, AppState appState) {
+    final noteCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: const [
+              Icon(Icons.medical_information_outlined, color: AppColors.primaryAccent, size: 24),
+              SizedBox(width: 8),
+              Expanded(child: Text('Tibbi Qeyd Əlavə Et')),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Övladınızın sağlığı ilə bağlı məktəb həkimi və müəllimlərinə bildirmək istədiyiniz məlumat:',
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: noteCtrl,
+                maxLines: 5,
+                decoration: InputDecoration(
+                  labelText: 'Tibbi Qeyd və ya Xəbərdarlıq',
+                  hintText: 'Məsələn: Uşaq bu həftə zökəm olub, dərslərdə çox gərginləşməməlidir.',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  alignLabelWithHint: true,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Ləğv et'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                if (noteCtrl.text.trim().isNotEmpty) {
+                  appState.addParentMedicalNote(
+                    appState.student.id,
+                    noteCtrl.text.trim(),
+                  );
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Tibbi qeyd uğurla əlavə edildi! Məktəb həkimi və müəllimlər görə biləcək.'),
+                      backgroundColor: AppColors.success,
+                      duration: Duration(seconds: 3),
+                    ),
+                  );
+                }
+              },
+              icon: const Icon(Icons.check_circle_outline),
+              label: const Text('Əlavə Et'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryAccent,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
         );
       },
     );

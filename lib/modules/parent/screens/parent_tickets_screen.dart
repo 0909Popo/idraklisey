@@ -18,7 +18,16 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
-    final parentTickets = appState.tickets.where((t) => t.senderRole == 'Valideyn').toList();
+    // Bilet görünüşü: view_all_tickets icazəsi olan hamını görür,
+    // digərləri (müəllim/valideyn) yalnız öz göndərdiklərini
+    final canSeeAll = appState.hasPermission('view_all_tickets');
+    final myId = appState.currentUser?.id;
+    final parentTickets = appState.tickets.where((t) {
+      if (canSeeAll) return true;
+      // Köhnə (senderId-siz) biletləri yalnız tam icazəlilər görür
+      if (t.senderId == null) return false;
+      return t.senderId == myId;
+    }).toList();
     final dateFormat = DateFormat('dd.MM.yyyy HH:mm');
 
     return Scaffold(
@@ -193,6 +202,37 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
     }
   }
 
+  /// Status dəyişmə düyməsi (yalnız manage_tickets sahibləri görür)
+  Widget _buildStatusAction(BuildContext ctx, AppState appState, HelpdeskTicket ticket, String label, TicketStatus status, Color color) {
+    final isCurrent = ticket.status == status;
+    return GestureDetector(
+      onTap: isCurrent
+          ? null
+          : () {
+              appState.updateTicketStatus(ticket.id, status);
+              ScaffoldMessenger.of(ctx).showSnackBar(
+                SnackBar(content: Text('Status: $label'), backgroundColor: color, duration: const Duration(seconds: 1)),
+              );
+            },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isCurrent ? color.withAlpha(25) : AppColors.background,
+          borderRadius: BorderRadius.circular(9),
+          border: Border.all(color: isCurrent ? color : AppColors.cardBorder, width: isCurrent ? 1.5 : 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(isCurrent ? Icons.check_circle_rounded : Icons.play_circle_outline_rounded, size: 13, color: color),
+            const SizedBox(width: 5),
+            Text(label, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: isCurrent ? color : AppColors.textSecondary)),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showTicketDetailsModal(BuildContext context, HelpdeskTicket ticket) {
     final messageController = TextEditingController();
 
@@ -243,6 +283,26 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
                     ),
                     const SizedBox(height: 10),
                     Divider(color: AppColors.cardBorder),
+
+                    // Status idarəsi (helpdesk / admin — manage_tickets)
+                    if (appState.hasPermission('manage_tickets')) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            _buildStatusAction(ctx, appState, currentTicket, 'Baxılır / İcrada', TicketStatus.inProgress, AppColors.primaryAccent),
+                            _buildStatusAction(ctx, appState, currentTicket, 'Həll Olundu', TicketStatus.resolved, AppColors.success),
+                            _buildStatusAction(ctx, appState, currentTicket, 'Bağlandı', TicketStatus.closed, AppColors.textMuted),
+                            if (currentTicket.status != TicketStatus.open)
+                              _buildStatusAction(ctx, appState, currentTicket, 'Yenidən Aç', TicketStatus.open, AppColors.warning),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Divider(color: AppColors.cardBorder),
+                    ],
 
                     // Resolved QR equipment info
                     if (currentTicket.inventoryCode != null &&
@@ -402,6 +462,8 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
     final titleCtrl = TextEditingController();
     final descCtrl = TextEditingController();
     TicketCategory selectedCat = TicketCategory.general;
+    final appState = Provider.of<AppState>(context, listen: false);
+    final myName = appState.currentUser?.fullName ?? 'İstifadəçi';
 
     showModalBottomSheet(
       context: context,
@@ -470,19 +532,25 @@ class _ParentTicketsScreenState extends State<ParentTicketsScreen> {
                       ),
                       onPressed: () {
                         if (titleCtrl.text.isNotEmpty && descCtrl.text.isNotEmpty) {
+                          final senderRoleLabel = switch (appState.currentRole) {
+                            UserRole.teacher => 'Müəllim',
+                            UserRole.admin => 'İşçi',
+                            _ => 'Valideyn',
+                          };
                           final newTicket = HelpdeskTicket(
                             id: 'TCK-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
                             title: titleCtrl.text.trim(),
                             category: selectedCat,
                             status: TicketStatus.open,
                             priority: TicketPriority.medium,
-                            senderName: 'Rəşad Qasımov',
-                            senderRole: 'Valideyn',
+                            senderName: myName,
+                            senderRole: senderRoleLabel,
+                            senderId: appState.currentUser?.id,
                             description: descCtrl.text.trim(),
                             createdAt: DateTime.now(),
                             messages: [
                               TicketMessage(
-                                sender: 'Rəşad Qasımov',
+                                sender: myName,
                                 message: descCtrl.text.trim(),
                                 timestamp: DateTime.now(),
                                 isFromStaff: false,

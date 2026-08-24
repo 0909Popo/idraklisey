@@ -83,6 +83,7 @@ class _QrInventoryTicketScreenState extends State<QrInventoryTicketScreen> {
       priority: _priority,
       senderName: '${currentUser?.fullName ?? "Müəllim"} (${currentUser?.subject ?? "Tədris"})',
       senderRole: 'Müəllim',
+      senderId: currentUser?.id,
       roomNumber: item?.room,
       inventoryCode: _scannedQrCode,
       description: _problemDescCtrl.text.trim(),

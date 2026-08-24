@@ -111,6 +111,76 @@ class ParentDashboardScreen extends StatelessWidget {
               ),
             ),
 
+            // Övlad keçidi (birdən çox uşaq varsa — Övladlar modeli)
+            if (appState.children.length > 1)
+              SliverToBoxAdapter(
+                child: Container(
+                  color: AppColors.primary,
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.diversity_3_rounded, color: Colors.white70, size: 13),
+                          const SizedBox(width: 5),
+                          Text(
+                            'Övladlarınız (${appState.children.length}) — keçid üçün seçin:',
+                            style: TextStyle(color: Colors.white.withAlpha(190), fontSize: 10.5, fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 7),
+                      SizedBox(
+                        height: 38,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: appState.children.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 8),
+                          itemBuilder: (context, index) {
+                            final child = appState.children[index];
+                            final isActive = child.id == student.id;
+                            return GestureDetector(
+                              onTap: () => appState.setActiveChild(child.id),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                decoration: BoxDecoration(
+                                  color: isActive ? AppColors.primaryAccent : Colors.white.withAlpha(25),
+                                  borderRadius: BorderRadius.circular(11),
+                                  border: Border.all(
+                                    color: isActive ? AppColors.primaryAccent : Colors.white.withAlpha(60),
+                                    width: isActive ? 1.5 : 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      isActive ? Icons.child_care_rounded : Icons.child_care_outlined,
+                                      size: 15,
+                                      color: isActive ? Colors.white : Colors.white70,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      '${child.fullName.split(' ').first} • ${child.className}',
+                                      style: TextStyle(
+                                        color: isActive ? Colors.white : Colors.white.withAlpha(200),
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -124,7 +194,7 @@ class ParentDashboardScreen extends StatelessWidget {
                         const SizedBox(width: 8),
                         _buildParentStatChip('Davamiyyət', '${student.attendanceRate}%', Icons.check_circle_rounded, AppColors.success),
                         const SizedBox(width: 8),
-                        _buildParentStatChip('Qan Qrupu', 'A(II)+', Icons.favorite_rounded, AppColors.danger),
+                        _buildParentStatChip('Qan Qrupu', student.bloodGroup ?? '—', Icons.favorite_rounded, AppColors.danger),
                       ],
                     ),
 

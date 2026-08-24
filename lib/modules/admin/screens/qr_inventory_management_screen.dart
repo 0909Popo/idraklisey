@@ -6,6 +6,7 @@ import '../../../core/theme/app_shadows.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../../providers/app_state.dart';
 import '../../../data/models/inventory_model.dart';
+import '../../../data/models/ticket_model.dart';
 import '../../shared/screens/qr_scanner_screen.dart';
 
 class QrInventoryManagementScreen extends StatefulWidget {
@@ -455,6 +456,7 @@ class _InventoryItemFormSheetState extends State<_InventoryItemFormSheet> {
   late final TextEditingController _roomCtrl;
   late final TextEditingController _serialCtrl;
   late final TextEditingController _notesCtrl;
+  late final TextEditingController _problemCtrl;
   late String _category;
 
   @override
@@ -466,6 +468,7 @@ class _InventoryItemFormSheetState extends State<_InventoryItemFormSheet> {
     _roomCtrl = TextEditingController(text: e?.room ?? '');
     _serialCtrl = TextEditingController(text: e?.serialNumber ?? '');
     _notesCtrl = TextEditingController(text: e?.notes ?? '');
+    _problemCtrl = TextEditingController();
     _category = e?.category ?? inventoryCategories.first;
   }
 
@@ -476,6 +479,7 @@ class _InventoryItemFormSheetState extends State<_InventoryItemFormSheet> {
     _roomCtrl.dispose();
     _serialCtrl.dispose();
     _notesCtrl.dispose();
+    _problemCtrl.dispose();
     super.dispose();
   }
 
@@ -527,19 +531,47 @@ class _InventoryItemFormSheetState extends State<_InventoryItemFormSheet> {
         ),
       );
     } else {
-      appState.addInventoryItem(
-        InventoryItem(
-          id: 'INV-${DateTime.now().millisecondsSinceEpoch}',
-          qrCode: qrCode,
-          name: _nameCtrl.text.trim(),
-          category: _category,
-          room: _roomCtrl.text.trim(),
-          serialNumber: _serialCtrl.text.trim(),
-          notes: _notesCtrl.text.trim(),
-          isActive: true,
-          createdAt: DateTime.now(),
-        ),
+      final newItem = InventoryItem(
+        id: 'INV-${DateTime.now().millisecondsSinceEpoch}',
+        qrCode: qrCode,
+        name: _nameCtrl.text.trim(),
+        category: _category,
+        room: _roomCtrl.text.trim(),
+        serialNumber: _serialCtrl.text.trim(),
+        notes: _notesCtrl.text.trim(),
+        isActive: true,
+        createdAt: DateTime.now(),
       );
+      appState.addInventoryItem(newItem);
+
+      // Problem qeydi daxil edilibsə avtomatik helpdesk bileti yaranır
+      // (QR-suz / problemli məhsul daxil etmə axını)
+      final problem = _problemCtrl.text.trim();
+      if (problem.isNotEmpty) {
+        final user = appState.currentUser;
+        appState.addTicket(HelpdeskTicket(
+          id: 'INV-TK-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
+          title: '${_nameCtrl.text.trim()} — problem qeydi',
+          category: TicketCategory.inventory,
+          status: TicketStatus.open,
+          priority: TicketPriority.medium,
+          senderName: user?.fullName ?? 'İnzibatçı',
+          senderRole: 'İşçi',
+          senderId: user?.id,
+          roomNumber: _roomCtrl.text.trim(),
+          inventoryCode: qrCode,
+          description: problem,
+          createdAt: DateTime.now(),
+          messages: [
+            TicketMessage(
+              sender: user?.fullName ?? 'İnzibatçı',
+              message: problem,
+              timestamp: DateTime.now(),
+              isFromStaff: false,
+            ),
+          ],
+        ));
+      }
     }
 
     Navigator.pop(context);
@@ -644,6 +676,42 @@ class _InventoryItemFormSheetState extends State<_InventoryItemFormSheet> {
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
               ),
             ),
+            // Problem qeydi — doldurulsa avtomatik helpdesk bileti yaranır
+            // (QR-suz / problemli məhsul daxil etmə axını)
+            if (widget.existing == null) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.gold.withAlpha(10),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.gold.withAlpha(35)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.report_problem_rounded, size: 15, color: AppColors.goldDark),
+                    const SizedBox(width: 7),
+                    Expanded(
+                      child: Text(
+                        'QR-suz və ya problemli məhsül? Problem qeydini doldurun — müraciət dərhal Helpdesk-ə düşəcək.',
+                        style: TextStyle(fontSize: 10.5, color: AppColors.goldDark, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _problemCtrl,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  labelText: 'Problem Qeydi (Helpdesk-ə göndərilir)',
+                  hintText: 'Məs: Proyektor işləmir, kabellər yararsızdır...',
+                  prefixIcon: const Icon(Icons.build_circle_rounded, color: AppColors.goldDark),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+              ),
+            ],
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
